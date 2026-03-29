@@ -152,6 +152,10 @@ function validateSourceRows(sourceRows, scope, scopeId, sourceIds) {
     if (rowScopeId !== scopeId) {
       throw new Error("source memories must share the requested scope_id");
     }
+    const rowTags = Array.isArray(row.tags) ? row.tags : [];
+    if (rowTags.includes("compacted_source")) {
+      throw new Error("source memory already compacted");
+    }
   }
 }
 

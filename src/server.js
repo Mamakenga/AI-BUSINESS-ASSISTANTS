@@ -929,6 +929,7 @@ app.use((error, _req, res, _next) => {
     error.message === "source_memory_ids must be a non-empty array" ||
     error.message === "source_memory_ids must contain positive integers" ||
     error.message === "source_memory_ids do not match existing memories" ||
+    error.message === "source memory already compacted" ||
     error.message === "source memories must share the requested scope" ||
     error.message === "source memories must share the requested scope_id" ||
     error.message === "scope_id is required for role/task compaction" ||

@@ -103,3 +103,19 @@ test("compaction allows promoted_facts as strings", () => {
   assert.equal(compaction.promoted_memories[0].fact, "Founder prefers concise answers.");
   assert.deepEqual(compaction.promoted_memories[0].tags, ["long_term_fact", "memory_curator"]);
 });
+
+test("compaction rejects source memories that were already compacted", () => {
+  assert.throws(
+    () =>
+      buildMemoryCompaction(
+        {
+          actor_agent: "memory_curator",
+          scope: "business",
+          source_memory_ids: [21],
+          summary: "Should fail on repeated compaction.",
+        },
+        [{ id: 21, scope: "business", scope_id: null, tags: ["raw_note", "compacted_source"] }]
+      ),
+    /source memory already compacted/
+  );
+});
