@@ -67,6 +67,17 @@ test("question in a role topic becomes direct answer", () => {
   assert.equal(result.should_create_task, false);
 });
 
+test("role tag with a concrete request still becomes a task", () => {
+  const result = resolveTelegramRouting({
+    text: "@assistant prepare the weekly digest",
+    topic_name: "01 Assistant",
+  });
+
+  assert.equal(result.resolved_role, "assistant");
+  assert.equal(result.interaction_type, "one_role_task");
+  assert.equal(result.should_create_task, true);
+});
+
 test("ambiguous contextless message asks for clarification", () => {
   const result = resolveTelegramRouting({
     text: "Посмотри пожалуйста",
