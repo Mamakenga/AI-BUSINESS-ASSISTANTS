@@ -99,7 +99,7 @@
 - [x] Зафиксировать сервисный режим для `memory_curator`
 - [x] Научить `orchestrator` создавать follow-up runs для других ролей
 - [x] Сохранять результаты роли в `artifacts`
-- [ ] Сохранять межролевые handoff-сообщения в `messages`
+- [x] Сохранять межролевые handoff-сообщения в `messages`
 
 ## Phase 5. Memory Layer
 
@@ -158,6 +158,6 @@
 ## Next Step
 
 Следующий шаг по этому чеклисту:
-1. зафиксировать runtime-profile для ролей Phase 4;
-2. начать сохранять результаты ролей в `artifacts`;
-3. затем добавить межролевые handoff-сообщения в `messages`.
+1. перейти к `Phase 5` memory layer;
+2. начать с `get_memory` и `save_memory_candidate`;
+3. затем определить retrieval bundle для owner / business / role / task.

@@ -331,28 +331,33 @@ app.post("/telegram/intake", async (req, res, next) => {
 });
 
 app.post("/runs/follow-up", async (req, res, next) => {
+  const client = await pool.connect();
   try {
     const followUpRun = buildFollowUpRun(req.body || {});
+    await client.query("BEGIN");
 
-    const taskResult = await pool.query(
+    const taskResult = await client.query(
       `
         SELECT id, thread_id
         FROM tasks
         WHERE id = $1
+        FOR UPDATE
       `,
-      [followUpRun.task_id]
+      [followUpRun.run.task_id]
     );
 
     if (taskResult.rowCount === 0) {
+      await client.query("ROLLBACK");
       return res.status(404).json({ error: "Task not found" });
     }
 
     const taskRow = taskResult.rows[0];
-    if (taskRow.thread_id !== followUpRun.thread_id) {
+    if (taskRow.thread_id !== followUpRun.run.thread_id) {
+      await client.query("ROLLBACK");
       return res.status(400).json({ error: "task_id and thread_id do not match" });
     }
 
-    const runResult = await pool.query(
+    const runResult = await client.query(
       `
         INSERT INTO runs (
           agent, task_id, thread_id, status, requested_by_agent, dispatch_reason
@@ -361,18 +366,45 @@ app.post("/runs/follow-up", async (req, res, next) => {
         RETURNING id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, started_at, finished_at, created_at
       `,
       [
-        followUpRun.agent,
-        followUpRun.task_id,
-        followUpRun.thread_id,
-        followUpRun.status,
-        followUpRun.requested_by_agent,
-        followUpRun.dispatch_reason,
+        followUpRun.run.agent,
+        followUpRun.run.task_id,
+        followUpRun.run.thread_id,
+        followUpRun.run.status,
+        followUpRun.run.requested_by_agent,
+        followUpRun.run.dispatch_reason,
       ]
     );
 
-    return res.status(201).json(mapRunRow(runResult.rows[0]));
+    const messageResult = await client.query(
+      `
+        INSERT INTO messages (
+          thread_id, task_id, from_agent, to_agent, message_type, content, status
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id, thread_id, task_id, from_agent, to_agent, message_type, content, status, created_at
+      `,
+      [
+        followUpRun.handoff_message.thread_id,
+        followUpRun.handoff_message.task_id,
+        followUpRun.handoff_message.from_agent,
+        followUpRun.handoff_message.to_agent,
+        followUpRun.handoff_message.message_type,
+        followUpRun.handoff_message.content,
+        followUpRun.handoff_message.status,
+      ]
+    );
+
+    await client.query("COMMIT");
+
+    return res.status(201).json({
+      run: mapRunRow(runResult.rows[0]),
+      handoff_message: mapMessageRow(messageResult.rows[0]),
+    });
   } catch (error) {
+    await client.query("ROLLBACK");
     return next(error);
+  } finally {
+    client.release();
   }
 });
 

@@ -21,6 +21,23 @@ function normalizeOptionalString(value) {
   return normalized.length > 0 ? normalized : null;
 }
 
+function buildHandoffMessage(sourceAgent, targetAgent, taskId, threadId, dispatchReason, input) {
+  const handoffContent =
+    normalizeOptionalString(input.handoff_message) ||
+    dispatchReason ||
+    "Follow-up requested by orchestrator.";
+
+  return {
+    thread_id: threadId,
+    task_id: taskId,
+    from_agent: sourceAgent,
+    to_agent: targetAgent,
+    message_type: "handoff",
+    content: handoffContent,
+    status: "unread",
+  };
+}
+
 function buildFollowUpRun(input) {
   const sourceAgent = normalizeRequiredString(input.source_agent, "source_agent");
   if (sourceAgent !== "orchestrator") {
@@ -35,13 +52,18 @@ function buildFollowUpRun(input) {
     throw new Error("Invalid follow-up target_agent");
   }
 
+  const dispatchReason = normalizeOptionalString(input.dispatch_reason);
+
   return {
-    agent: targetAgent,
-    task_id: taskId,
-    thread_id: threadId,
-    status: "pending",
-    requested_by_agent: "orchestrator",
-    dispatch_reason: normalizeOptionalString(input.dispatch_reason),
+    run: {
+      agent: targetAgent,
+      task_id: taskId,
+      thread_id: threadId,
+      status: "pending",
+      requested_by_agent: "orchestrator",
+      dispatch_reason: dispatchReason,
+    },
+    handoff_message: buildHandoffMessage(sourceAgent, targetAgent, taskId, threadId, dispatchReason, input),
   };
 }
 

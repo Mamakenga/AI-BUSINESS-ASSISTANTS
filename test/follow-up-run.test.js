@@ -15,13 +15,37 @@ test("follow-up runs can target worker roles from orchestrator", () => {
   });
 
   assert.deepEqual(run, {
-    agent: "researcher",
+    run: {
+      agent: "researcher",
+      task_id: "task_123",
+      thread_id: "thread_123",
+      status: "pending",
+      requested_by_agent: "orchestrator",
+      dispatch_reason: "Need competitor comparison before decision",
+    },
+    handoff_message: {
+      thread_id: "thread_123",
+      task_id: "task_123",
+      from_agent: "orchestrator",
+      to_agent: "researcher",
+      message_type: "handoff",
+      content: "Need competitor comparison before decision",
+      status: "unread",
+    },
+  });
+});
+
+test("follow-up runs can carry an explicit handoff message", () => {
+  const run = buildFollowUpRun({
+    source_agent: "orchestrator",
+    target_agent: "critic",
     task_id: "task_123",
     thread_id: "thread_123",
-    status: "pending",
-    requested_by_agent: "orchestrator",
-    dispatch_reason: "Need competitor comparison before decision",
+    dispatch_reason: "Need a review pass",
+    handoff_message: "Проверь, не переоцениваем ли эффект повышения цены.",
   });
+
+  assert.equal(run.handoff_message.content, "Проверь, не переоцениваем ли эффект повышения цены.");
 });
 
 test("follow-up runs reject orchestrator as target", () => {
