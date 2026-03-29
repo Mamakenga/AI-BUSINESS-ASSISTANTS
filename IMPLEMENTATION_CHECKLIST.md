@@ -14,14 +14,17 @@
 2. база данных и control layer;
 3. Telegram-first контур;
 4. role execution;
-5. память и scheduled jobs;
-6. Mini App board как дополнительный интерфейс;
-7. drag & drop и UX-polish только после проверки Telegram-first потока.
+5. память;
+6. первый живой vertical slice: Telegram -> worker -> OpenClaw -> ответ в тему;
+7. scheduled jobs;
+8. Mini App board как дополнительный интерфейс;
+9. drag & drop и UX-polish только после проверки Telegram-first потока.
 
 Важно:
 1. Telegram-группа и ролевой workflow идут раньше Mini App board;
-2. Mini App board не должен подменять собой runtime state model;
-3. founder-facing UX не должен перегружаться подкапотными сущностями.
+2. первый founder-visible результат важнее scheduled jobs и Mini App;
+3. Mini App board не должен подменять собой runtime state model;
+4. founder-facing UX не должен перегружаться подкапотными сущностями.
 
 ## Current Status
 
@@ -120,6 +123,19 @@
 - [x] Прогнать DB-backed smoke для `POST /memories/candidates`, `GET /memories`, `POST /memory/bundles/resolve`
 - [x] Проверить retrieval bundle на реальных данных для `researcher`, `critic`, `memory_curator`
 
+## Phase 5.5. First Live Vertical Slice
+
+- [ ] Реализовать живой Telegram bridge для группы/тем
+- [ ] Научить bridge вызывать `POST /telegram/intake`
+- [ ] Научить bridge отправлять founder-facing reply обратно в ту же тему
+- [ ] Реализовать worker, который забирает pending run и исполняет его
+- [ ] Подключить worker к OpenClaw / Antigravity execution path
+- [ ] Научить worker вызывать `POST /runs/:id/complete`
+- [ ] Поднять контур на VPS под пользователем `ops`
+- [ ] Подключить проект на VPS к живому Railway Postgres через `DATABASE_URL`
+- [ ] Прогнать smoke: Telegram message -> run -> model execution -> complete -> reply in topic
+- [ ] Зафиксировать минимальный founder-demo flow: `@assistant` и `@researcher` в живой Telegram-группе
+
 ## Phase 6. Scheduled Jobs
 
 - [ ] Добавить registry/use-case для `jobs`
@@ -175,7 +191,7 @@
 ## Next Step
 
 Следующий шаг по этому чеклисту:
-1. перейти к `Phase 6` scheduled jobs;
-2. затем вынести `memory cleanup` в реальный scheduled flow;
-3. server validation на VPS оставить отдельным треком после локально подтверждённого contour.
+1. пройти `Phase 5.5` и получить первый живой founder-visible результат в Telegram;
+2. затем перейти к `Phase 6` scheduled jobs;
+3. Mini App и UX-polish держать после живого Telegram vertical slice.
 
