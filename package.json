@@ -6,7 +6,8 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "check": "node --check src/server.js"
+    "check": "node --check src/server.js && node --check src/telegram-routing.js",
+    "test:routing": "node --test test/telegram-routing.test.js"
   },
   "engines": {
     "node": ">=20"

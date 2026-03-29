@@ -3,6 +3,7 @@
 const crypto = require("node:crypto");
 const express = require("express");
 const { Pool } = require("pg");
+const { resolveTelegramRouting } = require("./telegram-routing");
 
 const PORT = Number.parseInt(process.env.PORT || "3000", 10);
 const DATABASE_URL = process.env.DATABASE_URL || "";
@@ -157,6 +158,27 @@ app.get("/health", async (_req, res, next) => {
       service: "control-api",
       db_time: result.rows[0].now,
     });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.post("/telegram/route-preview", (req, res, next) => {
+  try {
+    const text = normalizeNullableString(req.body.text);
+    const topicName = normalizeNullableString(req.body.topic_name);
+
+    if (!text) {
+      return res.status(400).json({ error: "text is required" });
+    }
+
+    const result = resolveTelegramRouting({
+      text,
+      topic_name: topicName,
+      is_group_context: req.body.is_group_context !== false,
+    });
+
+    return res.json(result);
   } catch (error) {
     return next(error);
   }
