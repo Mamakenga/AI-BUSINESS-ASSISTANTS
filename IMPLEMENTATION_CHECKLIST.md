@@ -75,7 +75,7 @@
 
 ## Phase 3. Telegram-First Routing
 
-- [ ] Зафиксировать Telegram routing spec отдельным файлом
+- [x] Зафиксировать Telegram routing spec отдельным файлом
 - [ ] Описать mapping `topic -> role`
 - [ ] Поддержать direct role call `@assistant`
 - [ ] Поддержать direct role call `@researcher`
