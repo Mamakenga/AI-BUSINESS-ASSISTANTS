@@ -76,6 +76,12 @@ function classifyInteraction(resolvedRole, text) {
     return null;
   }
   if (resolvedRole === "orchestrator") {
+    if (looksLikeQuestion(text)) {
+      return {
+        interaction_type: "direct_answer",
+        should_create_task: false,
+      };
+    }
     return {
       interaction_type: "multi_role_task",
       should_create_task: true,

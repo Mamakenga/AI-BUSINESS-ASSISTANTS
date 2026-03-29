@@ -32,6 +32,18 @@ test("general topic defaults to orchestrator", () => {
   assert.equal(result.should_create_task, true);
 });
 
+test("orchestrator question may stay a direct answer", () => {
+  const result = resolveTelegramRouting({
+    text: "@orchestrator сколько у нас учеников?",
+    topic_name: "General",
+  });
+
+  assert.equal(result.resolved_role, "orchestrator");
+  assert.equal(result.route_source, "tag");
+  assert.equal(result.interaction_type, "direct_answer");
+  assert.equal(result.should_create_task, false);
+});
+
 test("role topic without tag uses topic role", () => {
   const result = resolveTelegramRouting({
     text: "Проверь конкурентов в Варне",
