@@ -30,7 +30,8 @@ If you feel lost, read only these files in this order:
 8. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md` - English technical version of the same plan
 9. `OPS_DEPLOYMENT_SKELETON.md` - deployment contour for the separate `ops` server user
 10. `DEPLOY_RUNBOOK.md` - first concrete VPS deploy and smoke sequence
-11. `deploy/systemd/` - systemd unit templates for `ops-api`, `ops-telegram`, and `ops-worker`
+11. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md` - problem statement and decision options for separate OpenClaw execution
+12. `deploy/systemd/` - systemd unit templates for `ops-api`, `ops-telegram`, and `ops-worker`
 
 ## Core Separation Rule
 
@@ -73,3 +74,4 @@ Do not mix it with:
 3. `TELEGRAM_ROUTING_SPEC.md`
 4. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md`
 5. `OPS_DEPLOYMENT_SKELETON.md`
+6. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md`
