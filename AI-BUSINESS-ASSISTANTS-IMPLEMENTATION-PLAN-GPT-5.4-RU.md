@@ -664,6 +664,51 @@ Founder interface должен оставаться простым.
 
 ---
 
+### 12.4. Founder Mini App Kanban
+
+Telegram Mini App kanban-доска рекомендуется как founder-facing control surface.
+
+Ее надо понимать как:
+
+1. чистую визуальную доску для founder-задач и работы ассистентов, которую полезно видеть человеку;
+2. Mini App, который хостится на Railway рядом с control API;
+3. UI-слой поверх канонического backend state, а не замену для runs, messages или artifacts.
+
+Эта доска не должна становиться единственным system of record для runtime execution.
+
+Предпочтительная схема такая:
+
+1. founder нажимает кнопку в Telegram и открывает Mini App внутри Telegram;
+2. Mini App читает и пишет board state через control API;
+3. PostgreSQL остается source of truth;
+4. role runs, messages, artifacts и memory продолжают жить в своих таблицах.
+
+Для founder board нужен отдельный task-слой, например с такими полями:
+
+1. id;
+2. 	itle;
+3. status;
+4. ssigned_role;
+5. 	hread_id;
+6. priority;
+7. due_at;
+8. oard_order;
+9. created_at;
+10. updated_at.
+
+Рекомендуемые статусы:
+
+1. acklog;
+2. in_work;
+3. done.
+
+Важное правило:
+
+1. Mini App board нужен для founder visibility и легкого контроля;
+2. он не заменяет более глубокую runtime state model;
+3. drag-and-drop можно добавить позже, но первую версию безопаснее делать через стабильные move actions, если mobile UX внутри Telegram окажется капризным.
+
+---
 ## 13. Пошаговый MVP-план
 
 ### Phase 1. Data foundation
@@ -699,7 +744,14 @@ Founder interface должен оставаться простым.
 3. добавить weekly critic review;
 4. логировать каждый run в `runs`.
 
-### Phase 6. Memory hygiene
+### Phase 6. Founder Mini App board
+
+1. добавить founder-facing task table и API endpoints для чтения и обновления доски;
+2. поднять простой Telegram Mini App board на Railway;
+3. связать board-задачи с текущими ролями ассистентов, не смешивая их с сырым runtime internals;
+4. начать со стабильных move actions; drag-and-drop добавлять только если Telegram mobile UX покажет себя надежно.
+
+### Phase 7. Memory hygiene
 
 1. реализовать memory compaction;
 2. ограничить объем retrieval на роль;
@@ -768,3 +820,4 @@ Founder interface должен оставаться простым.
 7. artifact-based handoffs.
 
 Это минимальная архитектура, которая закрывает founder use case без лишнего усложнения.
+

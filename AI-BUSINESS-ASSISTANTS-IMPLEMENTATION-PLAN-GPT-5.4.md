@@ -1,4 +1,4 @@
-# AI Business Assistants Implementation Plan (GPT-5.4)
+﻿# AI Business Assistants Implementation Plan (GPT-5.4)
 
 Status: Draft  
 Date: 2026-03-29  
@@ -623,6 +623,50 @@ Optional later:
 3. memory review screen
 4. job status screen
 
+### 12.4 Founder Mini App Kanban
+
+A Telegram Mini App kanban board is recommended as a founder-facing control surface.
+
+It should be treated as:
+
+1. a clean visual board for founder tasks and assistant-visible work
+2. a Mini App hosted on Railway next to the control API
+3. a UI layer above canonical backend state, not a replacement for runs, messages, or artifacts
+
+The board should not become the entire system of record for runtime execution.
+
+The preferred shape is:
+
+1. Telegram group or bot button opens the Mini App inside Telegram
+2. the Mini App reads board data through the control API
+3. PostgreSQL remains the source of truth
+4. role runs, messages, artifacts, and memory stay in their own tables
+
+The task board should start with a founder-oriented table, for example:
+
+1. id
+2. 	itle
+3. status
+4. ssigned_role
+5. 	hread_id
+6. priority
+7. due_at
+8. oard_order
+9. created_at
+10. updated_at
+
+Recommended statuses:
+
+1. acklog
+2. in_work
+3. done
+
+Important rule:
+
+1. the Mini App board is for founder task visibility and light control
+2. it does not replace the deeper runtime state model
+3. drag-and-drop can be added later, but the first version may safely use tap or move actions if mobile UX inside Telegram is more stable that way
+
 ## 13. MVP Build Sequence
 
 ### Phase 1. Data foundation
@@ -658,7 +702,14 @@ Optional later:
 3. add weekly critic review
 4. log every run to `runs`
 
-### Phase 6. Memory hygiene
+### Phase 6. Founder Mini App board
+
+1. add a founder-facing task table and API endpoints for board reads and updates
+2. ship a simple Telegram Mini App board on Railway
+3. connect board tasks to current assistant roles without mixing them with raw runtime internals
+4. start with stable move actions first; add drag-and-drop only if Telegram mobile UX is reliable
+
+### Phase 7. Memory hygiene
 
 1. implement memory compaction
 2. limit how many facts each role retrieves
@@ -721,3 +772,4 @@ And build the system around:
 7. artifact-based handoffs
 
 That is the smallest architecture that satisfies the founder use case without unnecessary complexity.
+
