@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node src/server.js",
     "start:telegram": "node scripts/run-telegram-bridge.js",
-    "check": "node --check src/server.js && node --check src/runtime-profiles.js && node --check src/memory-service.js && node --check src/memory-bundles.js && node --check src/memory-compaction.js && node --check src/follow-up-run.js && node --check src/run-completion.js && node --check src/telegram-routing.js && node --check src/telegram-intake.js && node --check src/telegram-reply.js && node --check src/telegram-bridge.js && node --check scripts/apply-migrations.js && node --check scripts/smoke-phase1-5.js && node --check scripts/run-telegram-bridge.js",
+    "start:worker": "node scripts/run-role-worker.js",
+    "check": "node --check src/server.js && node --check src/runtime-profiles.js && node --check src/memory-service.js && node --check src/memory-bundles.js && node --check src/memory-compaction.js && node --check src/follow-up-run.js && node --check src/run-completion.js && node --check src/telegram-routing.js && node --check src/telegram-intake.js && node --check src/telegram-reply.js && node --check src/telegram-bridge.js && node --check src/run-worker.js && node --check src/openclaw-client.js && node --check scripts/apply-migrations.js && node --check scripts/smoke-phase1-5.js && node --check scripts/run-telegram-bridge.js && node --check scripts/run-role-worker.js",
     "db:migrate": "node scripts/apply-migrations.js",
     "smoke:phase1-5": "node scripts/smoke-phase1-5.js",
     "test:routing": "node --test test/telegram-routing.test.js",
@@ -19,7 +20,9 @@
     "test:memory": "node --test test/memory-service.test.js",
     "test:bundles": "node --test test/memory-bundles.test.js",
     "test:compaction": "node --test test/memory-compaction.test.js",
-    "test:bridge": "node --test test/telegram-bridge.test.js"
+    "test:bridge": "node --test test/telegram-bridge.test.js",
+    "test:worker": "node --test test/run-worker.test.js",
+    "test:openclaw": "node --test test/openclaw-client.test.js"
   },
   "engines": {
     "node": ">=20"
