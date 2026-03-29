@@ -105,10 +105,10 @@
 
 - [x] Добавить `get_memory`
 - [x] Добавить `save_memory_candidate`
-- [ ] Определить retrieval bundle для `owner`
-- [ ] Определить retrieval bundle для `business`
-- [ ] Определить retrieval bundle для `role`
-- [ ] Определить retrieval bundle для `task`
+- [x] Определить retrieval bundle для `owner`
+- [x] Определить retrieval bundle для `business`
+- [x] Определить retrieval bundle для `role`
+- [x] Определить retrieval bundle для `task`
 - [ ] Ограничить объём подмешиваемой памяти на run
 - [ ] Добавить memory compaction flow
 

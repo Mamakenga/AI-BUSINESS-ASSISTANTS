@@ -4,6 +4,7 @@ const crypto = require("node:crypto");
 const express = require("express");
 const { Pool } = require("pg");
 const { buildFollowUpRun } = require("./follow-up-run");
+const { buildMemoryBundleRequest } = require("./memory-bundles");
 const { buildMemoryCandidate, parseMemoryQuery } = require("./memory-service");
 const { buildRunCompletion } = require("./run-completion");
 const { buildTelegramIntakePlan } = require("./telegram-intake");
@@ -185,6 +186,18 @@ function mapMemoryRow(row) {
   };
 }
 
+function mapDecisionRow(row) {
+  return {
+    id: row.id,
+    scope: row.scope,
+    decision: row.decision,
+    reasoning: row.reasoning,
+    made_by: row.made_by,
+    status: row.status,
+    created_at: row.created_at,
+  };
+}
+
 function buildTaskUpdate(body) {
   const candidate = {
     title: body.title !== undefined ? normalizeTitle(body.title) : undefined,
@@ -277,6 +290,100 @@ app.post("/memories/candidates", async (req, res, next) => {
     );
 
     return res.status(201).json(mapMemoryRow(result.rows[0]));
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.post("/memory/bundles/resolve", async (req, res, next) => {
+  try {
+    const bundleRequest = buildMemoryBundleRequest(req.body || {});
+
+    const result = {
+      role_id: bundleRequest.role_id,
+      task_id: bundleRequest.task_id,
+      limit_per_scope: bundleRequest.limit_per_scope,
+      include_expired: bundleRequest.include_expired,
+      owner: [],
+      business: [],
+      role: [],
+      task: [],
+      decisions: {
+        owner: [],
+        business: [],
+        task: [],
+      },
+    };
+
+    async function loadMemories(scope, scopeId) {
+      const values = [scope];
+      const where = ["scope = $1"];
+
+      if (scopeId === null) {
+        where.push("scope_id IS NULL");
+      } else {
+        values.push(scopeId);
+        where.push(`scope_id = $${values.length}`);
+      }
+
+      if (!bundleRequest.include_expired) {
+        where.push("(expires_at IS NULL OR expires_at > now())");
+      }
+
+      values.push(bundleRequest.limit_per_scope);
+
+      const queryResult = await pool.query(
+        `
+          SELECT id, scope, scope_id, fact, source, confidence, tags, expires_at, created_at
+          FROM memories
+          WHERE ${where.join(" AND ")}
+          ORDER BY created_at DESC
+          LIMIT $${values.length}
+        `,
+        values
+      );
+
+      return queryResult.rows.map(mapMemoryRow);
+    }
+
+    async function loadDecisions(scope) {
+      if (scope === "task") {
+        return [];
+      }
+
+      const queryResult = await pool.query(
+        `
+          SELECT id, scope, decision, reasoning, made_by, status, created_at
+          FROM decisions
+          WHERE scope = $1 AND status = 'active'
+          ORDER BY created_at DESC
+          LIMIT $2
+        `,
+        [scope, bundleRequest.limit_per_scope]
+      );
+
+      return queryResult.rows.map(mapDecisionRow);
+    }
+
+    if (bundleRequest.scopes.owner) {
+      result.owner = await loadMemories("owner", null);
+    }
+    if (bundleRequest.scopes.business) {
+      result.business = await loadMemories("business", null);
+    }
+    if (bundleRequest.scopes.role) {
+      result.role = await loadMemories("role", bundleRequest.role_id);
+    }
+    if (bundleRequest.scopes.task && bundleRequest.task_id) {
+      result.task = await loadMemories("task", bundleRequest.task_id);
+    }
+    if (bundleRequest.scopes.decisions) {
+      result.decisions.owner = await loadDecisions("owner");
+      result.decisions.business = await loadDecisions("business");
+      result.decisions.task = bundleRequest.task_id ? await loadDecisions("task") : [];
+    }
+
+    return res.json(result);
   } catch (error) {
     return next(error);
   }
