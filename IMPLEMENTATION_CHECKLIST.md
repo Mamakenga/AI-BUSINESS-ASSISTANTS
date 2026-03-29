@@ -41,17 +41,17 @@
 
 - [x] Создать отдельный репозиторий `AI-BUSINESS-ASSISTANTS`
 - [x] Вынести проект из `stemford-ai` в отдельную папку
-- [x] Добавить отдельный [START_HERE.md](D:/AI-BUSINESS-ASSISTANTS/START_HERE.md)
-- [x] Добавить отдельный [OPS_DEPLOYMENT_SKELETON.md](D:/AI-BUSINESS-ASSISTANTS/OPS_DEPLOYMENT_SKELETON.md)
+- [x] Добавить отдельный [START_HERE.md](START_HERE.md)
+- [x] Добавить отдельный [OPS_DEPLOYMENT_SKELETON.md](OPS_DEPLOYMENT_SKELETON.md)
 - [x] Зафиксировать отдельную канонику планов на русском и английском
 - [x] Добавить базовый `.gitignore`
 
 ## Phase 1. Data Foundation
 
-- [x] Добавить [001_initial_control_plane.sql](D:/AI-BUSINESS-ASSISTANTS/migrations/001_initial_control_plane.sql)
+- [x] Добавить [001_initial_control_plane.sql](migrations/001_initial_control_plane.sql)
 - [x] Создать таблицы `memories`, `messages`, `decisions`, `jobs`, `runs`, `artifacts`
 - [x] Добавить базовые индексы под retrieval, inbox и scheduler
-- [x] Добавить [002_founder_tasks.sql](D:/AI-BUSINESS-ASSISTANTS/migrations/002_founder_tasks.sql)
+- [x] Добавить [002_founder_tasks.sql](migrations/002_founder_tasks.sql)
 - [x] Создать таблицу `tasks` для founder-facing task layer
 - [x] Связать `messages`, `runs`, `artifacts` с `tasks`
 - [ ] Добавить migration runner / apply script
@@ -60,7 +60,7 @@
 ## Phase 2. Control API Foundation
 
 - [x] Добавить `package.json` и базовые зависимости
-- [x] Поднять минимальный [src/server.js](D:/AI-BUSINESS-ASSISTANTS/src/server.js)
+- [x] Поднять минимальный [src/server.js](src/server.js)
 - [x] Реализовать `GET /health`
 - [x] Реализовать `GET /tasks`
 - [x] Реализовать `GET /tasks/:id`
@@ -77,12 +77,11 @@
 
 - [ ] Зафиксировать Telegram routing spec отдельным файлом
 - [ ] Описать mapping `topic -> role`
-- [ ] Поддержать direct role call по тегам:
-- [ ] `@assistant`
-- [ ] `@researcher`
-- [ ] `@methodist`
-- [ ] `@finance`
-- [ ] `@critic`
+- [ ] Поддержать direct role call `@assistant`
+- [ ] Поддержать direct role call `@researcher`
+- [ ] Поддержать direct role call `@methodist`
+- [ ] Поддержать direct role call `@finance`
+- [ ] Поддержать direct role call `@critic`
 - [ ] Поддержать `@orchestrator` для multi-role задач
 - [ ] Научить систему определять роль по Telegram topic без обязательного тега
 - [ ] Создавать `thread_id` для входящего Telegram-потока
@@ -129,16 +128,14 @@
 - [ ] Зафиксировать отдельный Mini App frontend spec
 - [ ] Добавить task board endpoints, которых не хватает Mini App
 - [ ] Поднять простую Mini App страницу на Railway
-- [ ] Реализовать колонки:
-- [ ] `Inbox`
-- [ ] `In Work`
-- [ ] `Done`
-- [ ] Показать на карточке:
-- [ ] `title`
-- [ ] `assigned_role`
-- [ ] `priority`
-- [ ] `due_at`
-- [ ] `thread_id`
+- [ ] Реализовать колонку `Inbox`
+- [ ] Реализовать колонку `In Work`
+- [ ] Реализовать колонку `Done`
+- [ ] Показать на карточке `title`
+- [ ] Показать на карточке `assigned_role`
+- [ ] Показать на карточке `priority`
+- [ ] Показать на карточке `due_at`
+- [ ] Показать на карточке `thread_id`
 - [ ] Реализовать move actions вместо drag & drop
 - [ ] Не показывать в главной доске `runs`, `fallbacks`, `handoff logs`, `memory internals`
 
