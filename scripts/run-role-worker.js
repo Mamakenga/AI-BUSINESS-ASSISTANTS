@@ -130,14 +130,35 @@ async function loadMemoryBundle(runRow) {
   });
 }
 
-async function processOneRun(runRow) {
+async function failRun(runId) {
   const client = await pool.connect();
   try {
-    const [task, messages, memoryBundle] = await Promise.all([
-      loadTask(client, runRow.task_id),
-      loadMessages(client, runRow.thread_id),
-      loadMemoryBundle(runRow),
-    ]);
+    await client.query(
+      `
+        UPDATE runs
+        SET status = 'failed', finished_at = now()
+        WHERE id = $1 AND status = 'running'
+      `,
+      [runId]
+    );
+  } finally {
+    client.release();
+  }
+}
+
+async function processOneRun(runRow) {
+  const client = await pool.connect();
+  let task;
+  let messages;
+
+  try {
+    [task, messages] = await Promise.all([loadTask(client, runRow.task_id), loadMessages(client, runRow.thread_id)]);
+  } finally {
+    client.release();
+  }
+
+  try {
+    const memoryBundle = await loadMemoryBundle(runRow);
 
     const executionContext = buildRunExecutionContext({
       run: runRow,
@@ -163,17 +184,8 @@ async function processOneRun(runRow) {
       reply_text,
     };
   } catch (error) {
-    await client.query(
-      `
-        UPDATE runs
-        SET status = 'failed', finished_at = now()
-        WHERE id = $1 AND status = 'running'
-      `,
-      [runRow.id]
-    );
+    await failRun(runRow.id);
     throw error;
-  } finally {
-    client.release();
   }
 }
 
@@ -185,12 +197,18 @@ async function main() {
   const pollIntervalMs = normalizePollIntervalMs(WORKER_POLL_INTERVAL_MS);
 
   while (true) {
-    const client = await pool.connect();
     let claimedRun = null;
     try {
-      claimedRun = await claimNextRun(client, WORKER_ROLE_IDS);
-    } finally {
-      client.release();
+      const client = await pool.connect();
+      try {
+        claimedRun = await claimNextRun(client, WORKER_ROLE_IDS);
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error("[role-worker] claim error, retrying in 5s", error);
+      await sleep(5000);
+      continue;
     }
 
     if (!claimedRun) {
