@@ -14,3 +14,6 @@ Current baseline:
 1. `001_initial_control_plane.sql`
    - creates the core control-plane tables
    - adds the first indexes for memory, messages, decisions, jobs, runs, and artifacts
+2. `002_founder_tasks.sql`
+   - creates the founder-facing `tasks` table for the Mini App board
+   - connects `messages`, `runs`, and `artifacts` task references to canonical task ids
