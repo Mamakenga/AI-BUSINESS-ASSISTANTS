@@ -3,6 +3,7 @@
 const crypto = require("node:crypto");
 const express = require("express");
 const { Pool } = require("pg");
+const { buildFollowUpRun } = require("./follow-up-run");
 const { buildTelegramIntakePlan } = require("./telegram-intake");
 const { buildTelegramReply } = require("./telegram-reply");
 const { ALLOWED_TASK_ROLES } = require("./runtime-profiles");
@@ -147,6 +148,8 @@ function mapRunRow(row) {
     task_id: row.task_id,
     thread_id: row.thread_id,
     status: row.status,
+    requested_by_agent: row.requested_by_agent,
+    dispatch_reason: row.dispatch_reason,
     model_used: row.model_used,
     fallback_chain: row.fallback_chain,
     started_at: row.started_at,
@@ -281,16 +284,18 @@ app.post("/telegram/intake", async (req, res, next) => {
     const runResult = await client.query(
       `
         INSERT INTO runs (
-          agent, task_id, thread_id, status
+          agent, task_id, thread_id, status, requested_by_agent, dispatch_reason
         )
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, agent, task_id, thread_id, status, model_used, fallback_chain, started_at, finished_at, created_at
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, started_at, finished_at, created_at
       `,
       [
         intakePlan.run.agent,
         intakePlan.run.task_id,
         intakePlan.run.thread_id,
         intakePlan.run.status,
+        "founder",
+        null,
       ]
     );
 
@@ -310,6 +315,52 @@ app.post("/telegram/intake", async (req, res, next) => {
     return next(error);
   } finally {
     client.release();
+  }
+});
+
+app.post("/runs/follow-up", async (req, res, next) => {
+  try {
+    const followUpRun = buildFollowUpRun(req.body || {});
+
+    const taskResult = await pool.query(
+      `
+        SELECT id, thread_id
+        FROM tasks
+        WHERE id = $1
+      `,
+      [followUpRun.task_id]
+    );
+
+    if (taskResult.rowCount === 0) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    const taskRow = taskResult.rows[0];
+    if (taskRow.thread_id !== followUpRun.thread_id) {
+      return res.status(400).json({ error: "task_id and thread_id do not match" });
+    }
+
+    const runResult = await pool.query(
+      `
+        INSERT INTO runs (
+          agent, task_id, thread_id, status, requested_by_agent, dispatch_reason
+        )
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, started_at, finished_at, created_at
+      `,
+      [
+        followUpRun.agent,
+        followUpRun.task_id,
+        followUpRun.thread_id,
+        followUpRun.status,
+        followUpRun.requested_by_agent,
+        followUpRun.dispatch_reason,
+      ]
+    );
+
+    return res.status(201).json(mapRunRow(runResult.rows[0]));
+  } catch (error) {
+    return next(error);
   }
 });
 
@@ -445,6 +496,14 @@ app.patch("/tasks/:id", async (req, res, next) => {
 
 app.use((error, _req, res, _next) => {
   if (error.message && error.message.startsWith("Invalid")) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  if (error.message && error.message.endsWith("is required")) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  if (error.message === "Only orchestrator can create follow-up runs") {
     return res.status(400).json({ error: error.message });
   }
 

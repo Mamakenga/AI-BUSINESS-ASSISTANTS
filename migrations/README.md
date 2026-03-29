@@ -17,3 +17,6 @@ Current baseline:
 2. `002_founder_tasks.sql`
    - creates the founder-facing `tasks` table for the Mini App board
    - connects `messages`, `runs`, and `artifacts` task references to canonical task ids
+3. `003_run_dispatch_metadata.sql`
+   - adds `requested_by_agent` and `dispatch_reason` to `runs`
+   - prepares the schema for orchestrator-created follow-up runs

@@ -97,7 +97,7 @@
 - [x] Зафиксировать runtime-profile для `finance_analyst`
 - [x] Зафиксировать runtime-profile для `critic`
 - [x] Зафиксировать сервисный режим для `memory_curator`
-- [ ] Научить `orchestrator` создавать follow-up runs для других ролей
+- [x] Научить `orchestrator` создавать follow-up runs для других ролей
 - [ ] Сохранять результаты роли в `artifacts`
 - [ ] Сохранять межролевые handoff-сообщения в `messages`
 

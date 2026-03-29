@@ -24,9 +24,10 @@ If you feel lost, read only these files in this order:
 2. `IMPLEMENTATION_CHECKLIST.md` - step-by-step execution checklist with current status
 3. `RUNTIME_PROFILES.md` - role runtime profiles, model routing, and memory scopes
 4. `TELEGRAM_ROUTING_SPEC.md` - Telegram-first routing rules for topics, tags, threads, and task creation
-5. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4-RU.md` - main human-readable canon in Russian
-6. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md` - English technical version of the same plan
-7. `OPS_DEPLOYMENT_SKELETON.md` - deployment contour for the separate `ops` server user
+5. `migrations/` - database schema changes for the control plane
+6. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4-RU.md` - main human-readable canon in Russian
+7. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md` - English technical version of the same plan
+8. `OPS_DEPLOYMENT_SKELETON.md` - deployment contour for the separate `ops` server user
 
 ## Core Separation Rule
 
