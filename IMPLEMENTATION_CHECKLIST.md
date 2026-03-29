@@ -103,8 +103,8 @@
 
 ## Phase 5. Memory Layer
 
-- [ ] Добавить `get_memory`
-- [ ] Добавить `save_memory_candidate`
+- [x] Добавить `get_memory`
+- [x] Добавить `save_memory_candidate`
 - [ ] Определить retrieval bundle для `owner`
 - [ ] Определить retrieval bundle для `business`
 - [ ] Определить retrieval bundle для `role`

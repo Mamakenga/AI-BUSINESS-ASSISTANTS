@@ -4,6 +4,7 @@ const crypto = require("node:crypto");
 const express = require("express");
 const { Pool } = require("pg");
 const { buildFollowUpRun } = require("./follow-up-run");
+const { buildMemoryCandidate, parseMemoryQuery } = require("./memory-service");
 const { buildRunCompletion } = require("./run-completion");
 const { buildTelegramIntakePlan } = require("./telegram-intake");
 const { buildTelegramReply } = require("./telegram-reply");
@@ -170,6 +171,20 @@ function mapArtifactRow(row) {
   };
 }
 
+function mapMemoryRow(row) {
+  return {
+    id: row.id,
+    scope: row.scope,
+    scope_id: row.scope_id,
+    fact: row.fact,
+    source: row.source,
+    confidence: row.confidence,
+    tags: row.tags,
+    expires_at: row.expires_at,
+    created_at: row.created_at,
+  };
+}
+
 function buildTaskUpdate(body) {
   const candidate = {
     title: body.title !== undefined ? normalizeTitle(body.title) : undefined,
@@ -195,6 +210,73 @@ app.get("/health", async (_req, res, next) => {
       service: "control-api",
       db_time: result.rows[0].now,
     });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.get("/memories", async (req, res, next) => {
+  try {
+    const query = parseMemoryQuery(req.query || {});
+    const values = [query.scope];
+    const where = ["scope = $1"];
+
+    if (query.scope_id !== null) {
+      values.push(query.scope_id);
+      where.push(`scope_id = $${values.length}`);
+    } else {
+      where.push("scope_id IS NULL");
+    }
+
+    if (!query.include_expired) {
+      where.push("(expires_at IS NULL OR expires_at > now())");
+    }
+
+    values.push(query.limit);
+
+    const result = await pool.query(
+      `
+        SELECT id, scope, scope_id, fact, source, confidence, tags, expires_at, created_at
+        FROM memories
+        WHERE ${where.join(" AND ")}
+        ORDER BY created_at DESC
+        LIMIT $${values.length}
+      `,
+      values
+    );
+
+    return res.json({
+      items: result.rows.map(mapMemoryRow),
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.post("/memories/candidates", async (req, res, next) => {
+  try {
+    const candidate = buildMemoryCandidate(req.body || {});
+
+    const result = await pool.query(
+      `
+        INSERT INTO memories (
+          scope, scope_id, fact, source, confidence, tags, expires_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id, scope, scope_id, fact, source, confidence, tags, expires_at, created_at
+      `,
+      [
+        candidate.scope,
+        candidate.scope_id,
+        candidate.fact,
+        candidate.source,
+        candidate.confidence,
+        JSON.stringify(candidate.tags),
+        candidate.expires_at,
+      ]
+    );
+
+    return res.status(201).json(mapMemoryRow(result.rows[0]));
   } catch (error) {
     return next(error);
   }
