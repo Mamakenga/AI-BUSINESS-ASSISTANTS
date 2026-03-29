@@ -20,3 +20,6 @@ Current baseline:
 3. `003_run_dispatch_metadata.sql`
    - adds `requested_by_agent` and `dispatch_reason` to `runs`
    - prepares the schema for orchestrator-created follow-up runs
+4. `004_telegram_thread_bindings.sql`
+   - stores Telegram delivery metadata for each internal `thread_id`
+   - lets workers send final replies back to the same Telegram chat/topic

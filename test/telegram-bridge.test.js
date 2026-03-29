@@ -38,6 +38,7 @@ test("buildTelegramIntakeRequest resolves mapped topic name for forum topic mess
 
   assert.equal(request.telegram.chat_id, "-100123");
   assert.equal(request.telegram.message_thread_id, 101);
+  assert.equal(request.telegram.message_id, 77);
   assert.equal(request.telegram.topic_name, "01 Assistant");
   assert.equal(request.intake.topic_name, "01 Assistant");
   assert.equal(request.intake.is_group_context, true);

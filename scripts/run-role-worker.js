@@ -2,6 +2,7 @@
 
 const { Pool } = require("pg");
 const { setTimeout: sleep } = require("node:timers/promises");
+const { buildTelegramTextMessage, callTelegramApi, normalizeTelegramBotConfig } = require("../src/telegram-bot-client");
 const { executeOpenClawRun } = require("../src/openclaw-client");
 const { buildRunCompletionInput, buildRunExecutionContext, normalizeWorkerRoleIds } = require("../src/run-worker");
 
@@ -10,6 +11,7 @@ const CONTROL_API_URL = String(process.env.CONTROL_API_URL || "http://127.0.0.1:
 const PGSSLMODE = String(process.env.PGSSLMODE || "").trim();
 const WORKER_ROLE_IDS = normalizeWorkerRoleIds(process.env.WORKER_ROLE_IDS);
 const WORKER_POLL_INTERVAL_MS = Number.parseInt(process.env.WORKER_POLL_INTERVAL_MS || "3000", 10);
+const TELEGRAM_CONFIG = process.env.TELEGRAM_BOT_TOKEN ? normalizeTelegramBotConfig(process.env) : null;
 
 if (!DATABASE_URL) {
   throw new Error("DATABASE_URL is required");
@@ -122,6 +124,23 @@ async function loadMessages(client, threadId) {
   return result.rows;
 }
 
+async function loadTelegramThread(client, threadId) {
+  if (!threadId) {
+    return null;
+  }
+
+  const result = await client.query(
+    `
+      SELECT thread_id, chat_id, message_thread_id, topic_name, last_founder_message_id, created_at, updated_at
+      FROM telegram_threads
+      WHERE thread_id = $1
+    `,
+    [threadId]
+  );
+
+  return result.rows[0] || null;
+}
+
 async function loadMemoryBundle(runRow) {
   return callControlApi("/memory/bundles/resolve", {
     role_id: runRow.agent,
@@ -150,9 +169,14 @@ async function processOneRun(runRow) {
   const client = await pool.connect();
   let task;
   let messages;
+  let telegramThread;
 
   try {
-    [task, messages] = await Promise.all([loadTask(client, runRow.task_id), loadMessages(client, runRow.thread_id)]);
+    [task, messages, telegramThread] = await Promise.all([
+      loadTask(client, runRow.task_id),
+      loadMessages(client, runRow.thread_id),
+      loadTelegramThread(client, runRow.thread_id),
+    ]);
   } finally {
     client.release();
   }
@@ -178,6 +202,7 @@ async function processOneRun(runRow) {
       run: runRow,
       task,
       messages,
+      telegram_thread: telegramThread,
       memory_bundle: memoryBundle,
       openclaw_response: openClawResponse,
       completion_response: completeResponse,
@@ -219,7 +244,19 @@ async function main() {
     try {
       const result = await processOneRun(claimedRun);
       console.log(`[role-worker] completed run ${claimedRun.id} for ${claimedRun.agent}`);
-      if (result.reply_text) {
+      if (result.reply_text && result.telegram_thread && TELEGRAM_CONFIG) {
+        const sendMessagePayload = buildTelegramTextMessage({
+          chat_id: result.telegram_thread.chat_id,
+          message_thread_id: result.telegram_thread.message_thread_id,
+          reply_to_message_id: result.telegram_thread.last_founder_message_id,
+          text: result.reply_text,
+        });
+
+        await callTelegramApi("sendMessage", sendMessagePayload, {
+          config: TELEGRAM_CONFIG,
+        });
+        console.log(`[role-worker] delivered telegram reply for run ${claimedRun.id}`);
+      } else if (result.reply_text) {
         console.log(`[role-worker] reply text captured for run ${claimedRun.id}`);
       }
     } catch (error) {

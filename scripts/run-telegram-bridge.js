@@ -6,19 +6,14 @@ const {
   parseTelegramTopicMap,
   rememberTelegramTopicMetadata,
 } = require("../src/telegram-bridge");
+const { callTelegramApi, normalizeTelegramBotConfig } = require("../src/telegram-bot-client");
 const { setTimeout: sleep } = require("node:timers/promises");
 
-const TELEGRAM_BOT_TOKEN = String(process.env.TELEGRAM_BOT_TOKEN || "").trim();
 const CONTROL_API_URL = String(process.env.CONTROL_API_URL || "http://127.0.0.1:3000").trim();
 const TELEGRAM_ALLOWED_CHAT_ID = String(process.env.TELEGRAM_ALLOWED_CHAT_ID || "").trim() || null;
 const TELEGRAM_POLL_TIMEOUT_SECONDS = Number.parseInt(process.env.TELEGRAM_POLL_TIMEOUT_SECONDS || "30", 10);
 const TELEGRAM_TOPIC_MAP = parseTelegramTopicMap(process.env.TELEGRAM_TOPIC_MAP);
-
-if (!TELEGRAM_BOT_TOKEN) {
-  throw new Error("TELEGRAM_BOT_TOKEN is required");
-}
-
-const TELEGRAM_API_BASE = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+const TELEGRAM_CONFIG = normalizeTelegramBotConfig(process.env);
 const TELEGRAM_TOPIC_CACHE = new Map(TELEGRAM_TOPIC_MAP);
 
 function normalizePollTimeoutSeconds(value) {
@@ -26,25 +21,6 @@ function normalizePollTimeoutSeconds(value) {
     return 30;
   }
   return Math.min(value, 60);
-}
-
-async function telegramApi(method, body) {
-  const response = await fetch(`${TELEGRAM_API_BASE}/${method}`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-
-  const text = await response.text();
-  const payload = text ? JSON.parse(text) : null;
-
-  if (!response.ok || !payload?.ok) {
-    throw new Error(`Telegram API ${method} failed: ${response.status} ${text}`);
-  }
-
-  return payload.result;
 }
 
 async function callControlApi(path, body) {
@@ -78,18 +54,26 @@ async function processUpdate(update) {
     return false;
   }
 
-  const intakeResponse = await callControlApi("/telegram/intake", request.intake);
+  const intakeBody = {
+    ...request.intake,
+    telegram: request.telegram,
+  };
+  const intakeResponse = await callControlApi("/telegram/intake", intakeBody);
   const sendMessagePayload = buildTelegramSendMessageRequest(request.telegram, intakeResponse);
 
-  await telegramApi("sendMessage", sendMessagePayload);
+  await callTelegramApi("sendMessage", sendMessagePayload, {
+    config: TELEGRAM_CONFIG,
+  });
   return true;
 }
 
 async function pollOnce(offset) {
-  const updates = await telegramApi("getUpdates", {
+  const updates = await callTelegramApi("getUpdates", {
     offset,
     timeout: normalizePollTimeoutSeconds(TELEGRAM_POLL_TIMEOUT_SECONDS),
     allowed_updates: ["message"],
+  }, {
+    config: TELEGRAM_CONFIG,
   });
 
   let nextOffset = offset;

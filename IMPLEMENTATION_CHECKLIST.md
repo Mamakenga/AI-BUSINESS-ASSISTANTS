@@ -126,11 +126,11 @@
 ## Phase 5.5. First Live Vertical Slice
 
 - [ ] Реализовать живой Telegram bridge для группы/тем
-- [ ] Научить bridge вызывать `POST /telegram/intake`
-- [ ] Научить bridge отправлять founder-facing reply обратно в ту же тему
-- [ ] Реализовать worker, который забирает pending run и исполняет его
-- [ ] Подключить worker к OpenClaw / Antigravity execution path
-- [ ] Научить worker вызывать `POST /runs/:id/complete`
+- [x] Научить bridge вызывать `POST /telegram/intake`
+- [x] Научить bridge отправлять founder-facing reply обратно в ту же тему
+- [x] Реализовать worker, который забирает pending run и исполняет его
+- [x] Подключить worker к OpenClaw / Antigravity execution path
+- [x] Научить worker вызывать `POST /runs/:id/complete`
 - [ ] Поднять контур на VPS под пользователем `ops`
 - [ ] Подключить проект на VPS к живому Railway Postgres через `DATABASE_URL`
 - [ ] Прогнать smoke: Telegram message -> run -> model execution -> complete -> reply in topic
@@ -191,7 +191,7 @@
 ## Next Step
 
 Следующий шаг по этому чеклисту:
-1. пройти `Phase 5.5` и получить первый живой founder-visible результат в Telegram;
-2. затем перейти к `Phase 6` scheduled jobs;
-3. Mini App и UX-polish держать после живого Telegram vertical slice.
+1. поднять контур `Phase 5.5` на VPS под `ops` и подключить живой `DATABASE_URL`;
+2. прогнать живой Telegram smoke: сообщение -> run -> model execution -> complete -> reply in topic;
+3. затем перейти к `Phase 6` scheduled jobs.
 

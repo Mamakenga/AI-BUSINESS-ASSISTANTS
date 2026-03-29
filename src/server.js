@@ -199,6 +199,18 @@ function mapDecisionRow(row) {
   };
 }
 
+function mapTelegramThreadRow(row) {
+  return {
+    thread_id: row.thread_id,
+    chat_id: row.chat_id,
+    message_thread_id: row.message_thread_id,
+    topic_name: row.topic_name,
+    last_founder_message_id: row.last_founder_message_id,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
 function buildTaskUpdate(body) {
   const candidate = {
     title: body.title !== undefined ? normalizeTitle(body.title) : undefined,
@@ -509,6 +521,18 @@ app.post("/telegram/intake", async (req, res, next) => {
   const reply = buildTelegramReply(intakePlan, {
     topic_name: topicName,
   });
+  const telegramContext =
+    req.body?.telegram && typeof req.body.telegram === "object" && !Array.isArray(req.body.telegram)
+      ? {
+          chat_id: normalizeNullableString(req.body.telegram.chat_id),
+          message_id: normalizeBoardOrder(req.body.telegram.message_id),
+          message_thread_id:
+            req.body.telegram.message_thread_id === null || req.body.telegram.message_thread_id === undefined
+              ? null
+              : normalizeBoardOrder(req.body.telegram.message_thread_id),
+          topic_name: normalizeNullableString(req.body.telegram.topic_name),
+        }
+      : null;
 
   if (!intakePlan.should_persist) {
     return res.status(200).json({
@@ -521,6 +545,34 @@ app.post("/telegram/intake", async (req, res, next) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+
+    let telegramThreadRow = null;
+    if (telegramContext?.chat_id) {
+      const telegramThreadResult = await client.query(
+        `
+          INSERT INTO telegram_threads (
+            thread_id, chat_id, message_thread_id, topic_name, last_founder_message_id
+          )
+          VALUES ($1, $2, $3, $4, $5)
+          ON CONFLICT (thread_id)
+          DO UPDATE SET
+            chat_id = EXCLUDED.chat_id,
+            message_thread_id = EXCLUDED.message_thread_id,
+            topic_name = EXCLUDED.topic_name,
+            last_founder_message_id = EXCLUDED.last_founder_message_id,
+            updated_at = now()
+          RETURNING thread_id, chat_id, message_thread_id, topic_name, last_founder_message_id, created_at, updated_at
+        `,
+        [
+          intakePlan.thread_id,
+          telegramContext.chat_id,
+          telegramContext.message_thread_id,
+          telegramContext.topic_name,
+          telegramContext.message_id,
+        ]
+      );
+      telegramThreadRow = mapTelegramThreadRow(telegramThreadResult.rows[0]);
+    }
 
     let taskRow = null;
     if (intakePlan.task) {
@@ -590,6 +642,7 @@ app.post("/telegram/intake", async (req, res, next) => {
       reply,
       route: intakePlan.route,
       thread_id: intakePlan.thread_id,
+      telegram_thread: telegramThreadRow,
       task: taskRow,
       founder_message: mapMessageRow(messageResult.rows[0]),
       run: mapRunRow(runResult.rows[0]),
