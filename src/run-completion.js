@@ -42,6 +42,10 @@ function buildRunCompletion(input, runRow) {
     throw new Error("run_row is required");
   }
 
+  if (TERMINAL_RUN_STATUSES.has(runRow.status)) {
+    throw new Error("Run already in terminal state");
+  }
+
   const actorAgent = normalizeRequiredString(input.actor_agent, "actor_agent");
   if (actorAgent !== runRow.agent) {
     throw new Error("Only the assigned role can complete this run");

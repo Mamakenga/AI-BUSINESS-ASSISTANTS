@@ -604,6 +604,10 @@ app.use((error, _req, res, _next) => {
     return res.status(400).json({ error: error.message });
   }
 
+  if (error.message === "Run already in terminal state") {
+    return res.status(409).json({ error: error.message });
+  }
+
   if (error.message && error.message.endsWith("is required")) {
     return res.status(400).json({ error: error.message });
   }

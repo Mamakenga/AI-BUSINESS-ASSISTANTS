@@ -91,6 +91,23 @@ test("only the assigned role can complete the run", () => {
   );
 });
 
+test("terminal run cannot be completed again", () => {
+  assert.throws(
+    () =>
+      buildRunCompletion(
+        {
+          actor_agent: "researcher",
+          status: "completed",
+          artifact_content: { summary: "done again" },
+        },
+        createRunRow({
+          status: "completed",
+        })
+      ),
+    /Run already in terminal state/
+  );
+});
+
 test("fallback chain must stay an array", () => {
   assert.throws(
     () =>
