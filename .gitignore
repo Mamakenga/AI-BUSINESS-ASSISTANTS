@@ -1,6 +1,7 @@
-﻿# Local secrets
+# Local secrets
 .env
 .env.*
+!.env.example
 
 # Runtime state
 runtime/
@@ -16,7 +17,6 @@ Thumbs.db
 
 # Node / JS
 node_modules/
-package-lock.json
 pnpm-lock.yaml
 yarn.lock
 
