@@ -4,6 +4,7 @@ const crypto = require("node:crypto");
 const express = require("express");
 const { Pool } = require("pg");
 const { buildTelegramIntakePlan } = require("./telegram-intake");
+const { buildTelegramReply } = require("./telegram-reply");
 const { resolveTelegramRouting } = require("./telegram-routing");
 
 const PORT = Number.parseInt(process.env.PORT || "3000", 10);
@@ -227,10 +228,14 @@ app.post("/telegram/intake", async (req, res, next) => {
     topic_name: topicName,
     is_group_context: req.body.is_group_context !== false,
   });
+  const reply = buildTelegramReply(intakePlan, {
+    topic_name: topicName,
+  });
 
   if (!intakePlan.should_persist) {
     return res.status(200).json({
       persisted: false,
+      reply,
       ...intakePlan,
     });
   }
@@ -302,6 +307,7 @@ app.post("/telegram/intake", async (req, res, next) => {
 
     return res.status(201).json({
       persisted: true,
+      reply,
       route: intakePlan.route,
       thread_id: intakePlan.thread_id,
       task: taskRow,
