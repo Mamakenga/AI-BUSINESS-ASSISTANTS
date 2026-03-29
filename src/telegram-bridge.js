@@ -73,9 +73,35 @@ function extractIncomingTelegramMessage(update) {
   return message;
 }
 
+function rememberTelegramTopicMetadata(update, topicMap) {
+  if (!(topicMap instanceof Map)) {
+    return false;
+  }
+
+  const message = update?.message;
+  if (!message || !message.is_topic_message || message.message_thread_id === undefined || message.message_thread_id === null) {
+    return false;
+  }
+
+  const threadId = String(message.message_thread_id);
+  const createdName = normalizeOptionalString(message.forum_topic_created?.name);
+  if (createdName) {
+    topicMap.set(threadId, createdName);
+    return true;
+  }
+
+  const editedName = normalizeOptionalString(message.forum_topic_edited?.name);
+  if (editedName) {
+    topicMap.set(threadId, editedName);
+    return true;
+  }
+
+  return false;
+}
+
 function resolveTelegramTopicName(message, topicMap) {
   if (message?.is_topic_message && message.message_thread_id !== undefined && message.message_thread_id !== null) {
-    return topicMap.get(String(message.message_thread_id)) || "General";
+    return topicMap.get(String(message.message_thread_id)) || null;
   }
 
   if (message?.chat?.type === "supergroup" || message?.chat?.type === "group") {
@@ -133,6 +159,9 @@ function buildTelegramSendMessageRequest(telegramContext, intakeResponse) {
   if (telegramContext.message_thread_id !== null && telegramContext.message_thread_id !== undefined) {
     payload.message_thread_id = telegramContext.message_thread_id;
   }
+  if (telegramContext.message_id !== null && telegramContext.message_id !== undefined) {
+    payload.reply_to_message_id = telegramContext.message_id;
+  }
 
   return payload;
 }
@@ -142,5 +171,6 @@ module.exports = {
   buildTelegramSendMessageRequest,
   extractIncomingTelegramMessage,
   parseTelegramTopicMap,
+  rememberTelegramTopicMetadata,
   resolveTelegramTopicName,
 };

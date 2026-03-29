@@ -4,7 +4,9 @@ const {
   buildTelegramIntakeRequest,
   buildTelegramSendMessageRequest,
   parseTelegramTopicMap,
+  rememberTelegramTopicMetadata,
 } = require("../src/telegram-bridge");
+const { setTimeout: sleep } = require("node:timers/promises");
 
 const TELEGRAM_BOT_TOKEN = String(process.env.TELEGRAM_BOT_TOKEN || "").trim();
 const CONTROL_API_URL = String(process.env.CONTROL_API_URL || "http://127.0.0.1:3000").trim();
@@ -17,6 +19,7 @@ if (!TELEGRAM_BOT_TOKEN) {
 }
 
 const TELEGRAM_API_BASE = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+const TELEGRAM_TOPIC_CACHE = new Map(TELEGRAM_TOPIC_MAP);
 
 function normalizePollTimeoutSeconds(value) {
   if (!Number.isFinite(value) || value <= 0) {
@@ -64,9 +67,11 @@ async function callControlApi(path, body) {
 }
 
 async function processUpdate(update) {
+  rememberTelegramTopicMetadata(update, TELEGRAM_TOPIC_CACHE);
+
   const request = buildTelegramIntakeRequest(update, {
     allowed_chat_id: TELEGRAM_ALLOWED_CHAT_ID,
-    topic_map: TELEGRAM_TOPIC_MAP,
+    topic_map: TELEGRAM_TOPIC_CACHE,
   });
 
   if (!request) {
@@ -112,7 +117,12 @@ async function main() {
 
   let offset = 0;
   while (true) {
-    offset = await pollOnce(offset);
+    try {
+      offset = await pollOnce(offset);
+    } catch (error) {
+      console.error("[telegram-bridge] poll error, retrying in 5s", error);
+      await sleep(5000);
+    }
   }
 }
 
