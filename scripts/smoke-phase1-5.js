@@ -160,6 +160,19 @@ async function main() {
     });
     assert.equal(routePreview.resolved_role, "researcher", "route preview did not resolve researcher");
 
+    const directAnswerIntake = await request("POST", "/telegram/intake", {
+      text: `@assistant what is urgent today ${suffix}?`,
+      topic_name: "01 Assistant",
+    });
+    assert.equal(directAnswerIntake.persisted, true, "direct-answer intake did not persist");
+    assert.equal(directAnswerIntake.route.interaction_type, "direct_answer", "direct-answer route type mismatch");
+    assert.equal(directAnswerIntake.route.should_create_task, false, "direct-answer should not create a task");
+    assert.equal(directAnswerIntake.task, null, "direct-answer unexpectedly created a task");
+    assert.ok(directAnswerIntake.run, "direct-answer run was not created");
+    assert.equal(directAnswerIntake.run.task_id, null, "direct-answer run should not be task-bound");
+    cleanupState.messageIds.push(directAnswerIntake.founder_message.id);
+    cleanupState.runIds.push(directAnswerIntake.run.id);
+
     const ownerMemory = await request("POST", "/memories/candidates", {
       scope: "owner",
       fact: `Founder prefers concise answers (${suffix})`,
@@ -176,7 +189,13 @@ async function main() {
       fact: `Last competitor research was refreshed (${suffix})`,
       source: "smoke",
     });
-    cleanupState.memoryIds.push(ownerMemory.id, businessMemory.id, roleMemory.id);
+    const memoryCuratorRoleMemory = await request("POST", "/memories/candidates", {
+      scope: "role",
+      scope_id: "memory_curator",
+      fact: `Memory curator role context is available (${suffix})`,
+      source: "smoke",
+    });
+    cleanupState.memoryIds.push(ownerMemory.id, businessMemory.id, roleMemory.id, memoryCuratorRoleMemory.id);
 
     assert.equal(ownerMemory.scope, "owner", "owner memory was not created");
     assert.equal(businessMemory.scope, "business", "business memory was not created");
@@ -275,6 +294,18 @@ async function main() {
     assert.ok(Array.isArray(criticBundle.decisions.owner), "critic bundle decisions.owner missing");
     assert.ok(Array.isArray(criticBundle.decisions.business), "critic bundle decisions.business missing");
     assert.ok(Array.isArray(criticBundle.decisions.task), "critic bundle decisions.task missing");
+
+    const memoryCuratorBundle = await request("POST", "/memory/bundles/resolve", {
+      role_id: "memory_curator",
+      task_id: orchestrationTaskId,
+    });
+    assert.ok(memoryCuratorBundle.owner.length >= 1, "memory curator bundle missed owner memories");
+    assert.ok(memoryCuratorBundle.business.length >= 1, "memory curator bundle missed business memories");
+    assert.ok(memoryCuratorBundle.role.some((item) => item.scope_id === "memory_curator"), "memory curator bundle missed role memory");
+    assert.ok(memoryCuratorBundle.task.some((item) => item.scope_id === orchestrationTaskId), "memory curator bundle missed task memory");
+    assert.ok(Array.isArray(memoryCuratorBundle.decisions.owner), "memory curator bundle decisions.owner missing");
+    assert.ok(Array.isArray(memoryCuratorBundle.decisions.business), "memory curator bundle decisions.business missing");
+    assert.ok(Array.isArray(memoryCuratorBundle.decisions.task), "memory curator bundle decisions.task missing");
 
     console.log("Smoke suite passed for Phase 1-5");
     console.log(`Research thread: ${researchThreadId}`);

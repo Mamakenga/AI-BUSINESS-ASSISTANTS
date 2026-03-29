@@ -72,8 +72,9 @@ Telegram-вход делится на три типа.
 
 Что происходит:
 1. создаётся `thread_id`;
-2. создаётся `run`;
-3. отдельный `task` не обязателен.
+2. создаётся `founder_message`;
+3. создаётся `run`;
+4. отдельный `task` не создаётся.
 
 ### 5.2. One-role task
 
@@ -131,10 +132,12 @@ Telegram-вход делится на три типа.
 Founder должен видеть только полезный уровень системы.
 
 Поэтому:
-1. прямой one-role ответ возвращается в ту же Telegram-тему;
-2. multi-role итог возвращает `orchestrator`;
-3. внутренние handoff между ролями не выводятся в общий видимый поток;
-4. сырые `runs`, `fallback chains`, `memory internals` и технические логи не показываются founder-у в основном Telegram UX.
+1. direct-answer reply возвращается в ту же Telegram-тему;
+2. direct-answer path может сохранять `thread + founder_message + run`, но без `task`;
+3. прямой one-role ответ возвращается в ту же Telegram-тему;
+4. multi-role итог возвращает `orchestrator`;
+5. внутренние handoff между ролями не выводятся в общий видимый поток;
+6. сырые `runs`, `fallback chains`, `memory internals` и технические логи не показываются founder-у в основном Telegram UX.
 
 ## 9. Backend Rule
 
