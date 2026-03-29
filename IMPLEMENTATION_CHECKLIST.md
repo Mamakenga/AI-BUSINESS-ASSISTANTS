@@ -54,7 +54,7 @@
 - [x] Добавить [002_founder_tasks.sql](migrations/002_founder_tasks.sql)
 - [x] Создать таблицу `tasks` для founder-facing task layer
 - [x] Связать `messages`, `runs`, `artifacts` с `tasks`
-- [ ] Добавить migration runner / apply script
+- [x] Добавить migration runner / apply script
 - [ ] Прогнать миграции на живой Railway Postgres
 - [ ] Проверить на живой Railway Postgres, что все таблицы и индексы реально созданы
 
@@ -175,6 +175,6 @@
 ## Next Step
 
 Следующий шаг по этому чеклисту:
-1. закрыть ближайший verification gap: локальный/DB-backed smoke для уже реализованных Phase 1-5;
-2. затем завершить `Phase 5` через `memory compaction flow`;
-3. после этого перейти к `Phase 6` scheduled jobs.
+1. завести рабочий `DATABASE_URL` и прогнать `npm run db:migrate`;
+2. затем прогнать `npm run smoke:phase1-5` для уже реализованных частей Phase 1-5;
+3. после этого завершить `Phase 5` через `memory compaction flow`.
