@@ -98,7 +98,7 @@
 - [x] Зафиксировать runtime-profile для `critic`
 - [x] Зафиксировать сервисный режим для `memory_curator`
 - [x] Научить `orchestrator` создавать follow-up runs для других ролей
-- [ ] Сохранять результаты роли в `artifacts`
+- [x] Сохранять результаты роли в `artifacts`
 - [ ] Сохранять межролевые handoff-сообщения в `messages`
 
 ## Phase 5. Memory Layer

@@ -4,6 +4,7 @@ const crypto = require("node:crypto");
 const express = require("express");
 const { Pool } = require("pg");
 const { buildFollowUpRun } = require("./follow-up-run");
+const { buildRunCompletion } = require("./run-completion");
 const { buildTelegramIntakePlan } = require("./telegram-intake");
 const { buildTelegramReply } = require("./telegram-reply");
 const { ALLOWED_TASK_ROLES } = require("./runtime-profiles");
@@ -154,6 +155,17 @@ function mapRunRow(row) {
     fallback_chain: row.fallback_chain,
     started_at: row.started_at,
     finished_at: row.finished_at,
+    created_at: row.created_at,
+  };
+}
+
+function mapArtifactRow(row) {
+  return {
+    id: row.id,
+    task_id: row.task_id,
+    artifact_type: row.artifact_type,
+    created_by: row.created_by,
+    content: row.content,
     created_at: row.created_at,
   };
 }
@@ -364,6 +376,83 @@ app.post("/runs/follow-up", async (req, res, next) => {
   }
 });
 
+app.post("/runs/:id/complete", async (req, res, next) => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const runResult = await client.query(
+      `
+        SELECT id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, started_at, finished_at, created_at
+        FROM runs
+        WHERE id = $1
+        FOR UPDATE
+      `,
+      [req.params.id]
+    );
+
+    if (runResult.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Run not found" });
+    }
+
+    const runRow = runResult.rows[0];
+    const completion = buildRunCompletion(req.body || {}, runRow);
+
+    const updatedRunResult = await client.query(
+      `
+        UPDATE runs
+        SET
+          status = $2,
+          model_used = $3,
+          fallback_chain = $4,
+          started_at = COALESCE(started_at, now()),
+          finished_at = now()
+        WHERE id = $1
+        RETURNING id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, started_at, finished_at, created_at
+      `,
+      [
+        req.params.id,
+        completion.run_update.status,
+        completion.run_update.model_used,
+        JSON.stringify(completion.run_update.fallback_chain),
+      ]
+    );
+
+    let artifactRow = null;
+    if (completion.artifact) {
+      const artifactResult = await client.query(
+        `
+          INSERT INTO artifacts (
+            task_id, artifact_type, created_by, content
+          )
+          VALUES ($1, $2, $3, $4)
+          RETURNING id, task_id, artifact_type, created_by, content, created_at
+        `,
+        [
+          completion.artifact.task_id,
+          completion.artifact.artifact_type,
+          completion.artifact.created_by,
+          JSON.stringify(completion.artifact.content),
+        ]
+      );
+      artifactRow = mapArtifactRow(artifactResult.rows[0]);
+    }
+
+    await client.query("COMMIT");
+
+    return res.status(200).json({
+      run: mapRunRow(updatedRunResult.rows[0]),
+      artifact: artifactRow,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    return next(error);
+  } finally {
+    client.release();
+  }
+});
+
 app.get("/tasks", async (req, res, next) => {
   try {
     const where = [];
@@ -496,6 +585,22 @@ app.patch("/tasks/:id", async (req, res, next) => {
 
 app.use((error, _req, res, _next) => {
   if (error.message && error.message.startsWith("Invalid")) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  if (error.message === "fallback_chain must be an array") {
+    return res.status(400).json({ error: error.message });
+  }
+
+  if (error.message === "artifact_content must be an object") {
+    return res.status(400).json({ error: error.message });
+  }
+
+  if (error.message === "artifact_content is required for task-bound completed runs") {
+    return res.status(400).json({ error: error.message });
+  }
+
+  if (error.message === "Only the assigned role can complete this run") {
     return res.status(400).json({ error: error.message });
   }
 

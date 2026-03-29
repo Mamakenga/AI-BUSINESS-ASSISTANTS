@@ -6,12 +6,13 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "check": "node --check src/server.js && node --check src/runtime-profiles.js && node --check src/follow-up-run.js && node --check src/telegram-routing.js && node --check src/telegram-intake.js && node --check src/telegram-reply.js",
+    "check": "node --check src/server.js && node --check src/runtime-profiles.js && node --check src/follow-up-run.js && node --check src/run-completion.js && node --check src/telegram-routing.js && node --check src/telegram-intake.js && node --check src/telegram-reply.js",
     "test:routing": "node --test test/telegram-routing.test.js",
     "test:intake": "node --test test/telegram-intake.test.js",
     "test:reply": "node --test test/telegram-reply.test.js",
     "test:profiles": "node --test test/runtime-profiles.test.js",
-    "test:follow-up": "node --test test/follow-up-run.test.js"
+    "test:follow-up": "node --test test/follow-up-run.test.js",
+    "test:completion": "node --test test/run-completion.test.js"
   },
   "engines": {
     "node": ">=20"
