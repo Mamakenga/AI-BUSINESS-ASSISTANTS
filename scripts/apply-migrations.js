@@ -17,6 +17,13 @@ const pool = new Pool({
 
 const MIGRATIONS_DIR = path.join(__dirname, "..", "migrations");
 
+function normalizeMigrationSql(sql) {
+  return sql
+    .replace(/^\s*BEGIN;\s*/i, "")
+    .replace(/\s*COMMIT;\s*$/i, "")
+    .trim();
+}
+
 async function ensureSchemaMigrations(client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -41,12 +48,20 @@ async function getAppliedMigrations(client) {
 
 async function applyMigration(client, filename) {
   const fullPath = path.join(MIGRATIONS_DIR, filename);
-  const sql = await fs.readFile(fullPath, "utf8");
+  const rawSql = await fs.readFile(fullPath, "utf8");
+  const sql = normalizeMigrationSql(rawSql);
 
   console.log(`Applying ${filename}...`);
-  await client.query(sql);
-  await client.query("INSERT INTO schema_migrations (filename) VALUES ($1)", [filename]);
-  console.log(`Applied ${filename}`);
+  await client.query("BEGIN");
+  try {
+    await client.query(sql);
+    await client.query("INSERT INTO schema_migrations (filename) VALUES ($1)", [filename]);
+    await client.query("COMMIT");
+    console.log(`Applied ${filename}`);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  }
 }
 
 async function main() {
