@@ -1,0 +1,25 @@
+﻿# Local secrets
+.env
+.env.*
+
+# Runtime state
+runtime/
+tmp/
+logs/
+*.log
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Node / JS
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Python
+__pycache__/
+*.pyc
