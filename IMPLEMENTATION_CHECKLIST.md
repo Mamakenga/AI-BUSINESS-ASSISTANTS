@@ -109,7 +109,7 @@
 - [x] Определить retrieval bundle для `business`
 - [x] Определить retrieval bundle для `role`
 - [x] Определить retrieval bundle для `task`
-- [ ] Ограничить объём подмешиваемой памяти на run
+- [x] Ограничить объём подмешиваемой памяти на run
 - [ ] Добавить memory compaction flow
 
 ## Phase 6. Scheduled Jobs
@@ -158,6 +158,6 @@
 ## Next Step
 
 Следующий шаг по этому чеклисту:
-1. перейти к `Phase 5` memory layer;
-2. начать с `get_memory` и `save_memory_candidate`;
-3. затем определить retrieval bundle для owner / business / role / task.
+1. завершить `Phase 5` через `memory compaction flow`;
+2. определить, как `memory_curator` сжимает и поднимает факты в long-term memory;
+3. после этого перейти к `Phase 6` scheduled jobs.

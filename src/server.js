@@ -4,7 +4,7 @@ const crypto = require("node:crypto");
 const express = require("express");
 const { Pool } = require("pg");
 const { buildFollowUpRun } = require("./follow-up-run");
-const { buildMemoryBundleRequest } = require("./memory-bundles");
+const { buildMemoryBundleRequest, createEmptyBundleResult, trimMemoryBundle } = require("./memory-bundles");
 const { buildMemoryCandidate, parseMemoryQuery } = require("./memory-service");
 const { buildRunCompletion } = require("./run-completion");
 const { buildTelegramIntakePlan } = require("./telegram-intake");
@@ -298,22 +298,7 @@ app.post("/memories/candidates", async (req, res, next) => {
 app.post("/memory/bundles/resolve", async (req, res, next) => {
   try {
     const bundleRequest = buildMemoryBundleRequest(req.body || {});
-
-    const result = {
-      role_id: bundleRequest.role_id,
-      task_id: bundleRequest.task_id,
-      limit_per_scope: bundleRequest.limit_per_scope,
-      include_expired: bundleRequest.include_expired,
-      owner: [],
-      business: [],
-      role: [],
-      task: [],
-      decisions: {
-        owner: [],
-        business: [],
-        task: [],
-      },
-    };
+    const result = createEmptyBundleResult(bundleRequest);
 
     async function loadMemories(scope, scopeId) {
       const values = [scope];
@@ -383,7 +368,7 @@ app.post("/memory/bundles/resolve", async (req, res, next) => {
       result.decisions.task = bundleRequest.task_id ? await loadDecisions("task") : [];
     }
 
-    return res.json(result);
+    return res.json(trimMemoryBundle(result, bundleRequest));
   } catch (error) {
     return next(error);
   }
