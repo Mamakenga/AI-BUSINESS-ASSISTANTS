@@ -56,6 +56,7 @@
 - [x] Связать `messages`, `runs`, `artifacts` с `tasks`
 - [ ] Добавить migration runner / apply script
 - [ ] Прогнать миграции на живой Railway Postgres
+- [ ] Проверить на живой Railway Postgres, что все таблицы и индексы реально созданы
 
 ## Phase 2. Control API Foundation
 
@@ -72,6 +73,8 @@
 - [ ] Добавить endpoints для `memories`
 - [ ] Добавить endpoints для `runs`
 - [ ] Добавить endpoints для `artifacts`
+- [ ] Поднять API локально с реальным `DATABASE_URL`
+- [ ] Прогнать локальный HTTP smoke для `/health`, `GET /tasks`, `POST /tasks`, `PATCH /tasks/:id`
 
 ## Phase 3. Telegram-First Routing
 
@@ -87,6 +90,8 @@
 - [x] Создавать `thread_id` для входящего Telegram-потока
 - [x] Создавать `task` из founder-запроса, когда это действительно задача, а не просто вопрос
 - [x] Отвечать в ту же тему Telegram без лишнего технического шума
+- [ ] Прогнать HTTP smoke для `/telegram/route-preview`
+- [ ] Прогнать HTTP smoke для `/telegram/intake` на direct-answer, one-role task и orchestrator flow
 
 ## Phase 4. Role Execution
 
@@ -100,6 +105,7 @@
 - [x] Научить `orchestrator` создавать follow-up runs для других ролей
 - [x] Сохранять результаты роли в `artifacts`
 - [x] Сохранять межролевые handoff-сообщения в `messages`
+- [ ] Прогнать DB-backed smoke: intake -> follow-up run -> handoff message -> complete -> artifact
 
 ## Phase 5. Memory Layer
 
@@ -111,6 +117,8 @@
 - [x] Определить retrieval bundle для `task`
 - [x] Ограничить объём подмешиваемой памяти на run
 - [ ] Добавить memory compaction flow
+- [ ] Прогнать DB-backed smoke для `POST /memories/candidates`, `GET /memories`, `POST /memory/bundles/resolve`
+- [ ] Проверить retrieval bundle на реальных данных для `researcher`, `critic`, `memory_curator`
 
 ## Phase 6. Scheduled Jobs
 
@@ -122,6 +130,7 @@
 - [ ] Реализовать `branch finance review`
 - [ ] Реализовать `weekly risk review`
 - [ ] Реализовать `memory cleanup`
+- [ ] Прогнать smoke для scheduled trigger -> VPS execution path
 
 ## Phase 7. Founder Mini App Board
 
@@ -155,9 +164,17 @@
 - [ ] Добавить smoke-runbook для deploy
 - [ ] Добавить Railway/VPS deployment notes в отдельный ops-файл
 
+## Server Validation Gates
+
+- [ ] Развернуть контур на VPS под пользователем `ops`
+- [ ] Подключить проект к живому Railway Postgres через `DATABASE_URL`
+- [ ] Прогнать полный server smoke suite на VPS
+- [ ] Проверить process logs после smoke suite
+- [ ] Зафиксировать ручной runbook: `git pull -> migrate -> restart -> smoke`
+
 ## Next Step
 
 Следующий шаг по этому чеклисту:
-1. завершить `Phase 5` через `memory compaction flow`;
-2. определить, как `memory_curator` сжимает и поднимает факты в long-term memory;
+1. закрыть ближайший verification gap: локальный/DB-backed smoke для уже реализованных Phase 1-5;
+2. затем завершить `Phase 5` через `memory compaction flow`;
 3. после этого перейти к `Phase 6` scheduled jobs.
