@@ -710,7 +710,9 @@ Telegram Mini App kanban-доска рекомендуется как founder-fa
 4. интерфейс должен оставаться визуально простым и не показывать в главной доске подкапотные сущности вроде raw runs, fallback chains, внутренних handoff logs или memory mechanics;
 5. drag-and-drop можно добавить позже, но первую версию безопаснее делать через стабильные move actions, если mobile UX внутри Telegram окажется капризным.
 
----## 13. Пошаговый MVP-план
+---
+
+## 13. Пошаговый MVP-план
 
 ### Phase 1. Data foundation
 
@@ -753,7 +755,9 @@ Telegram Mini App kanban-доска рекомендуется как founder-fa
 4. держать основную доску визуально чистой и founder-oriented, а техническое состояние прятать глубже, если оно вообще понадобится;
 5. начать со стабильных move actions; drag-and-drop добавлять только если Telegram mobile UX покажет себя надежно.
 
-### Phase 7. Memory hygiene1. реализовать memory compaction;
+### Phase 7. Memory hygiene
+
+1. реализовать memory compaction;
 2. ограничить объем retrieval на роль;
 3. проверить повторные сессии на дистанции нескольких дней.
 
