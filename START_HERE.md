@@ -11,16 +11,18 @@ It is intentionally separated from:
 
 If you feel lost, read only these files in this order:
 1. `START_HERE.md`
-2. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4-RU.md`
-3. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md`
-4. `OPS_DEPLOYMENT_SKELETON.md`
+2. `IMPLEMENTATION_CHECKLIST.md`
+3. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4-RU.md`
+4. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md`
+5. `OPS_DEPLOYMENT_SKELETON.md`
 
 ## Project Map
 
 1. `START_HERE.md` - project entry point and navigation rules
-2. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4-RU.md` - main human-readable canon in Russian
-3. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md` - English technical version of the same plan
-4. `OPS_DEPLOYMENT_SKELETON.md` - deployment contour for the separate `ops` server user
+2. `IMPLEMENTATION_CHECKLIST.md` - step-by-step execution checklist with current status
+3. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4-RU.md` - main human-readable canon in Russian
+4. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md` - English technical version of the same plan
+5. `OPS_DEPLOYMENT_SKELETON.md` - deployment contour for the separate `ops` server user
 
 ## Core Separation Rule
 
@@ -59,5 +61,6 @@ Do not mix it with:
 ## Active Canon
 
 1. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4-RU.md`
-2. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md`
-3. `OPS_DEPLOYMENT_SKELETON.md`
+2. `IMPLEMENTATION_CHECKLIST.md`
+3. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md`
+4. `OPS_DEPLOYMENT_SKELETON.md`
