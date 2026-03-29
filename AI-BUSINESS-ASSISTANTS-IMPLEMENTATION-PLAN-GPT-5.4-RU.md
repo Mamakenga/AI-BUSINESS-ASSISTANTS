@@ -685,31 +685,32 @@ Telegram Mini App kanban-доска рекомендуется как founder-fa
 
 Для founder board нужен отдельный task-слой, например с такими полями:
 
-1. id;
-2. 	itle;
-3. status;
-4. ssigned_role;
-5. 	hread_id;
-6. priority;
-7. due_at;
-8. oard_order;
-9. created_at;
-10. updated_at.
+1. `id`;
+2. `title`;
+3. `status`;
+4. `assigned_role`;
+5. `thread_id`;
+6. `priority`;
+7. `due_at`;
+8. `board_order`;
+9. `created_at`;
+10. `updated_at`.
 
 Рекомендуемые статусы:
 
-1. acklog;
-2. in_work;
-3. done.
+1. `inbox`;
+2. `in_work`;
+3. `done`.
 
 Важное правило:
 
 1. Mini App board нужен для founder visibility и легкого контроля;
-2. он не заменяет более глубокую runtime state model;
-3. drag-and-drop можно добавить позже, но первую версию безопаснее делать через стабильные move actions, если mobile UX внутри Telegram окажется капризным.
+2. базовый поток колонок - `Inbox -> In Work -> Done`, с возможностью расширить статусную модель позже, если это действительно понадобится;
+3. он не заменяет более глубокую runtime state model;
+4. интерфейс должен оставаться визуально простым и не показывать в главной доске подкапотные сущности вроде raw runs, fallback chains, внутренних handoff logs или memory mechanics;
+5. drag-and-drop можно добавить позже, но первую версию безопаснее делать через стабильные move actions, если mobile UX внутри Telegram окажется капризным.
 
----
-## 13. Пошаговый MVP-план
+---## 13. Пошаговый MVP-план
 
 ### Phase 1. Data foundation
 
@@ -747,13 +748,12 @@ Telegram Mini App kanban-доска рекомендуется как founder-fa
 ### Phase 6. Founder Mini App board
 
 1. добавить founder-facing task table и API endpoints для чтения и обновления доски;
-2. поднять простой Telegram Mini App board на Railway;
+2. поднять простой Telegram Mini App board на Railway с базовым потоком `Inbox -> In Work -> Done`;
 3. связать board-задачи с текущими ролями ассистентов, не смешивая их с сырым runtime internals;
-4. начать со стабильных move actions; drag-and-drop добавлять только если Telegram mobile UX покажет себя надежно.
+4. держать основную доску визуально чистой и founder-oriented, а техническое состояние прятать глубже, если оно вообще понадобится;
+5. начать со стабильных move actions; drag-and-drop добавлять только если Telegram mobile UX покажет себя надежно.
 
-### Phase 7. Memory hygiene
-
-1. реализовать memory compaction;
+### Phase 7. Memory hygiene1. реализовать memory compaction;
 2. ограничить объем retrieval на роль;
 3. проверить повторные сессии на дистанции нескольких дней.
 
@@ -820,4 +820,5 @@ Telegram Mini App kanban-доска рекомендуется как founder-fa
 7. artifact-based handoffs.
 
 Это минимальная архитектура, которая закрывает founder use case без лишнего усложнения.
+
 

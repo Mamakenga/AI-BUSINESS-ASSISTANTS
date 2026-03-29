@@ -644,28 +644,31 @@ The preferred shape is:
 
 The task board should start with a founder-oriented table, for example:
 
-1. id
-2. 	itle
-3. status
-4. ssigned_role
-5. 	hread_id
-6. priority
-7. due_at
-8. oard_order
-9. created_at
-10. updated_at
+1. `id`
+2. `title`
+3. `status`
+4. `assigned_role`
+5. `thread_id`
+6. `priority`
+7. `due_at`
+8. `board_order`
+9. `created_at`
+10. `updated_at`
 
 Recommended statuses:
 
-1. acklog
-2. in_work
-3. done
+1. `inbox`
+2. `in_work`
+3. `done`
 
 Important rule:
 
 1. the Mini App board is for founder task visibility and light control
-2. it does not replace the deeper runtime state model
-3. drag-and-drop can be added later, but the first version may safely use tap or move actions if mobile UX inside Telegram is more stable that way
+2. the default column flow is `Inbox -> In Work -> Done`, with room to extend later if the workflow proves stable
+3. it does not replace the deeper runtime state model
+4. it should stay visually simple and must not expose under-the-hood runtime entities such as raw runs, fallback chains, internal handoff logs, or memory mechanics in the main board view
+5. drag-and-drop can be added later, but the first version may safely use tap or move actions if mobile UX inside Telegram is more stable that way
+
 
 ## 13. MVP Build Sequence
 
@@ -705,9 +708,10 @@ Important rule:
 ### Phase 6. Founder Mini App board
 
 1. add a founder-facing task table and API endpoints for board reads and updates
-2. ship a simple Telegram Mini App board on Railway
+2. ship a simple Telegram Mini App board on Railway with `Inbox -> In Work -> Done` as the default column flow
 3. connect board tasks to current assistant roles without mixing them with raw runtime internals
-4. start with stable move actions first; add drag-and-drop only if Telegram mobile UX is reliable
+4. keep the main board visually clean and founder-oriented, with technical state hidden behind deeper views if ever needed
+5. start with stable move actions first; add drag-and-drop only if Telegram mobile UX is reliable
 
 ### Phase 7. Memory hygiene
 
