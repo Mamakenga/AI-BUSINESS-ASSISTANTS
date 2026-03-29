@@ -5,6 +5,7 @@ const express = require("express");
 const { Pool } = require("pg");
 const { buildTelegramIntakePlan } = require("./telegram-intake");
 const { buildTelegramReply } = require("./telegram-reply");
+const { ALLOWED_TASK_ROLES } = require("./runtime-profiles");
 const { resolveTelegramRouting } = require("./telegram-routing");
 
 const PORT = Number.parseInt(process.env.PORT || "3000", 10);
@@ -21,16 +22,6 @@ const pool = new Pool({
 
 const ALLOWED_TASK_STATUSES = new Set(["inbox", "in_work", "done"]);
 const ALLOWED_TASK_PRIORITIES = new Set(["low", "medium", "high", "urgent"]);
-const ALLOWED_TASK_ROLES = new Set([
-  "orchestrator",
-  "assistant",
-  "researcher",
-  "methodist",
-  "finance_analyst",
-  "critic",
-  "memory_curator",
-]);
-
 function parseLimit(value, fallback = 50, max = 200) {
   const parsed = Number.parseInt(value || "", 10);
   if (Number.isNaN(parsed) || parsed <= 0) {

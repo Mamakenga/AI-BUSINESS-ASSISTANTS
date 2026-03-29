@@ -1,13 +1,6 @@
 "use strict";
 
-const ROLE_LABELS = new Map([
-  ["orchestrator", "оркестратору"],
-  ["assistant", "ассистенту"],
-  ["researcher", "ресерчеру"],
-  ["methodist", "методисту"],
-  ["finance_analyst", "финансовому аналитику"],
-  ["critic", "критику"],
-]);
+const { ROLE_LABELS_DATIVE } = require("./runtime-profiles");
 
 function normalizeTopicName(topicName) {
   const normalized = String(topicName || "").trim();
@@ -19,7 +12,7 @@ function buildReplyText(intakePlan) {
     return intakePlan.route.clarification_message;
   }
 
-  const roleLabel = ROLE_LABELS.get(intakePlan.route.resolved_role) || "нужной роли";
+  const roleLabel = ROLE_LABELS_DATIVE.get(intakePlan.route.resolved_role) || "нужной роли";
 
   if (intakePlan.route.interaction_type === "multi_role_task") {
     return "Принял. Оркестратор разложит задачу на шаги и подключит нужные роли.";

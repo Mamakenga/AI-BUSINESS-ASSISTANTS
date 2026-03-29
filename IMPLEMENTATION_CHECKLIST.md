@@ -90,13 +90,13 @@
 
 ## Phase 4. Role Execution
 
-- [ ] Зафиксировать runtime-profile для `orchestrator`
-- [ ] Зафиксировать runtime-profile для `assistant`
-- [ ] Зафиксировать runtime-profile для `researcher`
-- [ ] Зафиксировать runtime-profile для `methodist`
-- [ ] Зафиксировать runtime-profile для `finance_analyst`
-- [ ] Зафиксировать runtime-profile для `critic`
-- [ ] Зафиксировать сервисный режим для `memory_curator`
+- [x] Зафиксировать runtime-profile для `orchestrator`
+- [x] Зафиксировать runtime-profile для `assistant`
+- [x] Зафиксировать runtime-profile для `researcher`
+- [x] Зафиксировать runtime-profile для `methodist`
+- [x] Зафиксировать runtime-profile для `finance_analyst`
+- [x] Зафиксировать runtime-profile для `critic`
+- [x] Зафиксировать сервисный режим для `memory_curator`
 - [ ] Научить `orchestrator` создавать follow-up runs для других ролей
 - [ ] Сохранять результаты роли в `artifacts`
 - [ ] Сохранять межролевые handoff-сообщения в `messages`

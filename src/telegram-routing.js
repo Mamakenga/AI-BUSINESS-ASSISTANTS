@@ -1,23 +1,6 @@
 "use strict";
 
-const ROLE_ALIASES = new Map([
-  ["orchestrator", "orchestrator"],
-  ["assistant", "assistant"],
-  ["researcher", "researcher"],
-  ["methodist", "methodist"],
-  ["finance", "finance_analyst"],
-  ["critic", "critic"],
-]);
-
-const TOPIC_ROLE_BY_NAME = new Map([
-  ["00 orchestrator", "orchestrator"],
-  ["01 assistant", "assistant"],
-  ["02 researcher", "researcher"],
-  ["03 methodist", "methodist"],
-  ["04 finance", "finance_analyst"],
-  ["05 critic", "critic"],
-  ["general", "orchestrator"],
-]);
+const { ROLE_ALIASES, TOPIC_ROLE_BY_NAME } = require("./runtime-profiles");
 
 const QUESTION_STARTERS = [
   "что",
