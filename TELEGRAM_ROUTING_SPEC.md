@@ -133,7 +133,7 @@ Founder должен видеть только полезный уровень �
 
 Поэтому:
 1. direct-answer reply возвращается в ту же Telegram-тему;
-2. direct-answer path может сохранять `thread + founder_message + run`, но без `task`;
+2. direct-answer path сохраняет `thread + founder_message + run`, но без `task`;
 3. прямой one-role ответ возвращается в ту же Telegram-тему;
 4. multi-role итог возвращает `orchestrator`;
 5. внутренние handoff между ролями не выводятся в общий видимый поток;
