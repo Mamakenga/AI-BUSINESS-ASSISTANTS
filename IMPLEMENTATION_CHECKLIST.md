@@ -76,16 +76,16 @@
 ## Phase 3. Telegram-First Routing
 
 - [x] Зафиксировать Telegram routing spec отдельным файлом
-- [ ] Описать mapping `topic -> role`
-- [ ] Поддержать direct role call `@assistant`
-- [ ] Поддержать direct role call `@researcher`
-- [ ] Поддержать direct role call `@methodist`
-- [ ] Поддержать direct role call `@finance`
-- [ ] Поддержать direct role call `@critic`
-- [ ] Поддержать `@orchestrator` для multi-role задач
-- [ ] Научить систему определять роль по Telegram topic без обязательного тега
-- [ ] Создавать `thread_id` для входящего Telegram-потока
-- [ ] Создавать `task` из founder-запроса, когда это действительно задача, а не просто вопрос
+- [x] Описать mapping `topic -> role`
+- [x] Поддержать direct role call `@assistant`
+- [x] Поддержать direct role call `@researcher`
+- [x] Поддержать direct role call `@methodist`
+- [x] Поддержать direct role call `@finance`
+- [x] Поддержать direct role call `@critic`
+- [x] Поддержать `@orchestrator` для multi-role задач
+- [x] Научить систему определять роль по Telegram topic без обязательного тега
+- [x] Создавать `thread_id` для входящего Telegram-потока
+- [x] Создавать `task` из founder-запроса, когда это действительно задача, а не просто вопрос
 - [ ] Отвечать в ту же тему Telegram без лишнего технического шума
 
 ## Phase 4. Role Execution

@@ -60,8 +60,12 @@ function resolveTopicRole(topicName) {
   return TOPIC_ROLE_BY_NAME.get(normalizeTopicName(topicName)) || null;
 }
 
+function stripLeadingRoleTag(text) {
+  return normalizeText(text).replace(/^@[a-z_]+\s*/i, "").trim();
+}
+
 function looksLikeQuestion(text) {
-  const normalized = normalizeText(text).toLowerCase();
+  const normalized = stripLeadingRoleTag(text).toLowerCase();
   if (!normalized) {
     return false;
   }

@@ -3,6 +3,7 @@
 const crypto = require("node:crypto");
 const express = require("express");
 const { Pool } = require("pg");
+const { buildTelegramIntakePlan } = require("./telegram-intake");
 const { resolveTelegramRouting } = require("./telegram-routing");
 
 const PORT = Number.parseInt(process.env.PORT || "3000", 10);
@@ -133,6 +134,35 @@ function mapTaskRow(row) {
   };
 }
 
+function mapMessageRow(row) {
+  return {
+    id: row.id,
+    thread_id: row.thread_id,
+    task_id: row.task_id,
+    from_agent: row.from_agent,
+    to_agent: row.to_agent,
+    message_type: row.message_type,
+    content: row.content,
+    status: row.status,
+    created_at: row.created_at,
+  };
+}
+
+function mapRunRow(row) {
+  return {
+    id: row.id,
+    agent: row.agent,
+    task_id: row.task_id,
+    thread_id: row.thread_id,
+    status: row.status,
+    model_used: row.model_used,
+    fallback_chain: row.fallback_chain,
+    started_at: row.started_at,
+    finished_at: row.finished_at,
+    created_at: row.created_at,
+  };
+}
+
 function buildTaskUpdate(body) {
   const candidate = {
     title: body.title !== undefined ? normalizeTitle(body.title) : undefined,
@@ -181,6 +211,108 @@ app.post("/telegram/route-preview", (req, res, next) => {
     return res.json(result);
   } catch (error) {
     return next(error);
+  }
+});
+
+app.post("/telegram/intake", async (req, res, next) => {
+  const text = normalizeNullableString(req.body.text);
+  const topicName = normalizeNullableString(req.body.topic_name);
+
+  if (!text) {
+    return res.status(400).json({ error: "text is required" });
+  }
+
+  const intakePlan = buildTelegramIntakePlan({
+    text,
+    topic_name: topicName,
+    is_group_context: req.body.is_group_context !== false,
+  });
+
+  if (!intakePlan.should_persist) {
+    return res.status(200).json({
+      persisted: false,
+      ...intakePlan,
+    });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    let taskRow = null;
+    if (intakePlan.task) {
+      const taskResult = await client.query(
+        `
+          INSERT INTO tasks (
+            id, title, status, assigned_role, priority, due_at, thread_id, board_order
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING id, title, status, assigned_role, priority, due_at, thread_id, board_order, created_at, updated_at
+        `,
+        [
+          intakePlan.task.id,
+          intakePlan.task.title,
+          intakePlan.task.status,
+          intakePlan.task.assigned_role,
+          intakePlan.task.priority,
+          intakePlan.task.due_at,
+          intakePlan.task.thread_id,
+          intakePlan.task.board_order,
+        ]
+      );
+      taskRow = mapTaskRow(taskResult.rows[0]);
+    }
+
+    const messageResult = await client.query(
+      `
+        INSERT INTO messages (
+          thread_id, task_id, from_agent, to_agent, message_type, content, status
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id, thread_id, task_id, from_agent, to_agent, message_type, content, status, created_at
+      `,
+      [
+        intakePlan.founder_message.thread_id,
+        intakePlan.founder_message.task_id,
+        intakePlan.founder_message.from_agent,
+        intakePlan.founder_message.to_agent,
+        intakePlan.founder_message.message_type,
+        intakePlan.founder_message.content,
+        intakePlan.founder_message.status,
+      ]
+    );
+
+    const runResult = await client.query(
+      `
+        INSERT INTO runs (
+          agent, task_id, thread_id, status
+        )
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, agent, task_id, thread_id, status, model_used, fallback_chain, started_at, finished_at, created_at
+      `,
+      [
+        intakePlan.run.agent,
+        intakePlan.run.task_id,
+        intakePlan.run.thread_id,
+        intakePlan.run.status,
+      ]
+    );
+
+    await client.query("COMMIT");
+
+    return res.status(201).json({
+      persisted: true,
+      route: intakePlan.route,
+      thread_id: intakePlan.thread_id,
+      task: taskRow,
+      founder_message: mapMessageRow(messageResult.rows[0]),
+      run: mapRunRow(runResult.rows[0]),
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    return next(error);
+  } finally {
+    client.release();
   }
 });
 
