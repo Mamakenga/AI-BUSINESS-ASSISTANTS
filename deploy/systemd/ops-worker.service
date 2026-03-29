@@ -1,0 +1,18 @@
+[Unit]
+Description=AI Business Assistants Role Worker
+After=network.target ops-api.service
+Requires=ops-api.service
+
+[Service]
+Type=simple
+User=ops
+WorkingDirectory=/opt/ops/app
+EnvironmentFile=/etc/ops.env
+ExecStart=/usr/bin/node scripts/run-role-worker.js
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/ops/ops-worker.log
+StandardError=append:/var/log/ops/ops-worker.error.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,18 @@
+[Unit]
+Description=AI Business Assistants Telegram Bridge
+After=network.target ops-api.service
+Requires=ops-api.service
+
+[Service]
+Type=simple
+User=ops
+WorkingDirectory=/opt/ops/app
+EnvironmentFile=/etc/ops.env
+ExecStart=/usr/bin/node scripts/run-telegram-bridge.js
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/ops/ops-telegram.log
+StandardError=append:/var/log/ops/ops-telegram.error.log
+
+[Install]
+WantedBy=multi-user.target

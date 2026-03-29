@@ -29,6 +29,8 @@ If you feel lost, read only these files in this order:
 7. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4-RU.md` - main human-readable canon in Russian
 8. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md` - English technical version of the same plan
 9. `OPS_DEPLOYMENT_SKELETON.md` - deployment contour for the separate `ops` server user
+10. `DEPLOY_RUNBOOK.md` - first concrete VPS deploy and smoke sequence
+11. `deploy/systemd/` - systemd unit templates for `ops-api`, `ops-telegram`, and `ops-worker`
 
 ## Core Separation Rule
 

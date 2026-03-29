@@ -39,6 +39,11 @@ The purpose is to keep AI Business Assistants independent from old Stemford and 
 3. `ops-worker.service`
 4. `ops-scheduler.service`
 
+Concrete templates already live in:
+1. [deploy/systemd/ops-api.service](deploy/systemd/ops-api.service)
+2. [deploy/systemd/ops-telegram.service](deploy/systemd/ops-telegram.service)
+3. [deploy/systemd/ops-worker.service](deploy/systemd/ops-worker.service)
+
 ## Suggested Directory Layout
 
 ```text

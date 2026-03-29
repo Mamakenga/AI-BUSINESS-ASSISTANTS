@@ -1,0 +1,17 @@
+[Unit]
+Description=AI Business Assistants Control API
+After=network.target
+
+[Service]
+Type=simple
+User=ops
+WorkingDirectory=/opt/ops/app
+EnvironmentFile=/etc/ops.env
+ExecStart=/usr/bin/node src/server.js
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/ops/ops-api.log
+StandardError=append:/var/log/ops/ops-api.error.log
+
+[Install]
+WantedBy=multi-user.target
