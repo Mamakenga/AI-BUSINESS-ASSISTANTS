@@ -55,8 +55,8 @@
 - [x] Создать таблицу `tasks` для founder-facing task layer
 - [x] Связать `messages`, `runs`, `artifacts` с `tasks`
 - [x] Добавить migration runner / apply script
-- [ ] Прогнать миграции на живой Railway Postgres
-- [ ] Проверить на живой Railway Postgres, что все таблицы и индексы реально созданы
+- [x] Прогнать миграции на живой Railway Postgres
+- [x] Проверить на живой Railway Postgres, что все таблицы и индексы реально созданы
 
 ## Phase 2. Control API Foundation
 
@@ -73,8 +73,8 @@
 - [ ] Добавить endpoints для `memories`
 - [ ] Добавить endpoints для `runs`
 - [ ] Добавить endpoints для `artifacts`
-- [ ] Поднять API локально с реальным `DATABASE_URL`
-- [ ] Прогнать локальный HTTP smoke для `/health`, `GET /tasks`, `POST /tasks`, `PATCH /tasks/:id`
+- [x] Поднять API локально с реальным `DATABASE_URL`
+- [x] Прогнать локальный HTTP smoke для `/health`, `GET /tasks`, `POST /tasks`, `PATCH /tasks/:id`
 
 ## Phase 3. Telegram-First Routing
 
@@ -90,8 +90,8 @@
 - [x] Создавать `thread_id` для входящего Telegram-потока
 - [x] Создавать `task` из founder-запроса, когда это действительно задача, а не просто вопрос
 - [x] Отвечать в ту же тему Telegram без лишнего технического шума
-- [ ] Прогнать HTTP smoke для `/telegram/route-preview`
-- [ ] Прогнать HTTP smoke для `/telegram/intake` на direct-answer, one-role task и orchestrator flow
+- [x] Прогнать HTTP smoke для `/telegram/route-preview`
+- [x] Прогнать HTTP smoke для `/telegram/intake` на direct-answer, one-role task и orchestrator flow
 
 ## Phase 4. Role Execution
 
@@ -105,7 +105,7 @@
 - [x] Научить `orchestrator` создавать follow-up runs для других ролей
 - [x] Сохранять результаты роли в `artifacts`
 - [x] Сохранять межролевые handoff-сообщения в `messages`
-- [ ] Прогнать DB-backed smoke: intake -> follow-up run -> handoff message -> complete -> artifact
+- [x] Прогнать DB-backed smoke: intake -> follow-up run -> handoff message -> complete -> artifact
 
 ## Phase 5. Memory Layer
 
@@ -117,8 +117,8 @@
 - [x] Определить retrieval bundle для `task`
 - [x] Ограничить объём подмешиваемой памяти на run
 - [ ] Добавить memory compaction flow
-- [ ] Прогнать DB-backed smoke для `POST /memories/candidates`, `GET /memories`, `POST /memory/bundles/resolve`
-- [ ] Проверить retrieval bundle на реальных данных для `researcher`, `critic`, `memory_curator`
+- [x] Прогнать DB-backed smoke для `POST /memories/candidates`, `GET /memories`, `POST /memory/bundles/resolve`
+- [x] Проверить retrieval bundle на реальных данных для `researcher`, `critic`, `memory_curator`
 
 ## Phase 6. Scheduled Jobs
 
@@ -175,6 +175,6 @@
 ## Next Step
 
 Следующий шаг по этому чеклисту:
-1. завести рабочий `DATABASE_URL` и прогнать `npm run db:migrate`;
-2. затем прогнать `npm run smoke:phase1-5` для уже реализованных частей Phase 1-5;
-3. после этого завершить `Phase 5` через `memory compaction flow`.
+1. завершить `Phase 5` через `memory compaction flow`;
+2. затем перейти к `Phase 6` scheduled jobs;
+3. server validation на VPS оставить отдельным треком после локально подтверждённого contour.
