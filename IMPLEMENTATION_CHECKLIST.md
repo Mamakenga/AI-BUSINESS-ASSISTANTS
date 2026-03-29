@@ -1,4 +1,4 @@
-# Implementation Checklist
+﻿# Implementation Checklist
 
 Это рабочий чеклист реализации проекта `AI-BUSINESS-ASSISTANTS`.
 
@@ -116,7 +116,7 @@
 - [x] Определить retrieval bundle для `role`
 - [x] Определить retrieval bundle для `task`
 - [x] Ограничить объём подмешиваемой памяти на run
-- [ ] Добавить memory compaction flow
+- [x] Добавить memory compaction flow
 - [x] Прогнать DB-backed smoke для `POST /memories/candidates`, `GET /memories`, `POST /memory/bundles/resolve`
 - [x] Проверить retrieval bundle на реальных данных для `researcher`, `critic`, `memory_curator`
 
@@ -175,6 +175,7 @@
 ## Next Step
 
 Следующий шаг по этому чеклисту:
-1. завершить `Phase 5` через `memory compaction flow`;
-2. затем перейти к `Phase 6` scheduled jobs;
+1. перейти к `Phase 6` scheduled jobs;
+2. затем вынести `memory cleanup` в реальный scheduled flow;
 3. server validation на VPS оставить отдельным треком после локально подтверждённого contour.
+

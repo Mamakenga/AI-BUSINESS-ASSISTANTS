@@ -5,6 +5,7 @@ const express = require("express");
 const { Pool } = require("pg");
 const { buildFollowUpRun } = require("./follow-up-run");
 const { buildMemoryBundleRequest, createEmptyBundleResult, trimMemoryBundle } = require("./memory-bundles");
+const { buildMemoryCompaction, normalizeSourceMemoryIds } = require("./memory-compaction");
 const { buildMemoryCandidate, parseMemoryQuery } = require("./memory-service");
 const { buildRunCompletion } = require("./run-completion");
 const { buildTelegramIntakePlan } = require("./telegram-intake");
@@ -292,6 +293,103 @@ app.post("/memories/candidates", async (req, res, next) => {
     return res.status(201).json(mapMemoryRow(result.rows[0]));
   } catch (error) {
     return next(error);
+  }
+});
+
+app.post("/memories/compactions", async (req, res, next) => {
+  const client = await pool.connect();
+  try {
+    const sourceMemoryIds = normalizeSourceMemoryIds(req.body?.source_memory_ids);
+    await client.query("BEGIN");
+
+    const sourceResult = await client.query(
+      `
+        SELECT id, scope, scope_id, fact, source, confidence, tags, expires_at, created_at
+        FROM memories
+        WHERE id = ANY($1::bigint[])
+        FOR UPDATE
+      `,
+      [sourceMemoryIds]
+    );
+
+    const compaction = buildMemoryCompaction(req.body || {}, sourceResult.rows);
+
+    const archivedSources = [];
+    for (const sourceRow of compaction.archived_sources) {
+      const archivedResult = await client.query(
+        `
+          UPDATE memories
+          SET
+            tags = $2,
+            expires_at = $3
+          WHERE id = $1
+          RETURNING id, scope, scope_id, fact, source, confidence, tags, expires_at, created_at
+        `,
+        [sourceRow.id, JSON.stringify(sourceRow.tags), sourceRow.expires_at]
+      );
+      archivedSources.push(mapMemoryRow(archivedResult.rows[0]));
+    }
+
+    const summaryResult = await client.query(
+      `
+        INSERT INTO memories (
+          scope, scope_id, fact, source, confidence, tags, expires_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id, scope, scope_id, fact, source, confidence, tags, expires_at, created_at
+      `,
+      [
+        compaction.summary_memory.scope,
+        compaction.summary_memory.scope_id,
+        compaction.summary_memory.fact,
+        compaction.summary_memory.source,
+        compaction.summary_memory.confidence,
+        JSON.stringify(compaction.summary_memory.tags),
+        compaction.summary_memory.expires_at,
+      ]
+    );
+
+    const promotedMemories = [];
+    for (const promotedMemory of compaction.promoted_memories) {
+      const promotedResult = await client.query(
+        `
+          INSERT INTO memories (
+            scope, scope_id, fact, source, confidence, tags, expires_at
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          RETURNING id, scope, scope_id, fact, source, confidence, tags, expires_at, created_at
+        `,
+        [
+          promotedMemory.scope,
+          promotedMemory.scope_id,
+          promotedMemory.fact,
+          promotedMemory.source,
+          promotedMemory.confidence,
+          JSON.stringify(promotedMemory.tags),
+          promotedMemory.expires_at,
+        ]
+      );
+      promotedMemories.push(mapMemoryRow(promotedResult.rows[0]));
+    }
+
+    await client.query("COMMIT");
+
+    return res.status(201).json({
+      archived_sources: archivedSources,
+      promoted_memories: promotedMemories,
+      report: {
+        ...compaction.report,
+        archived_source_ids: archivedSources.map((item) => item.id),
+        promoted_memory_ids: promotedMemories.map((item) => item.id),
+        summary_memory_id: summaryResult.rows[0].id,
+      },
+      summary_memory: mapMemoryRow(summaryResult.rows[0]),
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    return next(error);
+  } finally {
+    client.release();
   }
 });
 
@@ -823,6 +921,21 @@ app.use((error, _req, res, _next) => {
   }
 
   if (error.message === "title is required") {
+    return res.status(400).json({ error: error.message });
+  }
+
+  if (
+    error.message === "Only memory_curator can compact memories" ||
+    error.message === "source_memory_ids must be a non-empty array" ||
+    error.message === "source_memory_ids must contain positive integers" ||
+    error.message === "source_memory_ids do not match existing memories" ||
+    error.message === "source memories must share the requested scope" ||
+    error.message === "source memories must share the requested scope_id" ||
+    error.message === "scope_id is required for role/task compaction" ||
+    error.message === "promoted_facts must be an array" ||
+    error.message === "promoted_facts items must be objects or strings" ||
+    error.message === "summary_tags must be an array"
+  ) {
     return res.status(400).json({ error: error.message });
   }
 
