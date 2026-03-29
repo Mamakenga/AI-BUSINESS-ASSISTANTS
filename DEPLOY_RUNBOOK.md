@@ -23,31 +23,37 @@ Templates live in:
 
 ## 3. First Deploy
 
-1. clone repo to `/opt/ops/app`
-2. create `/etc/ops.env`
-3. run `npm install`
-4. run `npm run db:migrate`
-5. install the systemd units
-6. `sudo systemctl daemon-reload`
-7. `sudo systemctl enable ops-api.service ops-telegram.service ops-worker.service`
-8. `sudo systemctl restart ops-api.service`
-9. `sudo systemctl restart ops-telegram.service`
-10. `sudo systemctl restart ops-worker.service`
+1. create the log directory:
+   `sudo mkdir -p /var/log/ops && sudo chown ops:ops /var/log/ops`
+2. clone repo to `/opt/ops/app`
+3. create `/etc/ops.env`
+4. verify the node binary path with `which node`
+5. if `node` is not available as `/usr/bin/node`, update the systemd unit templates before installing them
+6. run `npm install`
+7. run `npm run db:migrate`
+8. install the systemd units
+9. `sudo systemctl daemon-reload`
+10. `sudo systemctl enable ops-api.service ops-telegram.service ops-worker.service`
+11. `sudo systemctl restart ops-api.service`
+12. `sudo systemctl restart ops-telegram.service`
+13. `sudo systemctl restart ops-worker.service`
 
 ## 4. Env Checklist
 
-Minimum env set:
+Required env set:
 1. `DATABASE_URL`
 2. `PORT`
 3. `CONTROL_API_URL`
 4. `TELEGRAM_BOT_TOKEN`
 5. `TELEGRAM_ALLOWED_CHAT_ID`
-6. `TELEGRAM_TOPIC_MAP`
-7. `WORKER_ROLE_IDS`
-8. `WORKER_POLL_INTERVAL_MS`
-9. `OPENCLAW_EXECUTE_URL`
-10. `OPENCLAW_API_KEY`
-11. `OPENCLAW_TIMEOUT_MS`
+6. `OPENCLAW_EXECUTE_URL`
+
+Optional env set:
+1. `TELEGRAM_TOPIC_MAP`
+2. `WORKER_ROLE_IDS`
+3. `WORKER_POLL_INTERVAL_MS`
+4. `OPENCLAW_API_KEY`
+5. `OPENCLAW_TIMEOUT_MS`
 
 ## 5. Smoke Checks
 

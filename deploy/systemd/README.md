@@ -12,6 +12,12 @@ Expected runtime layout:
 2. env file in `/etc/ops.env`
 3. logs in `/var/log/ops`
 
+Before installing the units:
+1. create `/var/log/ops`
+2. `sudo chown ops:ops /var/log/ops`
+3. verify `which node`
+4. if Node is not available at `/usr/bin/node`, update `ExecStart=` in the unit templates
+
 Suggested activation flow:
 1. `sudo systemctl daemon-reload`
 2. `sudo systemctl enable ops-api.service ops-telegram.service ops-worker.service`
