@@ -14,6 +14,11 @@ Expected runtime layout:
 3. LiteLLM env file in `/home/ops/.env.ops-litellm`
 4. logs in `/var/log/ops`
 
+Auth contract:
+1. `ops-worker.service` reads LiteLLM auth from `/etc/ops.env`
+2. `ops-litellm.service` reads gateway auth from `/home/ops/.env.ops-litellm`
+3. if `LITELLM_MASTER_KEY` is enabled for the gateway, the worker env must carry the same secret as `LITELLM_API_KEY` or `LITELLM_MASTER_KEY`
+
 Before installing the units:
 1. create `/var/log/ops`
 2. `sudo chown ops:ops /var/log/ops`

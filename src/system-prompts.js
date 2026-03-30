@@ -150,8 +150,9 @@ function buildSystemPrompt(executionContext) {
   const handoffLines = trimBulletList(
     (executionContext.handoff_messages || [])
       .slice(-2)
+      .reverse()
       .map((message) => {
-        const content = truncateString(message.content, 300);
+        const content = truncateString(message.content, toCharBudget(HANDOFF_BUDGET_TOKENS));
         if (!content) {
           return null;
         }
