@@ -1,5 +1,6 @@
 "use strict";
 
+const { getJobDispatchStatus } = require("./job-trigger");
 const { ROLE_PROFILES } = require("./runtime-profiles");
 
 const REGISTERED_JOBS = Object.freeze([
@@ -48,12 +49,15 @@ const REGISTERED_JOBS = Object.freeze([
 ]);
 
 function cloneRegisteredJob(job) {
+  const dispatch = getJobDispatchStatus(job.assigned_agent);
   return {
     job_type: job.job_type,
     title: job.title,
     assigned_agent: job.assigned_agent,
     schedule: job.schedule,
     output_summary: job.output_summary,
+    dispatch_status: dispatch.dispatch_status,
+    dispatch_reason: dispatch.dispatch_reason,
   };
 }
 
@@ -182,6 +186,8 @@ function mergeRegisteredJobsWithStoredRows(existingRows = []) {
       assigned_agent: storedRow.assigned_agent,
       schedule: storedRow.schedule,
       output_summary: null,
+      dispatch_status: "unknown_registration",
+      dispatch_reason: "Stored job exists in DB but is not part of the registered jobs catalog.",
       enabled: storedRow.enabled,
       last_run_at: storedRow.last_run_at,
       next_run_at: storedRow.next_run_at,
@@ -195,6 +201,7 @@ function mergeRegisteredJobsWithStoredRows(existingRows = []) {
 
 module.exports = {
   buildJobSyncPlan,
+  getRegisteredJobMap,
   listRegisteredJobs,
   mergeRegisteredJobsWithStoredRows,
   REGISTERED_JOBS,

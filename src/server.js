@@ -4,7 +4,8 @@ const crypto = require("node:crypto");
 const express = require("express");
 const { Pool } = require("pg");
 const { buildFollowUpRun } = require("./follow-up-run");
-const { buildJobSyncPlan, mergeRegisteredJobsWithStoredRows } = require("./jobs-registry");
+const { buildJobTrigger } = require("./job-trigger");
+const { buildJobSyncPlan, getRegisteredJobMap, mergeRegisteredJobsWithStoredRows } = require("./jobs-registry");
 const { buildMemoryBundleRequest, createEmptyBundleResult, trimMemoryBundle } = require("./memory-bundles");
 const { buildMemoryCompaction, normalizeSourceMemoryIds } = require("./memory-compaction");
 const { buildMemoryCandidate, parseMemoryQuery } = require("./memory-service");
@@ -16,6 +17,7 @@ const { resolveTelegramRouting } = require("./telegram-routing");
 
 const PORT = Number.parseInt(process.env.PORT || "3000", 10);
 const DATABASE_URL = process.env.DATABASE_URL || "";
+const JOBS_LOCK_KEY = 431021;
 
 if (!DATABASE_URL) {
   throw new Error("DATABASE_URL is required");
@@ -286,7 +288,7 @@ app.post("/jobs/sync", async (_req, res, next) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query("SELECT pg_advisory_xact_lock($1)", [431021]);
+    await client.query("SELECT pg_advisory_xact_lock($1)", [JOBS_LOCK_KEY]);
 
     const existingResult = await client.query(
       `
@@ -349,6 +351,101 @@ app.post("/jobs/sync", async (_req, res, next) => {
     });
   } catch (error) {
     await client.query("ROLLBACK");
+    return next(error);
+  } finally {
+    client.release();
+  }
+});
+
+app.post("/jobs/:jobType/trigger", async (req, res, next) => {
+  const client = await pool.connect();
+  let transactionStarted = false;
+  try {
+    const registeredJob = getRegisteredJobMap().get(String(req.params.jobType || "").trim());
+    if (!registeredJob) {
+      return res.status(404).json({ error: "Registered job not found" });
+    }
+
+    const trigger = buildJobTrigger(req.body || {}, registeredJob);
+
+    await client.query("BEGIN");
+    transactionStarted = true;
+    await client.query("SELECT pg_advisory_xact_lock($1)", [JOBS_LOCK_KEY]);
+
+    const existingJobResult = await client.query(
+      `
+        SELECT id, job_type, assigned_agent, schedule, enabled, last_run_at, next_run_at, created_at
+        FROM jobs
+        WHERE job_type = $1
+        FOR UPDATE
+      `,
+      [registeredJob.job_type]
+    );
+
+    let jobRow;
+    if (existingJobResult.rowCount === 0) {
+      const insertJobResult = await client.query(
+        `
+          INSERT INTO jobs (
+            job_type, assigned_agent, schedule, enabled
+          )
+          VALUES ($1, $2, $3, TRUE)
+          RETURNING id, job_type, assigned_agent, schedule, enabled, last_run_at, next_run_at, created_at
+        `,
+        [registeredJob.job_type, registeredJob.assigned_agent, registeredJob.schedule]
+      );
+      jobRow = mapJobRow(insertJobResult.rows[0]);
+    } else if (existingJobResult.rowCount > 1) {
+      throw new Error(`Duplicate stored jobs for job_type: ${registeredJob.job_type}`);
+    } else {
+      jobRow = mapJobRow(existingJobResult.rows[0]);
+    }
+
+    if (!jobRow.enabled) {
+      await client.query("ROLLBACK");
+      return res.status(409).json({ error: "Job is disabled" });
+    }
+
+    const runResult = await client.query(
+      `
+        INSERT INTO runs (
+          agent, task_id, thread_id, status, requested_by_agent, dispatch_reason
+        )
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, started_at, finished_at, created_at
+      `,
+      [
+        trigger.run.agent,
+        trigger.run.task_id,
+        trigger.run.thread_id,
+        trigger.run.status,
+        trigger.run.requested_by_agent,
+        trigger.run.dispatch_reason,
+      ]
+    );
+
+    const updatedJobResult = await client.query(
+      `
+        UPDATE jobs
+        SET
+          next_run_at = COALESCE($2, next_run_at)
+        WHERE id = $1
+        RETURNING id, job_type, assigned_agent, schedule, enabled, last_run_at, next_run_at, created_at
+      `,
+      [jobRow.id, trigger.job_update.next_run_at]
+    );
+
+    await client.query("COMMIT");
+
+    return res.status(201).json({
+      job: mergeRegisteredJobsWithStoredRows([mapJobRow(updatedJobResult.rows[0])])[0],
+      run: mapRunRow(runResult.rows[0]),
+      trigger: trigger.trigger,
+    });
+  } catch (error) {
+    if (transactionStarted) {
+      await client.query("ROLLBACK");
+    }
     return next(error);
   } finally {
     client.release();
@@ -1079,6 +1176,14 @@ app.use((error, _req, res, _next) => {
     return res.status(409).json({ error: error.message });
   }
 
+  if (error.message === "Registered job not found") {
+    return res.status(404).json({ error: error.message });
+  }
+
+  if (error.message === "Job is disabled") {
+    return res.status(409).json({ error: error.message });
+  }
+
   if (error.message && error.message.endsWith("is required")) {
     return res.status(400).json({ error: error.message });
   }
@@ -1093,6 +1198,8 @@ app.use((error, _req, res, _next) => {
 
   if (
     isJobRegistryError(error.message) ||
+    error.message === "Invalid next_run_at" ||
+    (typeof error.message === "string" && error.message.startsWith("Scheduled job ") && error.message.endsWith(" is not dispatchable by the current worker contour")) ||
     error.message === "Only memory_curator can compact memories" ||
     error.message === "source_memory_ids must be a non-empty array" ||
     error.message === "source_memory_ids must contain positive integers" ||
