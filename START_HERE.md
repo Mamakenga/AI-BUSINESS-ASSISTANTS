@@ -32,6 +32,8 @@ If you feel lost, read only these files in this order:
 10. `DEPLOY_RUNBOOK.md` - first concrete VPS deploy and smoke sequence
 11. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md` - problem statement and decision options for separate OpenClaw execution
 12. `deploy/systemd/` - systemd unit templates for `ops-api`, `ops-telegram`, and `ops-worker`
+13. `refs/` - curated reference library for runtimes, auth/provider paths, evals, and ops patterns
+14. `V2_EXECUTION_LAYER.md` - agreed V2 execution architecture: what stays, what gets replaced, and phased migration
 
 ## Core Separation Rule
 
@@ -66,6 +68,7 @@ Do not mix it with:
 2. keep the contour isolated
 3. update the plan before adding new moving parts
 4. prefer clear files over hidden assumptions
+5. when implementing checklist items or plan steps, first check the matching `refs/` cards if the step touches executor choice, auth/provider paths, memory, runtime safety, evals, or ops patterns
 
 ## Active Canon
 
@@ -75,3 +78,19 @@ Do not mix it with:
 4. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md`
 5. `OPS_DEPLOYMENT_SKELETON.md`
 6. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md`
+7. `V2_EXECUTION_LAYER.md`
+
+## Reference Rule
+
+Before implementing any checkbox item or plan step:
+1. identify whether the step depends on external practice or framework choice
+2. open the relevant `refs/REF_*.md` card first
+3. use the reference to inform the implementation, not to silently replace the active project canon
+
+Typical triggers for checking `refs/` first:
+1. executor selection or replacement
+2. auth and provider routing
+3. memory and context handling
+4. runtime safety and autonomy limits
+5. evals, observability, and hardening
+6. VPS/runtime topology and process supervision
