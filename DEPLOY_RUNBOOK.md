@@ -57,9 +57,10 @@ Required env set:
 1. `DATABASE_URL`
 2. `PORT`
 3. `CONTROL_API_URL`
-4. `TELEGRAM_BOT_TOKEN`
-5. `TELEGRAM_ALLOWED_CHAT_ID`
-6. `LITELLM_BASE_URL`
+4. `CONTROL_API_INTERNAL_TOKEN`
+5. `TELEGRAM_BOT_TOKEN`
+6. `TELEGRAM_ALLOWED_CHAT_ID`
+7. `LITELLM_BASE_URL`
 
 Optional env set:
 1. `TELEGRAM_TOPIC_MAP`
@@ -203,6 +204,11 @@ If this fails:
    - preflight -> env/auth mismatch
    - stack smoke -> API or LiteLLM gateway problem
    - Telegram smoke -> bridge/worker/runtime routing issue
+
+Optional reproducible scheduled-trigger smoke:
+1. `sudo -u ops bash -lc 'cd /opt/ops/app && export CONTROL_API_URL=http://127.0.0.1:3300 && export CONTROL_API_INTERNAL_TOKEN=$(grep "^CONTROL_API_INTERNAL_TOKEN=" /etc/ops.env | cut -d= -f2-) && npm run smoke:job-trigger'`
+2. this checks the internal auth gate and the `POST /jobs/:jobType/trigger` path without waiting for Railway
+3. default smoke target is `daily_founder_brief -> assistant`
 
 ## 8. Current Known-Good Example
 

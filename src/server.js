@@ -3,6 +3,7 @@
 const crypto = require("node:crypto");
 const express = require("express");
 const { Pool } = require("pg");
+const { authorizeInternalRequest } = require("./control-api-auth");
 const { buildFollowUpRun } = require("./follow-up-run");
 const { buildJobTrigger } = require("./job-trigger");
 const { buildJobSyncPlan, getRegisteredJobMap, mergeRegisteredJobsWithStoredRows } = require("./jobs-registry");
@@ -17,6 +18,7 @@ const { resolveTelegramRouting } = require("./telegram-routing");
 
 const PORT = Number.parseInt(process.env.PORT || "3000", 10);
 const DATABASE_URL = process.env.DATABASE_URL || "";
+const CONTROL_API_INTERNAL_TOKEN = String(process.env.CONTROL_API_INTERNAL_TOKEN || "").trim();
 const JOBS_LOCK_KEY = 431021;
 
 if (!DATABASE_URL) {
@@ -118,6 +120,15 @@ function isJobRegistryError(message) {
       message.startsWith("Unknown assigned_agent in job registry:") ||
       message.startsWith("Duplicate registered job_type:"))
   );
+}
+
+function requireInternalAuth(req, res) {
+  const authResult = authorizeInternalRequest(req.headers, CONTROL_API_INTERNAL_TOKEN);
+  if (authResult.ok) {
+    return null;
+  }
+
+  return res.status(authResult.status).json(authResult.body);
 }
 
 function normalizeTitle(value) {
@@ -358,6 +369,11 @@ app.post("/jobs/sync", async (_req, res, next) => {
 });
 
 app.post("/jobs/:jobType/trigger", async (req, res, next) => {
+  const authFailure = requireInternalAuth(req, res);
+  if (authFailure) {
+    return authFailure;
+  }
+
   const client = await pool.connect();
   let transactionStarted = false;
   try {
@@ -1178,6 +1194,14 @@ app.use((error, _req, res, _next) => {
 
   if (error.message === "Registered job not found") {
     return res.status(404).json({ error: error.message });
+  }
+
+  if (error.message === "Unauthorized internal request") {
+    return res.status(401).json({ error: error.message });
+  }
+
+  if (error.message === "CONTROL_API_INTERNAL_TOKEN is not configured") {
+    return res.status(503).json({ error: error.message });
   }
 
   if (error.message === "Job is disabled") {
