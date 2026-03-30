@@ -4,6 +4,7 @@ const crypto = require("node:crypto");
 const express = require("express");
 const { Pool } = require("pg");
 const { buildFollowUpRun } = require("./follow-up-run");
+const { buildJobSyncPlan, mergeRegisteredJobsWithStoredRows } = require("./jobs-registry");
 const { buildMemoryBundleRequest, createEmptyBundleResult, trimMemoryBundle } = require("./memory-bundles");
 const { buildMemoryCompaction, normalizeSourceMemoryIds } = require("./memory-compaction");
 const { buildMemoryCandidate, parseMemoryQuery } = require("./memory-service");
@@ -108,6 +109,15 @@ function normalizeDueAt(value) {
   return date.toISOString();
 }
 
+function isJobRegistryError(message) {
+  return (
+    typeof message === "string" &&
+    (message.startsWith("Duplicate stored jobs for job_type:") ||
+      message.startsWith("Unknown assigned_agent in job registry:") ||
+      message.startsWith("Duplicate registered job_type:"))
+  );
+}
+
 function normalizeTitle(value) {
   const normalized = normalizeNullableString(value);
   if (!normalized) {
@@ -199,6 +209,19 @@ function mapDecisionRow(row) {
   };
 }
 
+function mapJobRow(row) {
+  return {
+    id: row.id,
+    job_type: row.job_type,
+    assigned_agent: row.assigned_agent,
+    schedule: row.schedule,
+    enabled: row.enabled,
+    last_run_at: row.last_run_at,
+    next_run_at: row.next_run_at,
+    created_at: row.created_at,
+  };
+}
+
 function mapTelegramThreadRow(row) {
   return {
     thread_id: row.thread_id,
@@ -238,6 +261,97 @@ app.get("/health", async (_req, res, next) => {
     });
   } catch (error) {
     return next(error);
+  }
+});
+
+app.get("/jobs", async (_req, res, next) => {
+  try {
+    const result = await pool.query(
+      `
+        SELECT id, job_type, assigned_agent, schedule, enabled, last_run_at, next_run_at, created_at
+        FROM jobs
+        ORDER BY job_type ASC
+      `
+    );
+
+    return res.json({
+      items: mergeRegisteredJobsWithStoredRows(result.rows.map(mapJobRow)),
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.post("/jobs/sync", async (_req, res, next) => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock($1)", [431021]);
+
+    const existingResult = await client.query(
+      `
+        SELECT id, job_type, assigned_agent, schedule, enabled, last_run_at, next_run_at, created_at
+        FROM jobs
+        ORDER BY job_type ASC, id ASC
+        FOR UPDATE
+      `
+    );
+
+    const existingRows = existingResult.rows.map(mapJobRow);
+    const plan = buildJobSyncPlan(existingRows);
+
+    const inserted = [];
+    for (const job of plan.inserts) {
+      const insertResult = await client.query(
+        `
+          INSERT INTO jobs (
+            job_type, assigned_agent, schedule, enabled
+          )
+          VALUES ($1, $2, $3, $4)
+          RETURNING id, job_type, assigned_agent, schedule, enabled, last_run_at, next_run_at, created_at
+        `,
+        [job.job_type, job.assigned_agent, job.schedule, job.enabled]
+      );
+      inserted.push(mapJobRow(insertResult.rows[0]));
+    }
+
+    const updated = [];
+    for (const job of plan.updates) {
+      const updateResult = await client.query(
+        `
+          UPDATE jobs
+          SET
+            assigned_agent = $2,
+            schedule = $3
+          WHERE id = $1
+          RETURNING id, job_type, assigned_agent, schedule, enabled, last_run_at, next_run_at, created_at
+        `,
+        [job.id, job.assigned_agent, job.schedule]
+      );
+      updated.push(mapJobRow(updateResult.rows[0]));
+    }
+
+    const syncedResult = await client.query(
+      `
+        SELECT id, job_type, assigned_agent, schedule, enabled, last_run_at, next_run_at, created_at
+        FROM jobs
+        ORDER BY job_type ASC
+      `
+    );
+
+    await client.query("COMMIT");
+
+    return res.status(200).json({
+      inserted,
+      updated,
+      unchanged: plan.unchanged,
+      items: mergeRegisteredJobsWithStoredRows(syncedResult.rows.map(mapJobRow)),
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    return next(error);
+  } finally {
+    client.release();
   }
 });
 
@@ -978,6 +1092,7 @@ app.use((error, _req, res, _next) => {
   }
 
   if (
+    isJobRegistryError(error.message) ||
     error.message === "Only memory_curator can compact memories" ||
     error.message === "source_memory_ids must be a non-empty array" ||
     error.message === "source_memory_ids must contain positive integers" ||

@@ -142,7 +142,7 @@
 
 ## Phase 6. Scheduled Jobs
 
-- [ ] Добавить registry/use-case для `jobs`
+- [x] Добавить registry/use-case для `jobs`
 - [ ] Определить, как Railway trigger вызывает VPS execution
 - [ ] Реализовать `daily founder brief`
 - [ ] Реализовать `weekly digest`
