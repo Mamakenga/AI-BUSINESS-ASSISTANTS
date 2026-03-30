@@ -53,6 +53,7 @@ test("buildRunExecutionContext extracts founder request and handoff messages", (
   assert.equal(context.handoff_messages.length, 1);
   assert.equal(context.handoff_messages[0].content, "Need price comparison.");
   assert.equal(context.role.id, "researcher");
+  assert.equal(context.role.model_alias, "researcher-model");
 });
 
 test("buildRunCompletionInput creates artifact payload for task-bound run", () => {
@@ -90,6 +91,6 @@ test("normalizeExecutionResult requires reply_text for direct-answer runs", () =
           status: "completed",
         }
       ),
-    /OpenClaw direct-answer response must include reply_text/
+    /Execution direct-answer response must include reply_text/
   );
 });

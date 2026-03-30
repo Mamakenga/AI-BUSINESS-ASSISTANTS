@@ -9,7 +9,7 @@
     "start:telegram": "node scripts/run-telegram-bridge.js",
     "start:worker": "node scripts/run-role-worker.js",
     "start:openclaw-stub": "node scripts/run-openclaw-stub.js",
-    "check": "node --check src/server.js && node --check src/runtime-profiles.js && node --check src/memory-service.js && node --check src/memory-bundles.js && node --check src/memory-compaction.js && node --check src/follow-up-run.js && node --check src/run-completion.js && node --check src/telegram-routing.js && node --check src/telegram-intake.js && node --check src/telegram-reply.js && node --check src/telegram-bridge.js && node --check src/telegram-bot-client.js && node --check src/run-worker.js && node --check src/openclaw-client.js && node --check src/openclaw-stub.js && node --check scripts/apply-migrations.js && node --check scripts/smoke-phase1-5.js && node --check scripts/run-telegram-bridge.js && node --check scripts/run-role-worker.js && node --check scripts/run-openclaw-stub.js",
+    "check": "node --check src/server.js && node --check src/runtime-profiles.js && node --check src/memory-service.js && node --check src/memory-bundles.js && node --check src/memory-compaction.js && node --check src/follow-up-run.js && node --check src/run-completion.js && node --check src/telegram-routing.js && node --check src/telegram-intake.js && node --check src/telegram-reply.js && node --check src/telegram-bridge.js && node --check src/telegram-bot-client.js && node --check src/run-worker.js && node --check src/system-prompts.js && node --check src/executor-client.js && node --check src/openclaw-client.js && node --check src/openclaw-stub.js && node --check scripts/apply-migrations.js && node --check scripts/smoke-phase1-5.js && node --check scripts/run-telegram-bridge.js && node --check scripts/run-role-worker.js && node --check scripts/run-openclaw-stub.js",
     "db:migrate": "node scripts/apply-migrations.js",
     "smoke:phase1-5": "node scripts/smoke-phase1-5.js",
     "test:routing": "node --test test/telegram-routing.test.js",
@@ -24,6 +24,8 @@
     "test:bridge": "node --test test/telegram-bridge.test.js",
     "test:telegram-client": "node --test test/telegram-bot-client.test.js",
     "test:worker": "node --test test/run-worker.test.js",
+    "test:prompts": "node --test test/system-prompts.test.js",
+    "test:executor": "node --test test/executor-client.test.js",
     "test:openclaw": "node --test test/openclaw-client.test.js",
     "test:stub": "node --test test/openclaw-stub.test.js"
   },

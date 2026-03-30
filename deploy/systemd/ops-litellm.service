@@ -1,0 +1,20 @@
+[Unit]
+Description=AI Business Assistants LiteLLM Gateway
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=ops
+WorkingDirectory=/opt/ops/app
+EnvironmentFile=/home/ops/.env.ops-litellm
+ExecStartPre=-/usr/bin/docker rm -f ops-litellm
+ExecStart=/usr/bin/docker run --rm --name ops-litellm --env-file /home/ops/.env.ops-litellm -p 127.0.0.1:4000:4000 -v /opt/ops/app/deploy/litellm/config.yaml:/app/config.yaml docker.litellm.ai/berriai/litellm:main-latest --config /app/config.yaml --host 0.0.0.0 --port 4000
+ExecStop=/usr/bin/docker stop ops-litellm
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/ops/ops-litellm.log
+StandardError=append:/var/log/ops/ops-litellm.error.log
+
+[Install]
+WantedBy=multi-user.target

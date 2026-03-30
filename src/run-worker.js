@@ -42,12 +42,12 @@ function normalizeWorkerRoleIds(value) {
 
 function normalizeExecutionResult(runRow, payload = {}) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-    throw new Error("OpenClaw response must be an object");
+    throw new Error("Execution response must be an object");
   }
 
   const status = normalizeOptionalString(payload.status) || "completed";
   if (!["completed", "failed", "canceled"].includes(status)) {
-    throw new Error("Invalid OpenClaw run status");
+    throw new Error("Invalid execution run status");
   }
 
   const modelUsed = normalizeOptionalString(payload.model_used);
@@ -56,7 +56,7 @@ function normalizeExecutionResult(runRow, payload = {}) {
   const fallbackChain = payload.fallback_chain === undefined ? [] : payload.fallback_chain;
 
   if (!Array.isArray(fallbackChain)) {
-    throw new Error("OpenClaw fallback_chain must be an array");
+    throw new Error("Execution fallback_chain must be an array");
   }
 
   let artifactContent = null;
@@ -71,7 +71,7 @@ function normalizeExecutionResult(runRow, payload = {}) {
   }
 
   if (status === "completed" && !runRow.task_id && !replyText) {
-    throw new Error("OpenClaw direct-answer response must include reply_text");
+    throw new Error("Execution direct-answer response must include reply_text");
   }
 
   return {
@@ -124,6 +124,7 @@ function buildRunExecutionContext(input = {}) {
       id: roleProfile.id,
       execution_mode: roleProfile.execution_mode,
       preferred_models: [...roleProfile.preferred_models],
+      model_alias: roleProfile.model_alias,
       output_contract: roleProfile.output_contract,
     },
     task: input.task

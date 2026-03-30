@@ -1,7 +1,7 @@
 [Unit]
 Description=AI Business Assistants Role Worker
-After=network.target ops-api.service
-Requires=ops-api.service
+After=network.target ops-api.service ops-litellm.service
+Requires=ops-api.service ops-litellm.service
 
 [Service]
 Type=simple

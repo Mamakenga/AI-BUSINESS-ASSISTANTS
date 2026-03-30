@@ -1,0 +1,50 @@
+model_list:
+  - model_name: orchestrator-model
+    litellm_params:
+      model: anthropic/claude-3-7-sonnet-latest
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: assistant-model
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: researcher-model
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: methodist-model
+    litellm_params:
+      model: anthropic/claude-3-7-sonnet-latest
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: finance-model
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: critic-model
+    litellm_params:
+      model: anthropic/claude-3-7-sonnet-latest
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: memory-curator-model
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+
+litellm_settings:
+  drop_params: true
+  set_verbose: false
+  json_logs: true
+  request_timeout: 60
+  num_retries: 2
+  fallbacks:
+    - {"orchestrator-model": ["methodist-model", "assistant-model"]}
+    - {"assistant-model": ["critic-model", "researcher-model"]}
+    - {"researcher-model": ["critic-model", "assistant-model"]}
+    - {"methodist-model": ["assistant-model", "researcher-model"]}
+    - {"finance-model": ["critic-model", "assistant-model"]}
+    - {"critic-model": ["assistant-model", "researcher-model"]}
+    - {"memory-curator-model": ["assistant-model", "researcher-model"]}

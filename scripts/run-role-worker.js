@@ -3,7 +3,7 @@
 const { Pool } = require("pg");
 const { setTimeout: sleep } = require("node:timers/promises");
 const { buildTelegramTextMessage, callTelegramApi, normalizeTelegramBotConfig } = require("../src/telegram-bot-client");
-const { executeOpenClawRun } = require("../src/openclaw-client");
+const { executeRoleRun } = require("../src/executor-client");
 const { buildRunCompletionInput, buildRunExecutionContext, normalizeWorkerRoleIds } = require("../src/run-worker");
 
 const DATABASE_URL = String(process.env.DATABASE_URL || "").trim();
@@ -191,11 +191,11 @@ async function processOneRun(runRow) {
       memory_bundle: memoryBundle,
     });
 
-    const openClawResponse = await executeOpenClawRun(executionContext, {
+    const executorResponse = await executeRoleRun(executionContext, {
       env: process.env,
     });
 
-    const { completion, reply_text } = buildRunCompletionInput(runRow, openClawResponse);
+    const { completion, reply_text } = buildRunCompletionInput(runRow, executorResponse);
     const completeResponse = await callControlApi(`/runs/${runRow.id}/complete`, completion);
 
     return {
@@ -204,7 +204,7 @@ async function processOneRun(runRow) {
       messages,
       telegram_thread: telegramThread,
       memory_bundle: memoryBundle,
-      openclaw_response: openClawResponse,
+      executor_response: executorResponse,
       completion_response: completeResponse,
       reply_text,
     };
