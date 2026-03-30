@@ -37,9 +37,9 @@
 6. живой LiteLLM-backed `@assistant` и `@researcher` smoke уже прошел на VPS через Telegram-группу `AI_KiberOne чат`.
 
 Следующий практический фокус:
-1. зафиксировать ручной runbook: `git pull -> migrate -> restart -> smoke`;
-2. после этого вернуться к scheduled jobs;
-3. затем перейти к hardening.
+1. вернуться к scheduled jobs;
+2. затем перейти к hardening;
+3. держать `DEPLOY_RUNBOOK.md` как канонический операторский сценарий для VPS updates.
 
 ## Phase 0. Project Bootstrap
 
@@ -191,12 +191,12 @@
 - [x] Перевести VPS contour на systemd services
 - [x] Прогнать полный server smoke suite на VPS (`@assistant` and `@researcher` done)
 - [x] Проверить process logs после первого живого demo
-- [ ] Зафиксировать ручной runbook: `git pull -> migrate -> restart -> smoke`
+- [x] Зафиксировать ручной runbook: `git pull -> migrate -> restart -> smoke`
 
 ## Next Step
 
 Следующий шаг по этому чеклисту:
-1. зафиксировать ручной runbook: `git pull -> migrate -> restart -> smoke`;
-2. затем вернуться к `Phase 6` scheduled jobs;
-3. после этого перейти к `Phase 9` hardening.
+1. вернуться к `Phase 6` scheduled jobs;
+2. после этого перейти к `Phase 9` hardening;
+3. использовать `DEPLOY_RUNBOOK.md` как канонический VPS update flow.
 

@@ -2,6 +2,10 @@
 
 This is the first concrete VPS runbook for the `ops` contour.
 
+It answers one operational question:
+
+How do we safely update the live `ops` contour on VPS without relying on memory or chat history?
+
 ## 1. Server Layout
 
 Expected layout:
@@ -81,7 +85,7 @@ After restart:
 3. `systemctl status ops-worker.service`
 4. `systemctl status ops-litellm.service`
 5. `npm run smoke:ops-preflight`
-6. `export CONTROL_API_URL=http://127.0.0.1:3000`
+6. `export CONTROL_API_URL=http://127.0.0.1:3300`
 7. `export LITELLM_BASE_URL=http://127.0.0.1:4000`
 8. `export LITELLM_MASTER_KEY=<same value as /home/ops/.env.ops-litellm>`
 9. `export SMOKE_LITELLM_MODEL=assistant-model`
@@ -118,11 +122,97 @@ Localhost binding note:
 ## 6. Restart Cycle
 
 For future updates:
-1. `git pull`
-2. `npm install`
-3. `npm run db:migrate`
-4. `sudo systemctl restart ops-litellm.service`
-5. `sudo systemctl restart ops-api.service`
-6. `sudo systemctl restart ops-telegram.service`
-7. `sudo systemctl restart ops-worker.service`
-8. rerun smoke
+1. `cd /opt/ops/app`
+2. `sudo -u ops git -C /opt/ops/app pull --ff-only`
+3. `sudo -u ops bash -lc 'cd /opt/ops/app && npm install'`
+4. `sudo -u ops bash -lc 'set -a; source /etc/ops.env; set +a; cd /opt/ops/app && npm run db:migrate'`
+5. `sudo systemctl daemon-reload`
+6. `sudo systemctl restart ops-litellm.service`
+7. `sudo systemctl restart ops-api.service`
+8. `sudo systemctl restart ops-telegram.service`
+9. `sudo systemctl restart ops-worker.service`
+10. rerun smoke
+
+## 7. Canonical Update Sequence
+
+Use this sequence for every routine VPS update after the first deploy.
+
+### 7.1 Pull
+
+1. `cd /opt/ops/app`
+2. `sudo -u ops git -C /opt/ops/app pull --ff-only`
+
+Pass condition:
+1. repository fast-forwards cleanly to the intended commit
+
+If this fails:
+1. stop here
+2. inspect local changes or upstream divergence before touching services
+
+### 7.2 Migrate
+
+1. `cd /opt/ops/app`
+2. `sudo -u ops bash -lc 'cd /opt/ops/app && npm install'`
+3. `sudo -u ops bash -lc 'set -a; source /etc/ops.env; set +a; cd /opt/ops/app && npm run db:migrate'`
+
+Pass condition:
+1. dependencies install without error
+2. migrations complete without error
+
+If this fails:
+1. do not restart services yet
+2. inspect migration output first
+
+### 7.3 Restart
+
+1. `sudo systemctl daemon-reload`
+2. `sudo systemctl restart ops-litellm.service`
+3. `sudo systemctl restart ops-api.service`
+4. `sudo systemctl restart ops-telegram.service`
+5. `sudo systemctl restart ops-worker.service`
+
+Pass condition:
+1. all four services restart without immediate failure
+
+Quick verification:
+1. `systemctl status ops-litellm.service --no-pager`
+2. `systemctl status ops-api.service --no-pager`
+3. `systemctl status ops-telegram.service --no-pager`
+4. `systemctl status ops-worker.service --no-pager`
+
+If this fails:
+1. inspect the failing service log first
+2. do not continue to smoke until service status is healthy
+
+### 7.4 Smoke
+
+1. `sudo -u ops bash -lc 'cd /opt/ops/app && npm run smoke:ops-preflight'`
+2. `sudo -u ops bash -lc 'cd /opt/ops/app && export CONTROL_API_URL=http://127.0.0.1:3300 && export LITELLM_BASE_URL=http://127.0.0.1:4000 && export LITELLM_MASTER_KEY=$(grep "^LITELLM_MASTER_KEY=" /home/ops/.env.ops-litellm | cut -d= -f2-) && export SMOKE_LITELLM_MODEL=assistant-model && export SMOKE_LITELLM_EXPECT_TEXT=OK && npm run smoke:ops-stack'`
+3. send one founder-facing Telegram message in the allowed chat
+4. verify worker log shows:
+   - completed run
+   - delivered telegram reply
+
+Pass condition:
+1. `smoke:ops-preflight` passes
+2. `smoke:ops-stack` passes
+3. one real Telegram reply returns to the same chat/topic
+
+If this fails:
+1. keep the failure localized to the current stage:
+   - preflight -> env/auth mismatch
+   - stack smoke -> API or LiteLLM gateway problem
+   - Telegram smoke -> bridge/worker/runtime routing issue
+
+## 8. Current Known-Good Example
+
+Validated on 2026-03-30:
+
+1. `ops-litellm.service` active with OpenRouter-backed LiteLLM
+2. `smoke:ops-preflight` passed
+3. `smoke:ops-stack` passed
+4. live Telegram smoke passed in `AI_KiberOne чат`
+5. worker log confirmed:
+   - `completed run 21 for assistant`
+   - `completed run 22 for researcher`
+   - matching Telegram reply delivery lines
