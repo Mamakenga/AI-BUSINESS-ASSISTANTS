@@ -97,9 +97,11 @@ function buildRunExecutionContext(input = {}) {
 
   const messages = Array.isArray(input.messages) ? input.messages : [];
   const founderRequest =
-    [...messages]
-      .reverse()
-      .find((message) => message.from_agent === "founder" && message.message_type === "request")?.content || null;
+    run.requested_by_agent === "scheduler"
+      ? normalizeOptionalString(run.dispatch_reason)
+      : [...messages]
+          .reverse()
+          .find((message) => message.from_agent === "founder" && message.message_type === "request")?.content || null;
 
   const handoffMessages = messages
     .filter((message) => message.to_agent === run.agent && message.message_type === "handoff")

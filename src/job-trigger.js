@@ -65,6 +65,7 @@ function buildJobTrigger(input = {}, registeredJob) {
   const threadId = normalizeOptionalString(input.thread_id);
   const dispatchReason =
     normalizeOptionalString(input.dispatch_reason) ||
+    normalizeOptionalString(registeredJob?.request_text) ||
     `Scheduled job trigger: ${registeredJob.title || jobType}`;
   const requestedByAgent = normalizeOptionalString(input.requested_by_agent) || "scheduler";
   const nextRunAt = normalizeOptionalDate(input.next_run_at, "next_run_at");

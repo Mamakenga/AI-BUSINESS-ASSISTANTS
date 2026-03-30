@@ -26,6 +26,14 @@ test("deriveRequestType detects orchestration and direct answers", () => {
     }),
     "direct-answer"
   );
+
+  assert.equal(
+    deriveRequestType({
+      role: { execution_mode: "single_role_worker" },
+      run: { task_id: null, requested_by_agent: "scheduler" },
+    }),
+    "task-execution"
+  );
 });
 
 test("buildSystemPrompt includes role, task, memory, and handoff context", () => {

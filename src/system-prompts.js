@@ -36,6 +36,10 @@ function deriveRequestType(executionContext) {
     return "orchestration";
   }
 
+  if (executionContext?.run?.requested_by_agent === "scheduler") {
+    return "task-execution";
+  }
+
   if (executionContext?.run?.task_id) {
     return "task-execution";
   }

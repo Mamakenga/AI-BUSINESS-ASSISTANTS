@@ -56,6 +56,53 @@ test("buildRunExecutionContext extracts founder request and handoff messages", (
   assert.equal(context.role.model_alias, "researcher-model");
 });
 
+test("buildRunExecutionContext falls back to scheduler dispatch_reason when founder request is absent", () => {
+  const context = buildRunExecutionContext({
+    run: {
+      id: 61,
+      agent: "assistant",
+      task_id: null,
+      thread_id: null,
+      requested_by_agent: "scheduler",
+      dispatch_reason: "Prepare the daily founder brief in Russian.",
+      created_at: "2026-03-30T10:00:00.000Z",
+    },
+    task: null,
+    messages: [],
+    memory_bundle: null,
+  });
+
+  assert.equal(context.founder_request, "Prepare the daily founder brief in Russian.");
+});
+
+test("buildRunExecutionContext prefers scheduler dispatch_reason over stale founder thread history", () => {
+  const context = buildRunExecutionContext({
+    run: {
+      id: 62,
+      agent: "assistant",
+      task_id: null,
+      thread_id: "thread_jobs_founder",
+      requested_by_agent: "scheduler",
+      dispatch_reason: "Prepare the daily founder brief in Russian.",
+      created_at: "2026-03-30T10:00:00.000Z",
+    },
+    task: null,
+    messages: [
+      {
+        id: 1,
+        from_agent: "founder",
+        to_agent: "assistant",
+        message_type: "request",
+        content: "@assistant answer yesterday's question",
+        created_at: "2026-03-29T10:00:00.000Z",
+      },
+    ],
+    memory_bundle: null,
+  });
+
+  assert.equal(context.founder_request, "Prepare the daily founder brief in Russian.");
+});
+
 test("buildRunCompletionInput creates artifact payload for task-bound run", () => {
   const result = buildRunCompletionInput(
     {
