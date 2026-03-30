@@ -36,9 +36,11 @@ test("worker and gateway auth parity stays explicit in deploy assets", () => {
   const rootEnv = readRepoFile(".env.example");
   const runbook = readRepoFile("DEPLOY_RUNBOOK.md");
   const systemdReadme = readRepoFile(path.join("deploy", "systemd", "README.md"));
+  const gatewayTemplate = readRepoFile(path.join("deploy", "litellm", "ops-litellm.env.example"));
 
   assert.match(rootEnv, /should match LITELLM_MASTER_KEY from \/home\/ops\/\.env\.ops-litellm/);
   assert.match(runbook, /Worker-to-gateway auth rule:/);
   assert.match(runbook, /worker must send the same secret from `\/etc\/ops\.env`/);
   assert.match(systemdReadme, /worker env must carry the same secret as `LITELLM_API_KEY` or `LITELLM_MASTER_KEY`/);
+  assert.match(gatewayTemplate, /^OPENROUTER_API_KEY=/m);
 });

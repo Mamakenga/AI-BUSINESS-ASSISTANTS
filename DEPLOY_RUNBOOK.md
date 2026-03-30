@@ -70,10 +70,8 @@ Worker-to-gateway auth rule:
 3. if this value is missing, the worker will reach LiteLLM but fail on authenticated requests
 
 LiteLLM env file (`/home/ops/.env.ops-litellm`) should include:
-1. `OPENAI_API_KEY`
-2. `ANTHROPIC_API_KEY`
-3. `GEMINI_API_KEY`
-4. `LITELLM_MASTER_KEY`
+1. `OPENROUTER_API_KEY`
+2. `LITELLM_MASTER_KEY`
 
 ## 5. Smoke Checks
 

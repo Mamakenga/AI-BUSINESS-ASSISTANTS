@@ -49,9 +49,7 @@ test("validatePreflight accepts matching worker and gateway env", () => {
       },
       {
         LITELLM_MASTER_KEY: "shared-secret",
-        OPENAI_API_KEY: "openai",
-        ANTHROPIC_API_KEY: "anthropic",
-        GEMINI_API_KEY: "gemini",
+        OPENROUTER_API_KEY: "openrouter",
       }
     )
   );
@@ -69,14 +67,12 @@ test("validatePreflight rejects auth mismatch", () => {
           TELEGRAM_ALLOWED_CHAT_ID: "-1001",
           LITELLM_BASE_URL: "http://127.0.0.1:4000",
           LITELLM_API_KEY: "worker-secret",
-        },
-        {
-          LITELLM_MASTER_KEY: "gateway-secret",
-          OPENAI_API_KEY: "openai",
-          ANTHROPIC_API_KEY: "anthropic",
-          GEMINI_API_KEY: "gemini",
-        }
-      ),
+      },
+      {
+        LITELLM_MASTER_KEY: "gateway-secret",
+        OPENROUTER_API_KEY: "openrouter",
+      }
+    ),
     /does not match gateway master key/
   );
 });

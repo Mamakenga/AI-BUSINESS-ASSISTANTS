@@ -21,6 +21,6 @@ Operational rules:
 
 Before first VPS smoke:
 1. copy the template values from `ops-litellm.env.example`
-2. fill real provider keys and `LITELLM_MASTER_KEY`
+2. fill real `OPENROUTER_API_KEY` and `LITELLM_MASTER_KEY`
 3. restart `ops-litellm.service`
 4. run `npm run smoke:litellm`

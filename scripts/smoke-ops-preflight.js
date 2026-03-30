@@ -76,7 +76,7 @@ function validatePreflight(workerEnv, gatewayEnv) {
     "TELEGRAM_ALLOWED_CHAT_ID",
     "LITELLM_BASE_URL",
   ];
-  const requiredGatewayFields = ["LITELLM_MASTER_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"];
+  const requiredGatewayFields = ["LITELLM_MASTER_KEY", "OPENROUTER_API_KEY"];
 
   for (const field of requiredWorkerFields) {
     assert.ok(normalizeOptionalString(workerEnv[field]), `worker env missing ${field}`);
