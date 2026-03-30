@@ -20,7 +20,7 @@ function normalizeOptionalString(value) {
 
 function normalizeLiteLLMConfig(env = process.env) {
   const baseUrl = normalizeRequiredString(env.LITELLM_BASE_URL, "LITELLM_BASE_URL").replace(/\/+$/, "");
-  const apiKey = normalizeOptionalString(env.LITELLM_API_KEY);
+  const apiKey = normalizeOptionalString(env.LITELLM_API_KEY || env.LITELLM_MASTER_KEY);
   const timeoutMs = Number.parseInt(env.LITELLM_TIMEOUT_MS || "60000", 10);
 
   return {
@@ -146,6 +146,27 @@ function parseResponsePayload(text) {
   }
 }
 
+function tryParseResponsePayload(text) {
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch (_error) {
+    return null;
+  }
+}
+
+function buildRawFragment(text, payload) {
+  const payloadMessage = normalizeOptionalString(payload?.error?.message);
+  if (payloadMessage) {
+    return payloadMessage.slice(0, 500);
+  }
+
+  return text.slice(0, 500);
+}
+
 async function executeRoleRun(executionContext, options = {}) {
   const config = options.config || normalizeLiteLLMConfig(options.env);
   const fetchImpl = options.fetchImpl || fetch;
@@ -182,12 +203,11 @@ async function executeRoleRun(executionContext, options = {}) {
       });
     }
 
-    const text = await response.text();
-    const payload = parseResponsePayload(text);
-
     if (!response.ok) {
       const status = response.status;
-      const rawFragment = text.slice(0, 500);
+      const text = await response.text();
+      const payload = tryParseResponsePayload(text);
+      const rawFragment = buildRawFragment(text, payload);
       if (status === 429) {
         throw createExecutorError("Executor request was rate limited", {
           retryable: true,
@@ -216,6 +236,9 @@ async function executeRoleRun(executionContext, options = {}) {
         raw_fragment: rawFragment,
       });
     }
+
+    const text = await response.text();
+    const payload = parseResponsePayload(text);
 
     try {
       return normalizeExecutorResponse(payload, executionContext, request);

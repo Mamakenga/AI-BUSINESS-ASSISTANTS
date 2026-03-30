@@ -38,7 +38,7 @@ Templates live in:
 9. run `npm install`
 10. run `npm run db:migrate`
 11. install the systemd units
-9. `sudo systemctl daemon-reload`
+12. `sudo systemctl daemon-reload`
 10. `sudo systemctl enable ops-api.service ops-telegram.service ops-worker.service ops-litellm.service`
 11. `sudo systemctl restart ops-litellm.service`
 12. `sudo systemctl restart ops-api.service`
@@ -59,19 +59,20 @@ Optional env set:
 1. `TELEGRAM_TOPIC_MAP`
 2. `WORKER_ROLE_IDS`
 3. `WORKER_POLL_INTERVAL_MS`
-4. `LITELLM_API_KEY`
+4. `LITELLM_API_KEY` or `LITELLM_MASTER_KEY`
 5. `LITELLM_TIMEOUT_MS`
 
 LiteLLM env file (`/home/ops/.env.ops-litellm`) should include:
 1. `OPENAI_API_KEY`
 2. `ANTHROPIC_API_KEY`
 3. `GEMINI_API_KEY`
+4. `LITELLM_MASTER_KEY`
 
 ## 5. Smoke Checks
 
 After restart:
 1. `curl http://127.0.0.1:3000/health`
-2. `curl -H "Authorization: Bearer $LITELLM_API_KEY" http://127.0.0.1:4000/v1/models`
+2. `curl -H "Authorization: Bearer $LITELLM_MASTER_KEY" http://127.0.0.1:4000/v1/models`
 3. `systemctl status ops-api.service`
 4. `systemctl status ops-telegram.service`
 5. `systemctl status ops-worker.service`

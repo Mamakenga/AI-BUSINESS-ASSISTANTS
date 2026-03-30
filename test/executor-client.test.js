@@ -49,6 +49,7 @@ test("buildExecutorRequest creates OpenAI-compatible chat request", () => {
   assert.equal(request.messages[0].role, "system");
   assert.equal(request.messages[1].role, "user");
   assert.equal(request.metadata.role_id, "assistant");
+  assert.equal(request.metadata.request_type, "direct-answer");
 });
 
 test("normalizeExecutorResponse extracts assistant text", () => {
@@ -120,6 +121,33 @@ test("executeRoleRun wraps rate limit responses as retryable executor error", as
       assert.equal(error.executor.reason, "rate_limit");
       assert.equal(error.executor.retryable, true);
       assert.equal(error.executor.upstream_status, 429);
+      return true;
+    }
+  );
+});
+
+
+test("executeRoleRun preserves non-json rate limit classification", async () => {
+  await assert.rejects(
+    () =>
+      executeRoleRun(createExecutionContext(), {
+        config: {
+          base_url: "http://127.0.0.1:4000",
+          api_key: null,
+          timeout_ms: 1000,
+        },
+        fetchImpl: async () => ({
+          ok: false,
+          status: 429,
+          text: async () => "Too Many Requests",
+        }),
+      }),
+    (error) => {
+      assert.equal(error.name, "ExecutorClientError");
+      assert.equal(error.executor.reason, "rate_limit");
+      assert.equal(error.executor.retryable, true);
+      assert.equal(error.executor.upstream_status, 429);
+      assert.match(error.executor.raw_fragment, /Too Many Requests/);
       return true;
     }
   );

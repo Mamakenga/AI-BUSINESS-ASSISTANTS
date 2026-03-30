@@ -35,6 +35,7 @@ model_list:
       api_key: os.environ/GEMINI_API_KEY
 
 litellm_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
   drop_params: true
   set_verbose: false
   json_logs: true

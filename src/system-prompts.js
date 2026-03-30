@@ -28,7 +28,7 @@ function truncateString(value, maxChars) {
     return normalized;
   }
 
-  return `${normalized.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
+  return `${normalized.slice(0, Math.max(0, maxChars - 3)).trimEnd()}...`;
 }
 
 function deriveRequestType(executionContext) {
@@ -37,10 +37,10 @@ function deriveRequestType(executionContext) {
   }
 
   if (executionContext?.run?.task_id) {
-    return "task_execution";
+    return "task-execution";
   }
 
-  return "direct_answer";
+  return "direct-answer";
 }
 
 function buildMemoryFacts(memoryBundle) {

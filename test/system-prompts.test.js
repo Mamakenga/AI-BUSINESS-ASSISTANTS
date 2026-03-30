@@ -23,7 +23,7 @@ test("deriveRequestType detects orchestration and direct answers", () => {
       role: { execution_mode: "single_role_worker" },
       run: { task_id: null },
     }),
-    "direct_answer"
+    "direct-answer"
   );
 });
 
@@ -59,7 +59,7 @@ test("buildSystemPrompt includes role, task, memory, and handoff context", () =>
   assert.match(result.prompt, /Compare competitors in Varna/);
   assert.match(result.prompt, /Founder prefers concise answers/);
   assert.match(result.prompt, /Need focus on pricing/);
-  assert.equal(result.meta.request_type, "task_execution");
+  assert.equal(result.meta.request_type, "task-execution");
 });
 
 test("buildExecutionMessages falls back to task title when founder request is missing", () => {
