@@ -88,7 +88,7 @@ Before implementing any checkbox item or plan step:
 3. use the reference to inform the implementation, not to silently replace the active project canon
 
 Typical triggers for checking `refs/` first:
-1. executor selection or replacement
+1. executor implementation details for the agreed V2 execution layer
 2. auth and provider routing
 3. memory and context handling
 4. runtime safety and autonomy limits

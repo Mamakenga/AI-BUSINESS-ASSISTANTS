@@ -72,6 +72,16 @@ Purpose:
 3. call the current gateway endpoint
 4. normalize the response into the project completion contract
 
+Minimum error contract:
+
+1. timeout -> return executor error with provider, model alias, and timeout reason
+2. rate limit / `429` -> return retriable executor error with retryable flag
+3. provider `5xx` -> return retriable executor error with upstream status
+4. invalid request / prompt / tool schema -> return non-retriable executor error
+5. partial or malformed upstream payload -> return normalization error with raw response fragment when safe
+
+The worker should never need provider-specific parsing logic.
+
 Important rule:
 
 1. the file name stays provider-agnostic
@@ -96,6 +106,22 @@ Purpose:
 3. enforce prompt discipline and context budget
 
 This is required because prompt construction should no longer be delegated implicitly to a framework runtime.
+
+Context budget policy for P0:
+
+1. role identity + output contract: target `~150 tokens`
+2. task context: target `~100 tokens`
+3. memory bundle: max `~500 tokens`
+4. handoff messages: max `~200 tokens`, prefer the latest 2 relevant handoffs
+5. total prompt ceiling for fixed scaffolding before founder request: target `~1000 tokens`
+
+Trimming strategy:
+
+1. preserve role identity and output contract first
+2. preserve current task context second
+3. trim memory before trimming task context
+4. trim oldest or lowest-priority handoff context first
+5. never silently inject unbounded raw message history
 
 ### 3.3 LiteLLM Gateway
 
@@ -125,6 +151,17 @@ Routing should be driven by:
 1. role
 2. request type
 3. execution criticality
+
+Definitions for P0:
+
+1. request type
+   - `direct-answer`: one role, no artifact-heavy work, founder-facing answer
+   - `task-execution`: role produces task output or artifact-oriented response
+   - `orchestration`: planning, delegation, or coordination-heavy reasoning
+2. execution criticality
+   - `low`: quick draft or low-risk supporting work
+   - `medium`: standard role execution
+   - `high`: founder-facing critical reasoning, planning, review, or decision support
 
 This should live in:
 
@@ -160,6 +197,7 @@ Scope:
 4. define first role-to-model mappings
 5. deploy LiteLLM on VPS
 6. run Telegram → real LLM → reply smoke
+7. keep the stub execution path available as rollback until LiteLLM smoke passes
 
 Expected effort:
 
@@ -212,6 +250,14 @@ Scope:
 2. role-specific routing can become messy if not kept explicit and documented
 3. moving prompt construction into project code increases responsibility on our side
 4. P0 still requires disciplined VPS deploy and smoke verification
+
+## 6. Security
+
+1. provider API keys for the LiteLLM gateway should live in a dedicated environment file such as `/home/ops/.env.ops-litellm`
+2. that environment file should be readable only by the intended service user, with permissions equivalent to `600`
+3. LiteLLM must bind to `127.0.0.1` only, never to `0.0.0.0`
+4. any internal gateway auth token should be locally generated and never committed into the repository
+5. the worker should talk only to the local gateway endpoint, not to public provider endpoints directly
 
 ### Non-Goals
 

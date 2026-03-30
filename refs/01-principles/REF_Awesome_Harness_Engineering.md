@@ -150,12 +150,6 @@ Most useful right now:
 Best saved for later hardening:
 1. Evals & Observability
 
-## Suggested Follow-Up Cards
-
-1. `REF_Claude_Code_CLI.md`
-2. `REF_Subscription_Auth_Paths.md`
-3. `REF_Executor_Selection_Criteria.md`
-
 ## Source Links
 
 1. [walkinglabs/awesome-harness-engineering](https://github.com/walkinglabs/awesome-harness-engineering)
