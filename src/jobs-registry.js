@@ -9,9 +9,9 @@ const REGISTERED_JOBS = Object.freeze([
     title: "Daily Founder Brief",
     assigned_agent: "assistant",
     schedule: "daily morning",
-    output_summary: "Short Telegram digest for the founder.",
+    output_summary: "Short Telegram digest for the leader.",
     request_text:
-      "Prepare the daily founder brief in Russian. Give a short Telegram-ready summary with: 1) the most important current signals, 2) urgent open items, 3) the main risk or blocker, 4) one recommended next step.",
+      "Prepare the daily brief for the leader in Russian. Do not ask follow-up questions. Use the available context, memory, and recent activity only. If fresh data is limited, say that directly and still produce the best concise brief you can. Format it as a Telegram-ready update with: 1) current status in 1-2 sentences, 2) important signals or changes, 3) urgent open items, 4) the main risk or blocker, 5) one recommended next step.",
   },
   {
     job_type: "weekly_digest",

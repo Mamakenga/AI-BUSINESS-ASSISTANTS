@@ -140,6 +140,17 @@ function buildSystemPrompt(executionContext) {
     ].join("\n")
   );
 
+  if (executionContext?.run?.requested_by_agent === "scheduler") {
+    sections.push(
+      [
+        "Scheduled-run rules:",
+        "1. Do not ask follow-up questions.",
+        "2. Produce the best possible result from the available context.",
+        "3. If fresh information is limited, say that explicitly and still provide a usable output.",
+      ].join("\n")
+    );
+  }
+
   if (executionContext.task) {
     const taskLines = [
       "Current task:",

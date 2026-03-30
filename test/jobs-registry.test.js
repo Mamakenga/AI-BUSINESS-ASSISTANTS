@@ -26,6 +26,16 @@ test("listRegisteredJobs returns the six planned scheduled jobs", () => {
   );
 });
 
+test("daily founder brief request is deterministic and does not ask for clarification", () => {
+  const jobs = listRegisteredJobs();
+  const dailyBrief = jobs.find((job) => job.job_type === "daily_founder_brief");
+
+  assert.ok(dailyBrief);
+  assert.match(dailyBrief.request_text, /Do not ask follow-up questions/i);
+  assert.match(dailyBrief.request_text, /leader/i);
+  assert.match(dailyBrief.request_text, /If fresh data is limited/i);
+});
+
 test("buildJobSyncPlan inserts missing jobs and updates drifted jobs", () => {
   const plan = buildJobSyncPlan([
     {

@@ -163,3 +163,26 @@ test("buildSystemPrompt trims memory facts to budget and preserves task context"
   assert.ok(result.meta.memory_fact_count < 10);
   assert.ok(result.prompt.length <= FIXED_SCAFFOLDING_TOKEN_CEILING * 4);
 });
+
+test("buildSystemPrompt adds scheduled-run guardrails to prevent clarification loops", () => {
+  const result = buildSystemPrompt({
+    role: {
+      id: "assistant",
+      execution_mode: "single_role_worker",
+      output_contract: "assistant_summary_v1",
+    },
+    run: {
+      requested_by_agent: "scheduler",
+      task_id: null,
+    },
+    task: null,
+    founder_request: "Prepare the daily brief for the leader in Russian.",
+    handoff_messages: [],
+    memory_bundle: null,
+  });
+
+  assert.match(result.prompt, /Scheduled-run rules:/);
+  assert.match(result.prompt, /Do not ask follow-up questions/);
+  assert.match(result.prompt, /If fresh information is limited/);
+  assert.equal(result.meta.request_type, "task-execution");
+});
