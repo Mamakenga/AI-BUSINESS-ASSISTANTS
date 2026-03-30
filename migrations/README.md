@@ -23,3 +23,6 @@ Current baseline:
 4. `004_telegram_thread_bindings.sql`
    - stores Telegram delivery metadata for each internal `thread_id`
    - lets workers send final replies back to the same Telegram chat/topic
+5. `005_allow_scheduler_requested_by_agent.sql`
+   - extends `runs_requested_by_agent_check`
+   - allows scheduled job triggers to create pending runs as `scheduler`
