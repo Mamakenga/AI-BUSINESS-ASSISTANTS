@@ -24,6 +24,21 @@ function normalizeTelegramBotConfig(env = process.env) {
   };
 }
 
+function buildTelegramApiError(method, response, payload, rawText) {
+  const migrateToChatId = payload?.parameters?.migrate_to_chat_id;
+  let message = `Telegram API ${method} failed: ${response.status} ${rawText}`;
+
+  if (migrateToChatId !== undefined && migrateToChatId !== null) {
+    message += ` | update TELEGRAM_ALLOWED_CHAT_ID to ${migrateToChatId}, restart ops-telegram.service plus ops-worker.service, then send one manual message in each role topic to rebind topic metadata`;
+  }
+
+  const error = new Error(message);
+  if (migrateToChatId !== undefined && migrateToChatId !== null) {
+    error.migrate_to_chat_id = String(migrateToChatId);
+  }
+  return error;
+}
+
 async function callTelegramApi(method, body, options = {}) {
   const config = options.config || normalizeTelegramBotConfig(options.env);
   const fetchImpl = options.fetchImpl || fetch;
@@ -40,7 +55,7 @@ async function callTelegramApi(method, body, options = {}) {
   const payload = text ? JSON.parse(text) : null;
 
   if (!response.ok || !payload?.ok) {
-    throw new Error(`Telegram API ${method} failed: ${response.status} ${text}`);
+    throw buildTelegramApiError(method, response, payload, text);
   }
 
   return payload.result;
@@ -67,6 +82,7 @@ function buildTelegramTextMessage(input = {}) {
 
 module.exports = {
   buildTelegramTextMessage,
+  buildTelegramApiError,
   callTelegramApi,
   normalizeTelegramBotConfig,
 };

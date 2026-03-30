@@ -61,7 +61,8 @@ Do not mix it with:
    - job registry and scheduled triggers
 
 3. `ops` is the active Linux user for this contour.
-4. live `@assistant` and `@researcher` Telegram smoke through LiteLLM already passed on 2026-03-30 in the `AI_KiberOne чат` group.
+4. live `@assistant` and `@researcher` Telegram smoke through LiteLLM already passed on 2026-03-30 in the `AI_KiberOne чат` supergroup.
+5. scheduled `daily_founder_brief` trigger -> VPS execution -> Telegram delivery already passed, including role-topic delivery into `01 Assistant`.
 
 ## Working Rhythm
 

@@ -34,7 +34,9 @@
 3. есть deployment skeleton;
 4. есть базовая схема БД;
 5. есть минимальный Control API для `tasks`;
-6. живой LiteLLM-backed `@assistant` и `@researcher` smoke уже прошел на VPS через Telegram-группу `AI_KiberOne чат`.
+6. живой LiteLLM-backed `@assistant` и `@researcher` smoke уже прошел на VPS через Telegram supergroup `AI_KiberOne чат`;
+7. scheduled trigger -> VPS execution -> Telegram delivery уже прошел живьем;
+8. scheduled delivery в тему `01 Assistant` уже подтверждена.
 
 Следующий практический фокус:
 1. вернуться к scheduled jobs;
@@ -144,13 +146,13 @@
 
 - [x] Добавить registry/use-case для `jobs`
 - [x] Определить, как Railway trigger вызывает VPS execution
-- [ ] Реализовать `daily founder brief`
+- [x] Реализовать `daily founder brief`
 - [ ] Реализовать `weekly digest`
 - [ ] Реализовать `competitor watch`
 - [ ] Реализовать `branch finance review`
 - [ ] Реализовать `weekly risk review`
 - [ ] Реализовать `memory cleanup`
-- [ ] Прогнать smoke для scheduled trigger -> VPS execution path
+- [x] Прогнать smoke для scheduled trigger -> VPS execution path
 
 ## Phase 7. Founder Mini App Board
 

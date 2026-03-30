@@ -78,6 +78,12 @@ LiteLLM env file (`/home/ops/.env.ops-litellm`) should include:
 1. `OPENROUTER_API_KEY`
 2. `LITELLM_MASTER_KEY`
 
+Telegram forum note:
+1. if the working chat is upgraded from a group to a supergroup, Telegram will issue a new `chat_id`
+2. update `TELEGRAM_ALLOWED_CHAT_ID` in `/etc/ops.env`
+3. restart `ops-telegram.service` and `ops-worker.service`
+4. send one manual message in each role topic you want to bind, so `telegram_threads` captures `message_thread_id` and `topic_name`
+
 ## 5. Smoke Checks
 
 After restart:
@@ -209,6 +215,7 @@ Optional reproducible scheduled-trigger smoke:
 1. `sudo -u ops bash -lc 'cd /opt/ops/app && export CONTROL_API_URL=http://127.0.0.1:3300 && export CONTROL_API_INTERNAL_TOKEN=$(grep "^CONTROL_API_INTERNAL_TOKEN=" /etc/ops.env | cut -d= -f2-) && npm run smoke:job-trigger'`
 2. this checks the internal auth gate and the `POST /jobs/:jobType/trigger` path without waiting for Railway
 3. default smoke target is `daily_founder_brief -> assistant`
+4. if delivery fails with `migrate_to_chat_id`, update `TELEGRAM_ALLOWED_CHAT_ID` and restart `ops-telegram.service` plus `ops-worker.service`
 
 ## 8. Current Known-Good Example
 
