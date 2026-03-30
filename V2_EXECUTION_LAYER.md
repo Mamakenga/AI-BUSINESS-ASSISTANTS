@@ -4,9 +4,9 @@ This document fixes the agreed V2 execution architecture for `AI-BUSINESS-ASSIST
 
 Current implementation status:
 
-1. P0 LiteLLM execution path is now live on VPS for the `assistant` role
+1. P0 LiteLLM execution path is now live on VPS for the `assistant` and `researcher` roles
 2. live Telegram smoke passed on 2026-03-30 in the `AI_KiberOne чат` group
-3. the next live validation target is `researcher`, after which the full server smoke suite can be marked complete
+3. the minimal server smoke suite is now complete from the execution-path perspective
 
 It exists to answer one concrete question:
 

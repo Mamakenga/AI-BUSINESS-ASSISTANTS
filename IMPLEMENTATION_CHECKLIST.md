@@ -34,12 +34,12 @@
 3. есть deployment skeleton;
 4. есть базовая схема БД;
 5. есть минимальный Control API для `tasks`;
-6. живой LiteLLM-backed `@assistant` smoke уже прошел на VPS через Telegram-группу `AI_KiberOne чат`.
+6. живой LiteLLM-backed `@assistant` и `@researcher` smoke уже прошел на VPS через Telegram-группу `AI_KiberOne чат`.
 
 Следующий практический фокус:
-1. добрать минимальный founder-demo flow для `@researcher`;
-2. затем зафиксировать полный server smoke suite как completed;
-3. после этого вернуться к scheduled jobs и hardening.
+1. зафиксировать ручной runbook: `git pull -> migrate -> restart -> smoke`;
+2. после этого вернуться к scheduled jobs;
+3. затем перейти к hardening.
 
 ## Phase 0. Project Bootstrap
 
@@ -138,7 +138,7 @@
 - [x] Перевести demo contour из ручных SSH-сессий в устойчивый systemd-режим
 - [x] Прогнать group/topic smoke: сообщение в Telegram-группе -> run -> execution -> complete -> reply in topic
 - [x] Зафиксировать живой founder-demo flow для `@assistant` в группе `AI_KiberOne чат` через LiteLLM
-- [ ] Зафиксировать живой founder-demo flow для `@researcher` в группе `AI_KiberOne чат`
+- [x] Зафиксировать живой founder-demo flow для `@researcher` в группе `AI_KiberOne чат`
 
 ## Phase 6. Scheduled Jobs
 
@@ -189,14 +189,14 @@
 - [x] Развернуть contour на VPS под пользователем `ops` в ручном demo-режиме
 - [x] Подключить проект к живому Railway Postgres через `DATABASE_URL`
 - [x] Перевести VPS contour на systemd services
-- [ ] Прогнать полный server smoke suite на VPS (`@assistant` done, `@researcher` pending)
+- [x] Прогнать полный server smoke suite на VPS (`@assistant` and `@researcher` done)
 - [x] Проверить process logs после первого живого demo
 - [ ] Зафиксировать ручной runbook: `git pull -> migrate -> restart -> smoke`
 
 ## Next Step
 
 Следующий шаг по этому чеклисту:
-1. зафиксировать живой founder-demo flow для `@researcher` в Telegram-группе `AI_KiberOne чат`;
-2. затем отметить полный server smoke suite как completed;
-3. после этого вернуться к `Phase 6` scheduled jobs и `Phase 9` hardening.
+1. зафиксировать ручной runbook: `git pull -> migrate -> restart -> smoke`;
+2. затем вернуться к `Phase 6` scheduled jobs;
+3. после этого перейти к `Phase 9` hardening.
 
