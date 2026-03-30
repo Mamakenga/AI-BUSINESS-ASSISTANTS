@@ -125,15 +125,17 @@
 
 ## Phase 5.5. First Live Vertical Slice
 
-- [ ] Реализовать живой Telegram bridge для группы/тем
+- [x] Реализовать живой Telegram bridge
 - [x] Научить bridge вызывать `POST /telegram/intake`
 - [x] Научить bridge отправлять founder-facing reply обратно в ту же тему
 - [x] Реализовать worker, который забирает pending run и исполняет его
 - [x] Подключить worker к OpenClaw / Antigravity execution path
 - [x] Научить worker вызывать `POST /runs/:id/complete`
-- [ ] Поднять контур на VPS под пользователем `ops`
-- [ ] Подключить проект на VPS к живому Railway Postgres через `DATABASE_URL`
-- [ ] Прогнать smoke: Telegram message -> run -> model execution -> complete -> reply in topic
+- [x] Поднять contour на VPS под пользователем `ops` в ручном demo-режиме
+- [x] Подключить проект на VPS к живому Railway Postgres через `DATABASE_URL`
+- [x] Прогнать живой personal-chat smoke: Telegram message -> run -> stub execution -> complete -> reply
+- [x] Перевести demo contour из ручных SSH-сессий в устойчивый systemd-режим
+- [x] Прогнать group/topic smoke: сообщение в Telegram-группе -> run -> execution -> complete -> reply in topic
 - [ ] Зафиксировать минимальный founder-demo flow: `@assistant` и `@researcher` в живой Telegram-группе
 
 ## Phase 6. Scheduled Jobs
@@ -182,16 +184,17 @@
 
 ## Server Validation Gates
 
-- [ ] Развернуть контур на VPS под пользователем `ops`
-- [ ] Подключить проект к живому Railway Postgres через `DATABASE_URL`
+- [x] Развернуть contour на VPS под пользователем `ops` в ручном demo-режиме
+- [x] Подключить проект к живому Railway Postgres через `DATABASE_URL`
+- [x] Перевести VPS contour на systemd services
 - [ ] Прогнать полный server smoke suite на VPS
-- [ ] Проверить process logs после smoke suite
+- [x] Проверить process logs после первого живого demo
 - [ ] Зафиксировать ручной runbook: `git pull -> migrate -> restart -> smoke`
 
 ## Next Step
 
 Следующий шаг по этому чеклисту:
-1. поднять контур `Phase 5.5` на VPS под `ops` и подключить живой `DATABASE_URL`;
-2. прогнать живой Telegram smoke: сообщение -> run -> model execution -> complete -> reply in topic;
-3. затем перейти к `Phase 6` scheduled jobs.
+1. зафиксировать минимальный founder-demo flow в живой Telegram-группе для `@assistant` и `@researcher`;
+2. затем заменить demo-stub на реальный `CLI-first` OpenClaw execution adapter;
+3. после этого вернуться к `Phase 6` scheduled jobs.
 
