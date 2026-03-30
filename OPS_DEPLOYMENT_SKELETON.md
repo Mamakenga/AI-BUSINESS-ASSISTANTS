@@ -17,7 +17,7 @@ The purpose is to keep AI Business Assistants independent from old Stemford and 
 
 ## VPS Responsibilities
 
-1. `OpenClaw runtime`
+1. `LiteLLM gateway`
 2. `Telegram bridge`
 3. `role workers`
 4. `scheduled execution after trigger`
@@ -43,6 +43,7 @@ Concrete templates already live in:
 1. [deploy/systemd/ops-api.service](deploy/systemd/ops-api.service)
 2. [deploy/systemd/ops-telegram.service](deploy/systemd/ops-telegram.service)
 3. [deploy/systemd/ops-worker.service](deploy/systemd/ops-worker.service)
+4. [deploy/systemd/ops-litellm.service](deploy/systemd/ops-litellm.service)
 
 ## Suggested Directory Layout
 
@@ -58,7 +59,7 @@ Concrete templates already live in:
 ## Execution Split
 
 1. Railway decides when a scheduled job should fire
-2. VPS decides how the job runs through OpenClaw
+2. VPS decides how the job runs through LiteLLM-backed role execution
 3. Railway stores canonical state
 4. VPS stores runtime state and process logs
 
@@ -67,6 +68,6 @@ Concrete templates already live in:
 1. `ops-api.service` is active
 2. `ops-telegram.service` is active
 3. `ops-worker.service` is active
-4. scheduled trigger can reach VPS
+4. `ops-litellm.service` is active
 5. one role run completes and writes state back to Railway
-```
+6. founder-facing Telegram reply returns to the same chat/topic

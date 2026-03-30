@@ -2,6 +2,12 @@
 
 This document fixes the agreed V2 execution architecture for `AI-BUSINESS-ASSISTANTS`.
 
+Current implementation status:
+
+1. P0 LiteLLM execution path is now live on VPS for the `assistant` role
+2. live Telegram smoke passed on 2026-03-30 in the `AI_KiberOne чат` group
+3. the next live validation target is `researcher`, after which the full server smoke suite can be marked complete
+
 It exists to answer one concrete question:
 
 How do we keep the current control-plane, but replace the fragile execution path with a more stable, provider-flexible execution layer?
@@ -255,7 +261,7 @@ Scope:
 
 1. provider API keys for the LiteLLM gateway should live in a dedicated environment file such as `/home/ops/.env.ops-litellm`
 2. that environment file should be readable only by the intended service user, with permissions equivalent to `600`
-3. LiteLLM must bind to `127.0.0.1` only, never to `0.0.0.0`
+3. LiteLLM must be published to `127.0.0.1` on the host; inside Docker it may still listen on `0.0.0.0`
 4. any internal gateway auth token should be locally generated and never committed into the repository
 5. the worker should talk only to the local gateway endpoint, not to public provider endpoints directly
 

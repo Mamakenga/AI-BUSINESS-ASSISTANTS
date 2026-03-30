@@ -15,7 +15,7 @@
 3. Telegram-first контур;
 4. role execution;
 5. память;
-6. первый живой vertical slice: Telegram -> worker -> OpenClaw -> ответ в тему;
+6. первый живой vertical slice: Telegram -> worker -> LiteLLM -> ответ в тему;
 7. scheduled jobs;
 8. Mini App board как дополнительный интерфейс;
 9. drag & drop и UX-polish только после проверки Telegram-first потока.
@@ -33,12 +33,13 @@
 2. есть архитектурный канон;
 3. есть deployment skeleton;
 4. есть базовая схема БД;
-5. есть минимальный Control API для `tasks`.
+5. есть минимальный Control API для `tasks`;
+6. живой LiteLLM-backed `@assistant` smoke уже прошел на VPS через Telegram-группу `AI_KiberOne чат`.
 
 Следующий практический фокус:
-1. Telegram-first routing;
-2. создание `thread/task` из Telegram-входа;
-3. прямой вызов ролей и путь через `orchestrator`.
+1. добрать минимальный founder-demo flow для `@researcher`;
+2. затем зафиксировать полный server smoke suite как completed;
+3. после этого вернуться к scheduled jobs и hardening.
 
 ## Phase 0. Project Bootstrap
 
@@ -129,14 +130,15 @@
 - [x] Научить bridge вызывать `POST /telegram/intake`
 - [x] Научить bridge отправлять founder-facing reply обратно в ту же тему
 - [x] Реализовать worker, который забирает pending run и исполняет его
-- [x] Подключить worker к OpenClaw / Antigravity execution path
+- [x] Подключить worker к LiteLLM execution path
 - [x] Научить worker вызывать `POST /runs/:id/complete`
 - [x] Поднять contour на VPS под пользователем `ops` в ручном demo-режиме
 - [x] Подключить проект на VPS к живому Railway Postgres через `DATABASE_URL`
 - [x] Прогнать живой personal-chat smoke: Telegram message -> run -> stub execution -> complete -> reply
 - [x] Перевести demo contour из ручных SSH-сессий в устойчивый systemd-режим
 - [x] Прогнать group/topic smoke: сообщение в Telegram-группе -> run -> execution -> complete -> reply in topic
-- [ ] Зафиксировать минимальный founder-demo flow: `@assistant` и `@researcher` в живой Telegram-группе
+- [x] Зафиксировать живой founder-demo flow для `@assistant` в группе `AI_KiberOne чат` через LiteLLM
+- [ ] Зафиксировать живой founder-demo flow для `@researcher` в группе `AI_KiberOne чат`
 
 ## Phase 6. Scheduled Jobs
 
@@ -187,14 +189,14 @@
 - [x] Развернуть contour на VPS под пользователем `ops` в ручном demo-режиме
 - [x] Подключить проект к живому Railway Postgres через `DATABASE_URL`
 - [x] Перевести VPS contour на systemd services
-- [ ] Прогнать полный server smoke suite на VPS
+- [ ] Прогнать полный server smoke suite на VPS (`@assistant` done, `@researcher` pending)
 - [x] Проверить process logs после первого живого demo
 - [ ] Зафиксировать ручной runbook: `git pull -> migrate -> restart -> smoke`
 
 ## Next Step
 
 Следующий шаг по этому чеклисту:
-1. зафиксировать минимальный founder-demo flow в живой Telegram-группе для `@assistant` и `@researcher`;
-2. затем заменить demo-stub на реальный `CLI-first` OpenClaw execution adapter;
-3. после этого вернуться к `Phase 6` scheduled jobs.
+1. зафиксировать живой founder-demo flow для `@researcher` в Telegram-группе `AI_KiberOne чат`;
+2. затем отметить полный server smoke suite как completed;
+3. после этого вернуться к `Phase 6` scheduled jobs и `Phase 9` hardening.
 

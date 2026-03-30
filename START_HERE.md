@@ -47,7 +47,7 @@ Do not mix it with:
 ## Current Architecture Direction
 
 1. `VPS = execution`
-   - OpenClaw runtime
+   - LiteLLM gateway
    - Telegram bridge
    - role workers
    - execution of scheduled jobs
@@ -60,7 +60,8 @@ Do not mix it with:
    - memory / messages / decisions / runs / artifacts metadata
    - job registry and scheduled triggers
 
-3. `ops` is the future Linux user for this contour.
+3. `ops` is the active Linux user for this contour.
+4. live `@assistant` Telegram smoke through LiteLLM already passed on 2026-03-30 in the `AI_KiberOne чат` group.
 
 ## Working Rhythm
 
