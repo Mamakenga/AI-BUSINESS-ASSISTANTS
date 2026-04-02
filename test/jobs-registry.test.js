@@ -36,6 +36,17 @@ test("daily founder brief request is deterministic and does not ask for clarific
   assert.match(dailyBrief.request_text, /If fresh data is limited/i);
 });
 
+test("weekly digest request is deterministic and leader-facing", () => {
+  const jobs = listRegisteredJobs();
+  const weeklyDigest = jobs.find((job) => job.job_type === "weekly_digest");
+
+  assert.ok(weeklyDigest);
+  assert.match(weeklyDigest.output_summary, /leader/i);
+  assert.match(weeklyDigest.request_text, /Do not ask follow-up questions/i);
+  assert.match(weeklyDigest.request_text, /If confirmed information is limited/i);
+  assert.match(weeklyDigest.request_text, /focus for next week/i);
+});
+
 test("buildJobSyncPlan inserts missing jobs and updates drifted jobs", () => {
   const plan = buildJobSyncPlan([
     {

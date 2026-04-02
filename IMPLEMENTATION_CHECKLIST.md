@@ -147,7 +147,7 @@
 - [x] Добавить registry/use-case для `jobs`
 - [x] Определить, как Railway trigger вызывает VPS execution
 - [x] Реализовать `daily founder brief`
-- [ ] Реализовать `weekly digest`
+- [x] Реализовать `weekly digest`
 - [ ] Реализовать `competitor watch`
 - [ ] Реализовать `branch finance review`
 - [ ] Реализовать `weekly risk review`

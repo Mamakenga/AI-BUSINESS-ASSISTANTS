@@ -18,9 +18,9 @@ const REGISTERED_JOBS = Object.freeze([
     title: "Weekly Digest",
     assigned_agent: "assistant",
     schedule: "monday morning",
-    output_summary: "Decisions, risks, and unresolved items.",
+    output_summary: "Weekly digest for the leader with decisions, risks, and unresolved items.",
     request_text:
-      "Prepare the weekly digest in Russian for the founder. Summarize the main decisions, risks, unresolved items, and the most important next actions in a compact Telegram-friendly format.",
+      "Prepare the weekly digest for the leader in Russian. Do not ask follow-up questions. Use the available context, memory, tasks, decisions, and recent activity only. If confirmed information is limited, say that directly and still produce the best concise digest you can. Format it as a Telegram-ready update with: 1) what changed this week, 2) main decisions or shifts, 3) unresolved items, 4) risks or blockers, 5) the most important focus for next week.",
   },
   {
     job_type: "competitor_watch",
