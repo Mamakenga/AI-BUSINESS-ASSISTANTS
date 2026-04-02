@@ -45,9 +45,9 @@ const REGISTERED_JOBS = Object.freeze([
     title: "Weekly Risk Review",
     assigned_agent: "critic",
     schedule: "friday evening after finance review",
-    output_summary: "Contradictions, weak assumptions, and escalation notes.",
+    output_summary: "Weekly risk review with contradictions, weak assumptions, and escalation notes.",
     request_text:
-      "Prepare the weekly risk review in Russian. Check for contradictions, weak assumptions, and write a short escalation note if something looks fragile.",
+      "Prepare the weekly risk review in Russian. Do not ask follow-up questions. Use only available context, memory, tasks, decisions, artifacts, and recent activity. If confirmed evidence is limited, say that directly and still produce the best concise review you can. Format it as a compact critic report with: 1) contradictions or tension points, 2) weak assumptions or fragile reasoning, 3) what may become risky next, 4) one escalation note or corrective action.",
   },
   {
     job_type: "memory_cleanup",

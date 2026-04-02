@@ -75,6 +75,21 @@ test("branch finance review request is deterministic and finance-oriented", () =
   assert.match(branchFinanceReview.request_text, /one practical recommendation or next action/i);
 });
 
+test("weekly risk review request is deterministic and critic-oriented", () => {
+  const jobs = listRegisteredJobs();
+  const weeklyRiskReview = jobs.find((job) => job.job_type === "weekly_risk_review");
+
+  assert.ok(weeklyRiskReview);
+  assert.equal(weeklyRiskReview.assigned_agent, "critic");
+  assert.match(weeklyRiskReview.output_summary, /contradictions, weak assumptions, and escalation notes/i);
+  assert.match(weeklyRiskReview.request_text, /Do not ask follow-up questions/i);
+  assert.match(weeklyRiskReview.request_text, /If confirmed evidence is limited/i);
+  assert.match(weeklyRiskReview.request_text, /contradictions or tension points/i);
+  assert.match(weeklyRiskReview.request_text, /weak assumptions or fragile reasoning/i);
+  assert.match(weeklyRiskReview.request_text, /what may become risky next/i);
+  assert.match(weeklyRiskReview.request_text, /one escalation note or corrective action/i);
+});
+
 test("buildJobSyncPlan inserts missing jobs and updates drifted jobs", () => {
   const plan = buildJobSyncPlan([
     {

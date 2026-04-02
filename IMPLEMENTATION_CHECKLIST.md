@@ -150,7 +150,7 @@
 - [x] Реализовать `weekly digest`
 - [x] Реализовать `competitor watch`
 - [x] Реализовать `branch finance review`
-- [ ] Реализовать `weekly risk review`
+- [x] Реализовать `weekly risk review`
 - [ ] Реализовать `memory cleanup`
 - [x] Прогнать smoke для scheduled trigger -> VPS execution path
 
