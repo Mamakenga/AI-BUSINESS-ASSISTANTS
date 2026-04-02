@@ -30,10 +30,11 @@ If you feel lost, read only these files in this order:
 8. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md` - English technical version of the same plan
 9. `OPS_DEPLOYMENT_SKELETON.md` - deployment contour for the separate `ops` server user
 10. `DEPLOY_RUNBOOK.md` - first concrete VPS deploy and smoke sequence
-11. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md` - problem statement and decision options for separate OpenClaw execution
-12. `deploy/systemd/` - systemd unit templates for `ops-api`, `ops-telegram`, and `ops-worker`
-13. `refs/` - curated reference library for runtimes, auth/provider paths, evals, and ops patterns
-14. `V2_EXECUTION_LAYER.md` - agreed V2 execution architecture: what stays, what gets replaced, and phased migration
+11. `MANUAL_ROLE_TESTS.md` - canonical manual validation runbook for live roles and scheduled jobs
+12. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md` - problem statement and decision options for separate OpenClaw execution
+13. `deploy/systemd/` - systemd unit templates for `ops-api`, `ops-telegram`, and `ops-worker`
+14. `refs/` - curated reference library for runtimes, auth/provider paths, evals, and ops patterns
+15. `V2_EXECUTION_LAYER.md` - agreed V2 execution architecture: what stays, what gets replaced, and phased migration
 
 ## Core Separation Rule
 
@@ -63,6 +64,7 @@ Do not mix it with:
 3. `ops` is the active Linux user for this contour.
 4. live `@assistant` and `@researcher` Telegram smoke through LiteLLM already passed on 2026-03-30 in the `AI_KiberOne чат` supergroup.
 5. scheduled `daily_founder_brief` trigger -> VPS execution -> Telegram delivery already passed, including role-topic delivery into `01 Assistant`.
+6. manual validation now has a canonical runbook in `MANUAL_ROLE_TESTS.md`.
 
 ## Working Rhythm
 
@@ -79,8 +81,9 @@ Do not mix it with:
 3. `TELEGRAM_ROUTING_SPEC.md`
 4. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md`
 5. `OPS_DEPLOYMENT_SKELETON.md`
-6. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md`
-7. `V2_EXECUTION_LAYER.md`
+6. `MANUAL_ROLE_TESTS.md`
+7. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md`
+8. `V2_EXECUTION_LAYER.md`
 
 ## Reference Rule
 

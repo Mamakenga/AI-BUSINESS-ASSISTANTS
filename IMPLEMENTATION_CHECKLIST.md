@@ -39,7 +39,7 @@
 8. scheduled delivery в тему `01 Assistant` уже подтверждена.
 
 Следующий практический фокус:
-1. вернуться к scheduled jobs;
+1. прогнать manual tests для уже готовых ролей и scheduled jobs;
 2. затем перейти к hardening;
 3. держать `DEPLOY_RUNBOOK.md` как канонический операторский сценарий для VPS updates.
 4. считать Phase 6 completed на уровне job contracts and trigger path, а не как полный live-quality signoff для каждого scheduled use-case.
