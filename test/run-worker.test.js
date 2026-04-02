@@ -125,6 +125,77 @@ test("buildRunCompletionInput creates artifact payload for task-bound run", () =
   });
 });
 
+test("buildRunCompletionInput replaces thin scheduled leader digest output with safe fallback", () => {
+  const result = buildRunCompletionInput(
+    {
+      id: 90,
+      agent: "assistant",
+      task_id: null,
+      requested_by_agent: "scheduler",
+      dispatch_reason: "Prepare the daily brief for the leader in Russian.",
+    },
+    {
+      status: "completed",
+      model_used: "assistant-model",
+      fallback_chain: [],
+      reply_text: "Invented upbeat executive summary.",
+    },
+    {
+      run: {
+        id: 90,
+        agent: "assistant",
+        task_id: null,
+        requested_by_agent: "scheduler",
+        dispatch_reason: "Prepare the daily brief for the leader in Russian.",
+      },
+      task: null,
+      handoff_messages: [],
+      memory_bundle: null,
+    }
+  );
+
+  assert.match(result.reply_text, /Ежедневный бриф для руководителя/i);
+  assert.match(result.reply_text, /Что подтверждено/i);
+  assert.match(result.reply_text, /Что не подтверждено/i);
+  assert.match(result.reply_text, /Безопасный следующий шаг/i);
+  assert.ok(result.completion.fallback_chain.includes("scheduled_digest_empty_context_guard"));
+});
+
+test("buildRunCompletionInput preserves scheduled leader digest output when context is present", () => {
+  const result = buildRunCompletionInput(
+    {
+      id: 91,
+      agent: "assistant",
+      task_id: null,
+      requested_by_agent: "scheduler",
+      dispatch_reason: "Prepare the weekly digest for the leader in Russian.",
+    },
+    {
+      status: "completed",
+      model_used: "assistant-model",
+      fallback_chain: [],
+      reply_text: "Что подтверждено: есть реальные факты.",
+    },
+    {
+      run: {
+        id: 91,
+        agent: "assistant",
+        task_id: null,
+        requested_by_agent: "scheduler",
+        dispatch_reason: "Prepare the weekly digest for the leader in Russian.",
+      },
+      task: null,
+      handoff_messages: [],
+      memory_bundle: {
+        business: [{ fact: "Есть подтвержденный бизнес-факт." }],
+      },
+    }
+  );
+
+  assert.equal(result.reply_text, "Что подтверждено: есть реальные факты.");
+  assert.deepEqual(result.completion.fallback_chain, []);
+});
+
 test("normalizeExecutionResult requires reply_text for direct-answer runs", () => {
   assert.throws(
     () =>

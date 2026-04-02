@@ -11,7 +11,7 @@ const REGISTERED_JOBS = Object.freeze([
     schedule: "daily morning",
     output_summary: "Short Telegram digest for the leader.",
     request_text:
-      "Prepare the daily brief for the leader in Russian. Do not ask follow-up questions. Use the available context, memory, and recent activity only. If fresh data is limited, say that directly, do not fill gaps with invented business claims, and still produce the best concise brief you can. Format it as a Telegram-ready update with: 1) current status in 1-2 sentences, 2) important signals or changes, 3) urgent open items, 4) the main risk or blocker, 5) one recommended next step.",
+      "Prepare the daily brief for the leader in Russian. Do not ask follow-up questions. Use the available context, memory, and recent activity only. If fresh data is limited, say that directly, do not fill gaps with invented business claims, and still produce the best concise brief you can. Format it as a Telegram-ready update with exactly these sections: 1) Что подтверждено, 2) Что не подтверждено, 3) Безопасный следующий шаг.",
   },
   {
     job_type: "weekly_digest",
@@ -20,7 +20,7 @@ const REGISTERED_JOBS = Object.freeze([
     schedule: "monday morning",
     output_summary: "Weekly digest for the leader with decisions, risks, and unresolved items.",
     request_text:
-      "Prepare the weekly digest for the leader in Russian. Do not ask follow-up questions. Use the available context, memory, tasks, decisions, and recent activity only. If confirmed information is limited, say that directly, do not fill gaps with invented business claims, and still produce the best concise digest you can. Format it as a Telegram-ready update with: 1) what changed this week, 2) main decisions or shifts, 3) unresolved items, 4) risks or blockers, 5) the most important focus for next week.",
+      "Prepare the weekly digest for the leader in Russian. Do not ask follow-up questions. Use the available context, memory, tasks, decisions, and recent activity only. If confirmed information is limited, say that directly, do not fill gaps with invented business claims, and still produce the best concise digest you can. Format it as a Telegram-ready update with exactly these sections: 1) Что подтверждено, 2) Что не подтверждено, 3) Безопасный следующий шаг.",
   },
   {
     job_type: "competitor_watch",

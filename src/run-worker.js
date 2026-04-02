@@ -40,6 +40,71 @@ function normalizeWorkerRoleIds(value) {
   return requested;
 }
 
+function countMemoryBundleItems(memoryBundle) {
+  if (!memoryBundle || typeof memoryBundle !== "object") {
+    return 0;
+  }
+
+  const directScopes = ["owner", "business", "role", "task"];
+  let count = 0;
+
+  for (const scope of directScopes) {
+    const items = Array.isArray(memoryBundle[scope]) ? memoryBundle[scope] : [];
+    count += items.length;
+  }
+
+  const decisions = memoryBundle.decisions && typeof memoryBundle.decisions === "object" ? memoryBundle.decisions : {};
+  for (const scope of ["owner", "business", "task"]) {
+    const items = Array.isArray(decisions[scope]) ? decisions[scope] : [];
+    count += items.length;
+  }
+
+  return count;
+}
+
+function isScheduledLeaderDigestRun(runRow) {
+  if (runRow?.requested_by_agent !== "scheduler" || runRow?.agent !== "assistant") {
+    return false;
+  }
+
+  const reason = normalizeOptionalString(runRow.dispatch_reason)?.toLowerCase() || "";
+  return reason.includes("daily brief for the leader") || reason.includes("weekly digest for the leader");
+}
+
+function hasThinScheduledDigestContext(executionContext) {
+  if (!executionContext || !isScheduledLeaderDigestRun(executionContext.run)) {
+    return false;
+  }
+
+  const memoryItemCount = countMemoryBundleItems(executionContext.memory_bundle);
+  const hasTask = Boolean(executionContext.task);
+  const handoffCount = Array.isArray(executionContext.handoff_messages) ? executionContext.handoff_messages.length : 0;
+
+  return !hasTask && handoffCount === 0 && memoryItemCount === 0;
+}
+
+function buildLowContextScheduledDigestFallback(runRow) {
+  const reason = normalizeOptionalString(runRow?.dispatch_reason)?.toLowerCase() || "";
+  const title = reason.includes("weekly digest")
+    ? "**Еженедельный дайджест для руководителя**"
+    : "**Ежедневный бриф для руководителя**";
+
+  return [
+    title,
+    "",
+    "**Что подтверждено**",
+    "- В текущем контуре недостаточно подтвержденных данных для содержательного брифа.",
+    "",
+    "**Что не подтверждено**",
+    "- актуальный статус бизнеса или проекта",
+    "- свежие сигналы, решения, риски и блокировки",
+    "- приоритетные вопросы, требующие внимания руководителя",
+    "",
+    "**Безопасный следующий шаг**",
+    "- Добавьте 1-2 подтвержденных факта о текущем состоянии бизнеса или главной задаче руководителя, после чего бриф станет содержательным.",
+  ].join("\n");
+}
+
 function normalizeExecutionResult(runRow, payload = {}) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     throw new Error("Execution response must be an object");
@@ -146,8 +211,13 @@ function buildRunExecutionContext(input = {}) {
   };
 }
 
-function buildRunCompletionInput(runRow, executionResult) {
+function buildRunCompletionInput(runRow, executionResult, executionContext = null) {
   const normalized = normalizeExecutionResult(runRow, executionResult);
+
+  if (hasThinScheduledDigestContext(executionContext) && normalized.status === "completed") {
+    normalized.reply_text = buildLowContextScheduledDigestFallback(runRow);
+    normalized.fallback_chain = [...normalized.fallback_chain, "scheduled_digest_empty_context_guard"];
+  }
 
   const completion = {
     actor_agent: runRow.agent,

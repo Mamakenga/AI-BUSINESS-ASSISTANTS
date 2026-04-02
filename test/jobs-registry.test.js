@@ -35,6 +35,9 @@ test("daily founder brief request is deterministic and does not ask for clarific
   assert.match(dailyBrief.request_text, /leader/i);
   assert.match(dailyBrief.request_text, /If fresh data is limited/i);
   assert.match(dailyBrief.request_text, /do not fill gaps with invented business claims/i);
+  assert.match(dailyBrief.request_text, /Что подтверждено/i);
+  assert.match(dailyBrief.request_text, /Что не подтверждено/i);
+  assert.match(dailyBrief.request_text, /Безопасный следующий шаг/i);
 });
 
 test("weekly digest request is deterministic and leader-facing", () => {
@@ -47,7 +50,9 @@ test("weekly digest request is deterministic and leader-facing", () => {
   assert.match(weeklyDigest.request_text, /Do not ask follow-up questions/i);
   assert.match(weeklyDigest.request_text, /If confirmed information is limited/i);
   assert.match(weeklyDigest.request_text, /do not fill gaps with invented business claims/i);
-  assert.match(weeklyDigest.request_text, /focus for next week/i);
+  assert.match(weeklyDigest.request_text, /Что подтверждено/i);
+  assert.match(weeklyDigest.request_text, /Что не подтверждено/i);
+  assert.match(weeklyDigest.request_text, /Безопасный следующий шаг/i);
 });
 
 test("competitor watch request is deterministic and escalation-oriented", () => {

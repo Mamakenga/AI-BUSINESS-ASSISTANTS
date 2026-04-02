@@ -218,7 +218,7 @@ async function processOneRun(runRow) {
       env: process.env,
     });
 
-    const { completion, reply_text } = buildRunCompletionInput(runRow, executorResponse);
+    const { completion, reply_text } = buildRunCompletionInput(runRow, executorResponse, executionContext);
     const completeResponse = await callControlApi(`/runs/${runRow.id}/complete`, completion);
 
     return {
