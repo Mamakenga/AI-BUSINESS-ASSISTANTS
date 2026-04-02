@@ -19,7 +19,7 @@ function buildReplyText(intakePlan) {
   }
 
   if (intakePlan.route.interaction_type === "direct_answer") {
-    return `Принял. Передаю вопрос ${roleLabel}.`;
+    return "Принял. Ответ будет здесь.";
   }
 
   return `Принял. Ставлю задачу ${roleLabel}.`;

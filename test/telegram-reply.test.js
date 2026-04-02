@@ -45,7 +45,7 @@ test("reply for one-role task stays short and does not expose internals", () => 
   assert.equal(reply.text.includes("task_"), false);
 });
 
-test("reply for direct answer sounds like question handoff", () => {
+test("reply for direct answer stays neutral and does not sound like self-handoff", () => {
   const intakePlan = buildTelegramIntakePlan(
     {
       text: "@finance сколько у нас учеников",
@@ -58,7 +58,7 @@ test("reply for direct answer sounds like question handoff", () => {
     topic_name: "04 Finance",
   });
 
-  assert.equal(reply.text, "Принял. Передаю вопрос финансовому аналитику.");
+  assert.equal(reply.text, "Принял. Ответ будет здесь.");
 });
 
 test("reply for orchestrator multi-role task stays high-level", () => {
