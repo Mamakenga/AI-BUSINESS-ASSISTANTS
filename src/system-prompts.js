@@ -176,6 +176,18 @@ function buildSystemPrompt(executionContext) {
     );
   }
 
+  if (requestType === "direct-answer" && roleId === "finance_analyst") {
+    sections.push(
+      [
+        "Finance direct-answer rules:",
+        "1. If the founder asks about financial anomalies, risks, or warning signs, answer from the available numbers, memory, and recent evidence instead of asking for a full finance brief.",
+        "2. If confirmed financial evidence is limited, say that directly.",
+        "3. Use a compact structure: a) what is confirmed in the available financial picture, b) what remains unclear or unconfirmed, c) one safest next finance check or action.",
+        "4. Even when confirmed financial evidence is absent, still include b) what remains unclear or unconfirmed and c) one safest next finance check or action instead of stopping after a clarification request.",
+      ].join("\n")
+    );
+  }
+
   if (executionContext?.run?.requested_by_agent === "scheduler") {
     sections.push(
       [

@@ -275,6 +275,40 @@ test("buildSystemPrompt adds direct-answer guardrails for researcher signal ques
   assert.equal(result.meta.request_type, "direct-answer");
 });
 
+test("buildSystemPrompt adds direct-answer guardrails for finance anomaly questions", () => {
+  const result = buildSystemPrompt({
+    role: {
+      id: "finance_analyst",
+      execution_mode: "single_role_worker",
+      output_contract: "finance_review_v1",
+    },
+    run: {
+      task_id: null,
+      requested_by_agent: null,
+    },
+    task: null,
+    founder_request: "@finance есть ли у нас сейчас явные финансовые аномалии или тревожные сигналы?",
+    handoff_messages: [],
+    memory_bundle: {
+      business: [{ fact: "Свежих подтвержденных финансовых аномалий в памяти сейчас нет." }],
+    },
+  });
+
+  assert.match(result.prompt, /Direct-answer rules:/);
+  assert.match(result.prompt, /Finance direct-answer rules:/);
+  assert.match(result.prompt, /answer from the available numbers, memory, and recent evidence instead of asking for a full finance brief/i);
+  assert.match(result.prompt, /If confirmed financial evidence is limited, say that directly/i);
+  assert.match(
+    result.prompt,
+    /what is confirmed in the available financial picture, b\) what remains unclear or unconfirmed, c\) one safest next finance check or action/i
+  );
+  assert.match(
+    result.prompt,
+    /Even when confirmed financial evidence is absent, still include b\) what remains unclear or unconfirmed and c\) one safest next finance check or action/i
+  );
+  assert.equal(result.meta.request_type, "direct-answer");
+});
+
 test("buildSystemPrompt does not inject direct-answer guardrails into scheduled runs", () => {
   const result = buildSystemPrompt({
     role: {
