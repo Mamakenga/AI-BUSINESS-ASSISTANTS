@@ -6,7 +6,12 @@ const { Pool } = require("pg");
 const { authorizeInternalRequest } = require("./control-api-auth");
 const { buildFollowUpRun } = require("./follow-up-run");
 const { buildJobTrigger } = require("./job-trigger");
-const { buildJobSyncPlan, getRegisteredJobMap, mergeRegisteredJobsWithStoredRows } = require("./jobs-registry");
+const {
+  buildJobSyncPlan,
+  getRegisteredJobMap,
+  mergeRegisteredJobWithStoredRow,
+  mergeRegisteredJobsWithStoredRows,
+} = require("./jobs-registry");
 const { buildMemoryBundleRequest, createEmptyBundleResult, trimMemoryBundle } = require("./memory-bundles");
 const { buildMemoryCompaction, normalizeSourceMemoryIds } = require("./memory-compaction");
 const { buildMemoryCandidate, parseMemoryQuery } = require("./memory-service");
@@ -453,8 +458,13 @@ app.post("/jobs/:jobType/trigger", async (req, res, next) => {
 
     await client.query("COMMIT");
 
+    const mergedJob = mergeRegisteredJobWithStoredRow(mapJobRow(updatedJobResult.rows[0]));
+    if (!mergedJob) {
+      throw new Error(`Failed to merge triggered job snapshot for job_type: ${registeredJob.job_type}`);
+    }
+
     return res.status(201).json({
-      job: mergeRegisteredJobsWithStoredRows([mapJobRow(updatedJobResult.rows[0])])[0],
+      job: mergedJob,
       run: mapRunRow(runResult.rows[0]),
       trigger: trigger.trigger,
     });

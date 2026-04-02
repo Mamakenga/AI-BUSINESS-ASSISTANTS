@@ -212,10 +212,21 @@ function mergeRegisteredJobsWithStoredRows(existingRows = []) {
   return items;
 }
 
+function mergeRegisteredJobWithStoredRow(storedRow) {
+  if (!storedRow || !storedRow.job_type) {
+    return null;
+  }
+
+  return (
+    mergeRegisteredJobsWithStoredRows([storedRow]).find((item) => item.job_type === storedRow.job_type) || null
+  );
+}
+
 module.exports = {
   buildJobSyncPlan,
   getRegisteredJobMap,
   listRegisteredJobs,
+  mergeRegisteredJobWithStoredRow,
   mergeRegisteredJobsWithStoredRows,
   REGISTERED_JOBS,
 };

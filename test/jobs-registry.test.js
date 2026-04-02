@@ -6,6 +6,7 @@ const assert = require("node:assert/strict");
 const {
   buildJobSyncPlan,
   listRegisteredJobs,
+  mergeRegisteredJobWithStoredRow,
   mergeRegisteredJobsWithStoredRows,
 } = require("../src/jobs-registry");
 
@@ -199,4 +200,22 @@ test("mergeRegisteredJobsWithStoredRows surfaces unregistered stored jobs instea
   assert.equal(manualJob.registry_status, "unregistered_in_db");
   assert.equal(manualJob.title, null);
   assert.equal(manualJob.output_summary, null);
+});
+
+test("mergeRegisteredJobWithStoredRow returns the matching registered snapshot instead of the first catalog item", () => {
+  const weeklyDigest = mergeRegisteredJobWithStoredRow({
+    id: 44,
+    job_type: "weekly_digest",
+    assigned_agent: "assistant",
+    schedule: "monday morning",
+    enabled: true,
+    last_run_at: null,
+    next_run_at: null,
+    created_at: "2026-04-02T08:00:00.000Z",
+  });
+
+  assert.ok(weeklyDigest);
+  assert.equal(weeklyDigest.job_type, "weekly_digest");
+  assert.equal(weeklyDigest.id, 44);
+  assert.equal(weeklyDigest.title, "Weekly Digest");
 });
