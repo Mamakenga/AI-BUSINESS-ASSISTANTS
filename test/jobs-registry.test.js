@@ -61,6 +61,20 @@ test("competitor watch request is deterministic and escalation-oriented", () => 
   assert.match(competitorWatch.request_text, /one recommended next action/i);
 });
 
+test("branch finance review request is deterministic and finance-oriented", () => {
+  const jobs = listRegisteredJobs();
+  const branchFinanceReview = jobs.find((job) => job.job_type === "branch_finance_review");
+
+  assert.ok(branchFinanceReview);
+  assert.equal(branchFinanceReview.assigned_agent, "finance_analyst");
+  assert.match(branchFinanceReview.output_summary, /anomalies, risks, and practical recommendations/i);
+  assert.match(branchFinanceReview.request_text, /Do not ask follow-up questions/i);
+  assert.match(branchFinanceReview.request_text, /If confirmed financial information is limited/i);
+  assert.match(branchFinanceReview.request_text, /branch-level anomalies or unusual shifts/i);
+  assert.match(branchFinanceReview.request_text, /what requires escalation to the leader/i);
+  assert.match(branchFinanceReview.request_text, /one practical recommendation or next action/i);
+});
+
 test("buildJobSyncPlan inserts missing jobs and updates drifted jobs", () => {
   const plan = buildJobSyncPlan([
     {

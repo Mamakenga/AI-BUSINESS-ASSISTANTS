@@ -36,9 +36,9 @@ const REGISTERED_JOBS = Object.freeze([
     title: "Branch Finance Review",
     assigned_agent: "finance_analyst",
     schedule: "friday evening",
-    output_summary: "Branch-level anomalies, risky trends, and founder-facing questions.",
+    output_summary: "Branch-level finance review with anomalies, risks, and practical recommendations.",
     request_text:
-      "Prepare the branch finance review in Russian. Highlight branch-level anomalies, risky trends in numbers, and short founder-facing questions or recommendations.",
+      "Prepare the branch finance review in Russian. Do not ask follow-up questions. Use only available context, memory, tasks, decisions, and recent activity. If confirmed financial information is limited, say that directly and still produce the best concise review you can. Format it as a compact report with: 1) branch-level anomalies or unusual shifts, 2) risky trends in numbers, 3) what requires escalation to the leader, 4) one practical recommendation or next action.",
   },
   {
     job_type: "weekly_risk_review",
