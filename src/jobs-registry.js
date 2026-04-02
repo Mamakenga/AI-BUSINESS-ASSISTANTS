@@ -27,9 +27,9 @@ const REGISTERED_JOBS = Object.freeze([
     title: "Competitor Watch",
     assigned_agent: "researcher",
     schedule: "daily",
-    output_summary: "Market changes, memory updates, and relevant cross-role messages.",
+    output_summary: "Daily competitor watch with grounded market signals and escalation notes.",
     request_text:
-      "Run the daily competitor watch in Russian. Summarize notable market changes, important competitor signals, and anything that should be escalated to assistant, methodist, or finance_analyst.",
+      "Run the daily competitor watch in Russian. Do not ask follow-up questions. Use only available context, memory, tasks, decisions, and recent activity. If confirmed competitor information is limited, say that directly and still produce the best concise report you can. Format it as a compact update with: 1) confirmed competitor or market signals, 2) why they matter for us, 3) what should be escalated to assistant, methodist, or finance_analyst, 4) one recommended next action.",
   },
   {
     job_type: "branch_finance_review",

@@ -48,6 +48,19 @@ test("weekly digest request is deterministic and leader-facing", () => {
   assert.match(weeklyDigest.request_text, /focus for next week/i);
 });
 
+test("competitor watch request is deterministic and escalation-oriented", () => {
+  const jobs = listRegisteredJobs();
+  const competitorWatch = jobs.find((job) => job.job_type === "competitor_watch");
+
+  assert.ok(competitorWatch);
+  assert.equal(competitorWatch.assigned_agent, "researcher");
+  assert.match(competitorWatch.output_summary, /grounded market signals/i);
+  assert.match(competitorWatch.request_text, /Do not ask follow-up questions/i);
+  assert.match(competitorWatch.request_text, /If confirmed competitor information is limited/i);
+  assert.match(competitorWatch.request_text, /assistant, methodist, or finance_analyst/i);
+  assert.match(competitorWatch.request_text, /one recommended next action/i);
+});
+
 test("buildJobSyncPlan inserts missing jobs and updates drifted jobs", () => {
   const plan = buildJobSyncPlan([
     {
