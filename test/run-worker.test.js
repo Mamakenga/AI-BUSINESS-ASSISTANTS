@@ -154,11 +154,11 @@ test("buildRunCompletionInput replaces thin scheduled leader digest output with 
     }
   );
 
-  assert.match(result.reply_text, /Ежедневный бриф для руководителя/i);
-  assert.match(result.reply_text, /Что подтверждено/i);
-  assert.match(result.reply_text, /Что не подтверждено/i);
-  assert.match(result.reply_text, /Безопасный следующий шаг/i);
-  assert.ok(result.completion.fallback_chain.includes("scheduled_digest_empty_context_guard"));
+  assert.ok(result.reply_text.includes("Ежедневный бриф для руководителя"));
+  assert.ok(result.reply_text.includes("Что подтверждено"));
+  assert.ok(result.reply_text.includes("Что не подтверждено"));
+  assert.ok(result.reply_text.includes("Безопасный следующий шаг"));
+  assert.ok(result.completion.fallback_chain.includes("scheduled_empty_context_guard"));
 });
 
 test("buildRunCompletionInput preserves scheduled leader digest output when context is present", () => {
@@ -194,6 +194,117 @@ test("buildRunCompletionInput preserves scheduled leader digest output when cont
 
   assert.equal(result.reply_text, "Что подтверждено: есть реальные факты.");
   assert.deepEqual(result.completion.fallback_chain, []);
+});
+
+test("buildRunCompletionInput replaces thin scheduled competitor watch output with safe fallback", () => {
+  const result = buildRunCompletionInput(
+    {
+      id: 92,
+      agent: "researcher",
+      task_id: null,
+      requested_by_agent: "scheduler",
+      dispatch_reason: "Run the daily competitor watch in Russian.",
+    },
+    {
+      status: "completed",
+      model_used: "researcher-model",
+      fallback_chain: [],
+      reply_text: "Invented competitor events and market shifts.",
+    },
+    {
+      run: {
+        id: 92,
+        agent: "researcher",
+        task_id: null,
+        requested_by_agent: "scheduler",
+        dispatch_reason: "Run the daily competitor watch in Russian.",
+      },
+      task: null,
+      handoff_messages: [],
+      memory_bundle: null,
+    }
+  );
+
+  assert.ok(result.reply_text.includes("Ежедневный мониторинг конкурентов"));
+  assert.ok(result.reply_text.includes("Подтвержденные сигналы конкурентов или рынка"));
+  assert.ok(result.reply_text.includes("Почему это важно для нас"));
+  assert.ok(result.reply_text.includes("Эскалация"));
+  assert.ok(result.reply_text.includes("Рекомендованное следующее действие"));
+  assert.ok(result.completion.fallback_chain.includes("scheduled_empty_context_guard"));
+});
+
+test("buildRunCompletionInput replaces thin scheduled finance review output with safe fallback", () => {
+  const result = buildRunCompletionInput(
+    {
+      id: 93,
+      agent: "finance_analyst",
+      task_id: null,
+      requested_by_agent: "scheduler",
+      dispatch_reason: "Prepare the branch finance review in Russian.",
+    },
+    {
+      status: "completed",
+      model_used: "finance-model",
+      fallback_chain: [],
+      reply_text: "Invented branch anomalies and suspicious finance trends.",
+    },
+    {
+      run: {
+        id: 93,
+        agent: "finance_analyst",
+        task_id: null,
+        requested_by_agent: "scheduler",
+        dispatch_reason: "Prepare the branch finance review in Russian.",
+      },
+      task: null,
+      handoff_messages: [],
+      memory_bundle: null,
+    }
+  );
+
+  assert.ok(result.reply_text.includes("Финансовый обзор филиала"));
+  assert.ok(result.reply_text.includes("Аномалии или необычные сдвиги"));
+  assert.ok(result.reply_text.includes("Рискованные тренды в цифрах"));
+  assert.ok(result.reply_text.includes("Что требует эскалации руководителю"));
+  assert.ok(result.reply_text.includes("Практическая рекомендация"));
+  assert.ok(result.completion.fallback_chain.includes("scheduled_empty_context_guard"));
+});
+
+test("buildRunCompletionInput replaces thin scheduled risk review output with safe fallback", () => {
+  const result = buildRunCompletionInput(
+    {
+      id: 94,
+      agent: "critic",
+      task_id: null,
+      requested_by_agent: "scheduler",
+      dispatch_reason: "Prepare the weekly risk review in Russian.",
+    },
+    {
+      status: "completed",
+      model_used: "critic-model",
+      fallback_chain: [],
+      reply_text: "Invented contradictions and expanded risk register.",
+    },
+    {
+      run: {
+        id: 94,
+        agent: "critic",
+        task_id: null,
+        requested_by_agent: "scheduler",
+        dispatch_reason: "Prepare the weekly risk review in Russian.",
+      },
+      task: null,
+      handoff_messages: [],
+      memory_bundle: null,
+    }
+  );
+
+  assert.ok(result.reply_text.includes("Еженедельный обзор рисков"));
+  assert.ok(result.reply_text.includes("Противоречия или точки напряжения"));
+  assert.ok(result.reply_text.includes("Слабые допущения или хрупкая логика"));
+  assert.ok(result.reply_text.includes("Что может стать рискованным следующим"));
+  assert.ok(result.reply_text.includes("Эскалация или корректирующее действие"));
+  assert.ok(result.completion.fallback_chain.includes("scheduled_empty_context_guard"));
 });
 
 test("normalizeExecutionResult requires reply_text for direct-answer runs", () => {
