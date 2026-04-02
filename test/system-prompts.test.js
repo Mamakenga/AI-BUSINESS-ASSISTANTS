@@ -215,6 +215,7 @@ test("buildSystemPrompt adds direct-answer guardrails for assistant urgency ques
   assert.match(result.prompt, /best available answer plus one concrete next step/i);
   assert.match(result.prompt, /Do not end the answer with a request to clarify the whole situation/i);
   assert.match(result.prompt, /Never quote raw memory labels or internal scope tags/i);
+  assert.match(result.prompt, /Never mention internal record ids, UUIDs, memory ids, or database-style identifiers/i);
   assert.match(result.prompt, /Assistant direct-answer rules:/);
   assert.match(result.prompt, /answer from the available context instead of asking for a broad project restatement/i);
   assert.match(result.prompt, /what is confirmed right now, b\) what is unclear, c\) the safest next action/i);
@@ -337,11 +338,15 @@ test("buildSystemPrompt adds direct-answer guardrails for critic weakness questi
   assert.match(result.prompt, /If confirmed evidence is limited, say that directly/i);
   assert.match(
     result.prompt,
-    /what is confirmed as a weak point, contradiction, or fragile assumption, b\) what remains unverified or unclear, c\) one safest verification step or corrective action/i
+    /what is confirmed as a weak point, contradiction, or fragile assumption, b\) what remains unverified or unclear, c\) one short safest verification step or corrective action/i
   );
   assert.match(
     result.prompt,
-    /Even when confirmed evidence is absent, still include b\) what remains unverified or unclear and c\) one safest verification step or corrective action instead of inventing detailed business risks/i
+    /Even when confirmed evidence is absent, still include b\) what remains unverified or unclear and c\) one short safest verification step or corrective action instead of inventing detailed business risks/i
+  );
+  assert.match(
+    result.prompt,
+    /Do not turn c\) into a long intake questionnaire, multi-step audit plan, or checklist for filling the whole business profile/i
   );
   assert.equal(result.meta.request_type, "direct-answer");
 });

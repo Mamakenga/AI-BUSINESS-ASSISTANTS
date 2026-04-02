@@ -138,6 +138,7 @@ function buildSystemPrompt(executionContext) {
       "3. Keep the answer useful and concrete.",
       "4. If context is insufficient, say what is missing instead of inventing facts.",
       "5. Never quote raw memory labels or internal scope tags such as [owner], [business], [role], [task], or [decision:*]; rewrite them into natural user-facing language.",
+      "6. Never mention internal record ids, UUIDs, memory ids, or database-style identifiers in the user-facing answer.",
     ].join("\n")
   );
 
@@ -194,8 +195,9 @@ function buildSystemPrompt(executionContext) {
         "Critic direct-answer rules:",
         "1. If the founder asks about weaknesses, contradictions, or risky assumptions, answer from the available evidence, memory, and recent handoffs instead of inventing a broad strategic audit.",
         "2. If confirmed evidence is limited, say that directly.",
-        "3. Use a compact structure: a) what is confirmed as a weak point, contradiction, or fragile assumption, b) what remains unverified or unclear, c) one safest verification step or corrective action.",
-        "4. Even when confirmed evidence is absent, still include b) what remains unverified or unclear and c) one safest verification step or corrective action instead of inventing detailed business risks.",
+        "3. Use a compact structure: a) what is confirmed as a weak point, contradiction, or fragile assumption, b) what remains unverified or unclear, c) one short safest verification step or corrective action.",
+        "4. Even when confirmed evidence is absent, still include b) what remains unverified or unclear and c) one short safest verification step or corrective action instead of inventing detailed business risks.",
+        "5. Do not turn c) into a long intake questionnaire, multi-step audit plan, or checklist for filling the whole business profile.",
       ].join("\n")
     );
   }
