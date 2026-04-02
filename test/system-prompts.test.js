@@ -168,6 +168,39 @@ test("buildSystemPrompt trims memory facts to budget and preserves task context"
   assert.ok(result.prompt.length <= FIXED_SCAFFOLDING_TOKEN_CEILING * 4);
 });
 
+test("buildSystemPrompt sanitizes internal identifiers from memory facts and handoffs", () => {
+  const result = buildSystemPrompt({
+    role: {
+      id: "critic",
+      execution_mode: "single_role_worker",
+      output_contract: "critic_review_v1",
+    },
+    run: {
+      task_id: null,
+      requested_by_agent: null,
+    },
+    task: null,
+    founder_request: "@critic есть ли сейчас у нас слабые места?",
+    handoff_messages: [
+      { from_agent: "researcher", content: "Есть только один зафиксированный конкурентный факт (ID: 7a04104a)." },
+      { from_agent: "assistant", content: "Последний handoff thread_id: 7a04104a-18c8-4f1f-8f98-58d63737c820." },
+    ],
+    memory_bundle: {
+      business: [{ fact: "Есть только один долгосрочный факт о конкуренте (запись 7a04104a)." }],
+      decisions: {
+        owner: [{ decision: "Опираемся только на подтвержденные сигналы, без memory_id: 7a04104a." }],
+      },
+    },
+  });
+
+  assert.doesNotMatch(result.prompt, /7a04104a/i);
+  assert.doesNotMatch(result.prompt, /thread_id/i);
+  assert.doesNotMatch(result.prompt, /memory_id/i);
+  assert.match(result.prompt, /Есть только один долгосрочный факт о конкуренте/);
+  assert.match(result.prompt, /Есть только один зафиксированный конкурентный факт/);
+  assert.match(result.prompt, /Опираемся только на подтвержденные сигналы/);
+});
+
 test("buildSystemPrompt adds scheduled-run guardrails to prevent clarification loops", () => {
   const result = buildSystemPrompt({
     role: {

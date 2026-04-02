@@ -14,6 +14,26 @@ function normalizeOptionalString(value) {
   return normalized.length > 0 ? normalized : null;
 }
 
+function sanitizeUserFacingPromptText(value) {
+  const normalized = normalizeOptionalString(value);
+  if (!normalized) {
+    return null;
+  }
+
+  let sanitized = normalized
+    .replace(/\((?:[^)]*?)\b(?:id|uuid|run_id|task_id|thread_id|memory[_ ]?id|record[_ ]?id)\b[^)]*\)/gi, "")
+    .replace(/\((?:[^)]*?)запись\s*[a-f0-9-]{6,}[^)]*\)/gi, "")
+    .replace(/\b(?:id|uuid|run_id|task_id|thread_id|memory[_ ]?id|record[_ ]?id)\s*[:#]?\s*[a-f0-9-]{6,}\b/gi, "")
+    .replace(/запись\s+[a-f0-9-]{6,}/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,.;:!?])/g, "$1")
+    .trim();
+
+  sanitized = sanitized.replace(/\(\s*\)/g, "").trim();
+
+  return sanitized.length > 0 ? sanitized : null;
+}
+
 function toCharBudget(tokens) {
   return tokens * CHARS_PER_TOKEN;
 }
@@ -58,7 +78,7 @@ function buildMemoryFacts(memoryBundle) {
   for (const scope of scopeOrder) {
     const items = Array.isArray(memoryBundle[scope]) ? memoryBundle[scope] : [];
     for (const item of items) {
-      const fact = normalizeOptionalString(item?.fact);
+      const fact = sanitizeUserFacingPromptText(item?.fact);
       if (!fact) {
         continue;
       }
@@ -71,7 +91,7 @@ function buildMemoryFacts(memoryBundle) {
   for (const scope of ["owner", "business", "task"]) {
     const items = Array.isArray(decisions[scope]) ? decisions[scope] : [];
     for (const item of items) {
-      const decision = normalizeOptionalString(item?.decision);
+      const decision = sanitizeUserFacingPromptText(item?.decision);
       if (!decision) {
         continue;
       }
@@ -229,7 +249,7 @@ function buildSystemPrompt(executionContext) {
       .slice(-2)
       .reverse()
       .map((message) => {
-        const content = truncateString(message.content, toCharBudget(HANDOFF_BUDGET_TOKENS));
+        const content = truncateString(sanitizeUserFacingPromptText(message.content), toCharBudget(HANDOFF_BUDGET_TOKENS));
         if (!content) {
           return null;
         }
