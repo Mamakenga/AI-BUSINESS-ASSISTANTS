@@ -42,6 +42,7 @@
 1. вернуться к scheduled jobs;
 2. затем перейти к hardening;
 3. держать `DEPLOY_RUNBOOK.md` как канонический операторский сценарий для VPS updates.
+4. считать Phase 6 completed на уровне job contracts and trigger path, а не как полный live-quality signoff для каждого scheduled use-case.
 
 ## Phase 0. Project Bootstrap
 
@@ -151,7 +152,7 @@
 - [x] Реализовать `competitor watch`
 - [x] Реализовать `branch finance review`
 - [x] Реализовать `weekly risk review`
-- [ ] Реализовать `memory cleanup`
+- [x] Реализовать `memory cleanup`
 - [x] Прогнать smoke для scheduled trigger -> VPS execution path
 
 ## Phase 7. Founder Mini App Board

@@ -54,9 +54,9 @@ const REGISTERED_JOBS = Object.freeze([
     title: "Memory Cleanup",
     assigned_agent: "memory_curator",
     schedule: "twice per week",
-    output_summary: "Compacted memory and promoted long-term facts.",
+    output_summary: "Memory cleanup report with compaction, promotion, and noise reduction notes.",
     request_text:
-      "Run memory cleanup in Russian. Compact raw memory, promote durable facts, and report what was compacted or promoted.",
+      "Run memory cleanup in Russian. Do not ask follow-up questions. Use only available context, memory, decisions, artifacts, and recent activity. If compactable evidence is limited, say that directly and still produce the best concise curator report you can. Format it as a compact memory report with: 1) what should be compacted or merged, 2) what should be promoted into durable memory, 3) what looks noisy, duplicated, or stale, 4) one corrective memory action.",
   },
 ]);
 

@@ -90,6 +90,21 @@ test("weekly risk review request is deterministic and critic-oriented", () => {
   assert.match(weeklyRiskReview.request_text, /one escalation note or corrective action/i);
 });
 
+test("memory cleanup request is deterministic and curator-oriented", () => {
+  const jobs = listRegisteredJobs();
+  const memoryCleanup = jobs.find((job) => job.job_type === "memory_cleanup");
+
+  assert.ok(memoryCleanup);
+  assert.equal(memoryCleanup.assigned_agent, "memory_curator");
+  assert.match(memoryCleanup.output_summary, /compaction, promotion, and noise reduction notes/i);
+  assert.match(memoryCleanup.request_text, /Do not ask follow-up questions/i);
+  assert.match(memoryCleanup.request_text, /If compactable evidence is limited/i);
+  assert.match(memoryCleanup.request_text, /what should be compacted or merged/i);
+  assert.match(memoryCleanup.request_text, /what should be promoted into durable memory/i);
+  assert.match(memoryCleanup.request_text, /what looks noisy, duplicated, or stale/i);
+  assert.match(memoryCleanup.request_text, /one corrective memory action/i);
+});
+
 test("buildJobSyncPlan inserts missing jobs and updates drifted jobs", () => {
   const plan = buildJobSyncPlan([
     {
