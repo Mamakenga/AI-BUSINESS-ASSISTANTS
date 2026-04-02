@@ -31,13 +31,16 @@ test("daily founder brief request is deterministic and does not ask for clarific
   const dailyBrief = jobs.find((job) => job.job_type === "daily_founder_brief");
 
   assert.ok(dailyBrief);
+  assert.equal(dailyBrief.assigned_agent, "assistant");
   assert.match(dailyBrief.request_text, /Do not ask follow-up questions/i);
   assert.match(dailyBrief.request_text, /leader/i);
   assert.match(dailyBrief.request_text, /If fresh data is limited/i);
   assert.match(dailyBrief.request_text, /do not fill gaps with invented business claims/i);
-  assert.match(dailyBrief.request_text, /Что подтверждено/i);
-  assert.match(dailyBrief.request_text, /Что не подтверждено/i);
-  assert.match(dailyBrief.request_text, /Безопасный следующий шаг/i);
+  assert.ok(dailyBrief.request_text.includes("Текущий статус"));
+  assert.ok(dailyBrief.request_text.includes("Подтвержденные сигналы и изменения"));
+  assert.ok(dailyBrief.request_text.includes("Срочные открытые вопросы"));
+  assert.ok(dailyBrief.request_text.includes("Главный риск или блокировка"));
+  assert.ok(dailyBrief.request_text.includes("Безопасный следующий шаг"));
 });
 
 test("weekly digest request is deterministic and leader-facing", () => {
@@ -50,9 +53,11 @@ test("weekly digest request is deterministic and leader-facing", () => {
   assert.match(weeklyDigest.request_text, /Do not ask follow-up questions/i);
   assert.match(weeklyDigest.request_text, /If confirmed information is limited/i);
   assert.match(weeklyDigest.request_text, /do not fill gaps with invented business claims/i);
-  assert.match(weeklyDigest.request_text, /Что подтверждено/i);
-  assert.match(weeklyDigest.request_text, /Что не подтверждено/i);
-  assert.match(weeklyDigest.request_text, /Безопасный следующий шаг/i);
+  assert.ok(weeklyDigest.request_text.includes("Что изменилось за неделю"));
+  assert.ok(weeklyDigest.request_text.includes("Подтвержденные решения или сдвиги"));
+  assert.ok(weeklyDigest.request_text.includes("Нерешенные вопросы"));
+  assert.ok(weeklyDigest.request_text.includes("Риски или блокировки"));
+  assert.ok(weeklyDigest.request_text.includes("Главный фокус на следующую неделю"));
 });
 
 test("competitor watch request is deterministic and escalation-oriented", () => {

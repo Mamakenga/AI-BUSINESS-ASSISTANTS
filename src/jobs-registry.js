@@ -11,7 +11,7 @@ const REGISTERED_JOBS = Object.freeze([
     schedule: "daily morning",
     output_summary: "Short Telegram digest for the leader.",
     request_text:
-      "Prepare the daily brief for the leader in Russian. Do not ask follow-up questions. Use the available context, memory, and recent activity only. If fresh data is limited, say that directly, do not fill gaps with invented business claims, and still produce the best concise brief you can. Format it as a Telegram-ready update with exactly these sections: 1) Что подтверждено, 2) Что не подтверждено, 3) Безопасный следующий шаг.",
+      "Prepare the daily brief for the leader in Russian. Do not ask follow-up questions. Use the available context, memory, and recent activity only. If fresh data is limited, say that directly, do not fill gaps with invented business claims, and still produce the best concise brief you can. Keep it executive-friendly, but only state what is actually supported by the available context. Format it as a Telegram-ready update with exactly these sections: 1) Текущий статус, 2) Подтвержденные сигналы и изменения, 3) Срочные открытые вопросы, 4) Главный риск или блокировка, 5) Безопасный следующий шаг.",
   },
   {
     job_type: "weekly_digest",
@@ -20,7 +20,7 @@ const REGISTERED_JOBS = Object.freeze([
     schedule: "monday morning",
     output_summary: "Weekly digest for the leader with decisions, risks, and unresolved items.",
     request_text:
-      "Prepare the weekly digest for the leader in Russian. Do not ask follow-up questions. Use the available context, memory, tasks, decisions, and recent activity only. If confirmed information is limited, say that directly, do not fill gaps with invented business claims, and still produce the best concise digest you can. Format it as a Telegram-ready update with exactly these sections: 1) Что подтверждено, 2) Что не подтверждено, 3) Безопасный следующий шаг.",
+      "Prepare the weekly digest for the leader in Russian. Do not ask follow-up questions. Use the available context, memory, tasks, decisions, and recent activity only. If confirmed information is limited, say that directly, do not fill gaps with invented business claims, and still produce the best concise digest you can. Keep it executive-friendly, but only state what is actually supported by the available context. Format it as a Telegram-ready update with exactly these sections: 1) Что изменилось за неделю, 2) Подтвержденные решения или сдвиги, 3) Нерешенные вопросы, 4) Риски или блокировки, 5) Главный фокус на следующую неделю.",
   },
   {
     job_type: "competitor_watch",
