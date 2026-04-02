@@ -20,6 +20,7 @@ Before manual tests:
    - `02 Researcher`
    - `04 Finance`
    - `05 Critic`
+6. `03 Methodist` is intentionally outside the standard live sweep until the first confirmed live methodist dispatch is recorded
 
 ## 2. What Good Looks Like
 
@@ -32,6 +33,10 @@ For every manual test, check:
 6. the reply is readable in Telegram without backend noise
 
 ## 3. Founder-Facing Role Tests
+
+Deferred for now:
+1. `methodist` is implemented at the routing/profile level, but the canonical live manual sweep should include it only after the first confirmed live methodist dispatch
+2. `orchestrator` is intentionally deferred here because it needs a multi-role scenario, not a single-role prompt in one topic
 
 ### 3.1 Assistant
 
@@ -105,7 +110,7 @@ Pass:
 1. run is created
 2. delivery goes to `01 Assistant`
 3. text is compact and leader-facing
-4. no generic “please provide more information”
+4. no generic "please provide more information"
 
 ### 4.2 Weekly Digest
 
