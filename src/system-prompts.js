@@ -63,7 +63,7 @@ function buildMemoryFacts(memoryBundle) {
         continue;
       }
 
-      facts.push(`[${scope}] ${fact}`);
+      facts.push(fact);
     }
   }
 
@@ -76,7 +76,7 @@ function buildMemoryFacts(memoryBundle) {
         continue;
       }
 
-      facts.push(`[decision:${scope}] ${decision}`);
+      facts.push(decision);
     }
   }
 
@@ -137,6 +137,7 @@ function buildSystemPrompt(executionContext) {
       "2. Stay within the assigned role.",
       "3. Keep the answer useful and concrete.",
       "4. If context is insufficient, say what is missing instead of inventing facts.",
+      "5. Never quote raw memory labels or internal scope tags such as [owner], [business], [role], [task], or [decision:*]; rewrite them into natural user-facing language.",
     ].join("\n")
   );
 

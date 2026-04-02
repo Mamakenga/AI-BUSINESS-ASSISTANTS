@@ -149,7 +149,10 @@ function buildTelegramIntakeRequest(update, options = {}) {
 
 function buildTelegramSendMessageRequest(telegramContext, intakeResponse) {
   const chatId = normalizeRequiredString(telegramContext?.chat_id, "chat_id");
-  const replyText = normalizeRequiredString(intakeResponse?.reply?.text, "reply.text");
+  const replyText = normalizeOptionalString(intakeResponse?.reply?.text);
+  if (!replyText) {
+    return null;
+  }
 
   const payload = {
     chat_id: chatId,

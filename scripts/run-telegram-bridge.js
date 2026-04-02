@@ -61,9 +61,11 @@ async function processUpdate(update) {
   const intakeResponse = await callControlApi("/telegram/intake", intakeBody);
   const sendMessagePayload = buildTelegramSendMessageRequest(request.telegram, intakeResponse);
 
-  await callTelegramApi("sendMessage", sendMessagePayload, {
-    config: TELEGRAM_CONFIG,
-  });
+  if (sendMessagePayload) {
+    await callTelegramApi("sendMessage", sendMessagePayload, {
+      config: TELEGRAM_CONFIG,
+    });
+  }
   return true;
 }
 

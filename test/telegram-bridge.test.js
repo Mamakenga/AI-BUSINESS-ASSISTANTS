@@ -129,3 +129,20 @@ test("buildTelegramSendMessageRequest keeps reply in the same topic", () => {
     reply_to_message_id: 77,
   });
 });
+
+test("buildTelegramSendMessageRequest skips empty direct-answer ack payloads", () => {
+  const payload = buildTelegramSendMessageRequest(
+    {
+      chat_id: "-100123",
+      message_id: 77,
+      message_thread_id: 202,
+    },
+    {
+      reply: {
+        text: null,
+      },
+    }
+  );
+
+  assert.equal(payload, null);
+});

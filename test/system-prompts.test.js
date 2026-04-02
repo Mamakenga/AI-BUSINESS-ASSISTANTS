@@ -159,6 +159,10 @@ test("buildSystemPrompt trims memory facts to budget and preserves task context"
   assert.match(result.prompt, /Compare three competitors in Varna/);
   assert.match(result.prompt, /owner-fact-1/);
   assert.doesNotMatch(result.prompt, /decision-task-1/);
+  assert.doesNotMatch(result.prompt, /Owner context:/);
+  assert.doesNotMatch(result.prompt, /Business context:/);
+  assert.doesNotMatch(result.prompt, /Role context:/);
+  assert.doesNotMatch(result.prompt, /Memory bundle:\n- \[/);
   assert.ok(result.meta.memory_fact_count >= 1);
   assert.ok(result.meta.memory_fact_count < 10);
   assert.ok(result.prompt.length <= FIXED_SCAFFOLDING_TOKEN_CEILING * 4);
@@ -210,6 +214,7 @@ test("buildSystemPrompt adds direct-answer guardrails for assistant urgency ques
   assert.match(result.prompt, /Do not ask generic follow-up questions/);
   assert.match(result.prompt, /best available answer plus one concrete next step/i);
   assert.match(result.prompt, /Do not end the answer with a request to clarify the whole situation/i);
+  assert.match(result.prompt, /Never quote raw memory labels or internal scope tags/i);
   assert.match(result.prompt, /Assistant direct-answer rules:/);
   assert.match(result.prompt, /answer from the available context instead of asking for a broad project restatement/i);
   assert.match(result.prompt, /what is confirmed right now, b\) what is unclear, c\) the safest next action/i);
