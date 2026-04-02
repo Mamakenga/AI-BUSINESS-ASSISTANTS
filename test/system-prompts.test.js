@@ -213,3 +213,49 @@ test("buildSystemPrompt adds direct-answer guardrails for assistant urgency ques
   assert.match(result.prompt, /answer from the available context instead of asking for a broad project restatement/i);
   assert.equal(result.meta.request_type, "direct-answer");
 });
+
+test("buildSystemPrompt keeps generic direct-answer guardrails for non-assistant roles only", () => {
+  const result = buildSystemPrompt({
+    role: {
+      id: "finance_analyst",
+      execution_mode: "single_role_worker",
+      output_contract: "finance_review_v1",
+    },
+    run: {
+      task_id: null,
+      requested_by_agent: null,
+    },
+    task: null,
+    founder_request: "@finance сколько у нас учеников?",
+    handoff_messages: [],
+    memory_bundle: null,
+  });
+
+  assert.match(result.prompt, /Direct-answer rules:/);
+  assert.match(result.prompt, /Do not ask generic follow-up questions/);
+  assert.doesNotMatch(result.prompt, /Assistant direct-answer rules:/);
+  assert.equal(result.meta.request_type, "direct-answer");
+});
+
+test("buildSystemPrompt does not inject direct-answer guardrails into scheduled runs", () => {
+  const result = buildSystemPrompt({
+    role: {
+      id: "assistant",
+      execution_mode: "single_role_worker",
+      output_contract: "assistant_summary_v1",
+    },
+    run: {
+      requested_by_agent: "scheduler",
+      task_id: null,
+    },
+    task: null,
+    founder_request: "Prepare the daily brief for the leader in Russian.",
+    handoff_messages: [],
+    memory_bundle: null,
+  });
+
+  assert.match(result.prompt, /Scheduled-run rules:/);
+  assert.doesNotMatch(result.prompt, /Direct-answer rules:/);
+  assert.doesNotMatch(result.prompt, /Assistant direct-answer rules:/);
+  assert.equal(result.meta.request_type, "task-execution");
+});
