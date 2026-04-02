@@ -244,6 +244,33 @@ test("buildSystemPrompt keeps generic direct-answer guardrails for non-assistant
   assert.equal(result.meta.request_type, "direct-answer");
 });
 
+test("buildSystemPrompt adds direct-answer guardrails for researcher signal questions", () => {
+  const result = buildSystemPrompt({
+    role: {
+      id: "researcher",
+      execution_mode: "single_role_worker",
+      output_contract: "research_summary_v1",
+    },
+    run: {
+      task_id: null,
+      requested_by_agent: null,
+    },
+    task: null,
+    founder_request: "@researcher есть ли у нас свежие сигналы по конкурентам в Варне?",
+    handoff_messages: [],
+    memory_bundle: {
+      business: [{ fact: "Свежих подтвержденных сигналов по конкурентам в Варне сейчас нет." }],
+    },
+  });
+
+  assert.match(result.prompt, /Direct-answer rules:/);
+  assert.match(result.prompt, /Researcher direct-answer rules:/);
+  assert.match(result.prompt, /answer from the available evidence instead of asking for a broad research brief/i);
+  assert.match(result.prompt, /If no fresh confirmed signals exist, say that directly/i);
+  assert.match(result.prompt, /confirmed signals, b\) what remains unconfirmed, c\) one focused next research step/i);
+  assert.equal(result.meta.request_type, "direct-answer");
+});
+
 test("buildSystemPrompt does not inject direct-answer guardrails into scheduled runs", () => {
   const result = buildSystemPrompt({
     role: {

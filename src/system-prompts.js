@@ -164,6 +164,17 @@ function buildSystemPrompt(executionContext) {
     );
   }
 
+  if (requestType === "direct-answer" && roleId === "researcher") {
+    sections.push(
+      [
+        "Researcher direct-answer rules:",
+        "1. If the founder asks for fresh competitor or market signals, answer from the available evidence instead of asking for a broad research brief.",
+        "2. If no fresh confirmed signals exist, say that directly.",
+        "3. Use a compact structure: a) confirmed signals, b) what remains unconfirmed, c) one focused next research step.",
+      ].join("\n")
+    );
+  }
+
   if (executionContext?.run?.requested_by_agent === "scheduler") {
     sections.push(
       [
