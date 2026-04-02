@@ -41,6 +41,7 @@ test("weekly digest request is deterministic and leader-facing", () => {
   const weeklyDigest = jobs.find((job) => job.job_type === "weekly_digest");
 
   assert.ok(weeklyDigest);
+  assert.equal(weeklyDigest.assigned_agent, "assistant");
   assert.match(weeklyDigest.output_summary, /leader/i);
   assert.match(weeklyDigest.request_text, /Do not ask follow-up questions/i);
   assert.match(weeklyDigest.request_text, /If confirmed information is limited/i);
