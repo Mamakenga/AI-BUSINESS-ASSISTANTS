@@ -34,6 +34,7 @@ test("daily founder brief request is deterministic and does not ask for clarific
   assert.match(dailyBrief.request_text, /Do not ask follow-up questions/i);
   assert.match(dailyBrief.request_text, /leader/i);
   assert.match(dailyBrief.request_text, /If fresh data is limited/i);
+  assert.match(dailyBrief.request_text, /do not fill gaps with invented business claims/i);
 });
 
 test("weekly digest request is deterministic and leader-facing", () => {
@@ -45,6 +46,7 @@ test("weekly digest request is deterministic and leader-facing", () => {
   assert.match(weeklyDigest.output_summary, /leader/i);
   assert.match(weeklyDigest.request_text, /Do not ask follow-up questions/i);
   assert.match(weeklyDigest.request_text, /If confirmed information is limited/i);
+  assert.match(weeklyDigest.request_text, /do not fill gaps with invented business claims/i);
   assert.match(weeklyDigest.request_text, /focus for next week/i);
 });
 
@@ -57,6 +59,7 @@ test("competitor watch request is deterministic and escalation-oriented", () => 
   assert.match(competitorWatch.output_summary, /grounded market signals/i);
   assert.match(competitorWatch.request_text, /Do not ask follow-up questions/i);
   assert.match(competitorWatch.request_text, /If confirmed competitor information is limited/i);
+  assert.match(competitorWatch.request_text, /do not fill gaps with invented market signals/i);
   assert.match(competitorWatch.request_text, /assistant, methodist, or finance_analyst/i);
   assert.match(competitorWatch.request_text, /one recommended next action/i);
 });
@@ -70,6 +73,7 @@ test("branch finance review request is deterministic and finance-oriented", () =
   assert.match(branchFinanceReview.output_summary, /anomalies, risks, and practical recommendations/i);
   assert.match(branchFinanceReview.request_text, /Do not ask follow-up questions/i);
   assert.match(branchFinanceReview.request_text, /If confirmed financial information is limited/i);
+  assert.match(branchFinanceReview.request_text, /do not fill gaps with invented financial anomalies/i);
   assert.match(branchFinanceReview.request_text, /branch-level anomalies or unusual shifts/i);
   assert.match(branchFinanceReview.request_text, /what requires escalation to the leader/i);
   assert.match(branchFinanceReview.request_text, /one practical recommendation or next action/i);
@@ -84,6 +88,7 @@ test("weekly risk review request is deterministic and critic-oriented", () => {
   assert.match(weeklyRiskReview.output_summary, /contradictions, weak assumptions, and escalation notes/i);
   assert.match(weeklyRiskReview.request_text, /Do not ask follow-up questions/i);
   assert.match(weeklyRiskReview.request_text, /If confirmed evidence is limited/i);
+  assert.match(weeklyRiskReview.request_text, /do not fill gaps with invented risks or contradictions/i);
   assert.match(weeklyRiskReview.request_text, /contradictions or tension points/i);
   assert.match(weeklyRiskReview.request_text, /weak assumptions or fragile reasoning/i);
   assert.match(weeklyRiskReview.request_text, /what may become risky next/i);
@@ -99,6 +104,7 @@ test("memory cleanup request is deterministic and curator-oriented", () => {
   assert.match(memoryCleanup.output_summary, /compaction, promotion, and noise reduction notes/i);
   assert.match(memoryCleanup.request_text, /Do not ask follow-up questions/i);
   assert.match(memoryCleanup.request_text, /If compactable evidence is limited/i);
+  assert.match(memoryCleanup.request_text, /do not fill gaps with invented memory actions/i);
   assert.match(memoryCleanup.request_text, /what should be compacted or merged/i);
   assert.match(memoryCleanup.request_text, /what should be promoted into durable memory/i);
   assert.match(memoryCleanup.request_text, /what looks noisy, duplicated, or stale/i);

@@ -11,7 +11,7 @@ const REGISTERED_JOBS = Object.freeze([
     schedule: "daily morning",
     output_summary: "Short Telegram digest for the leader.",
     request_text:
-      "Prepare the daily brief for the leader in Russian. Do not ask follow-up questions. Use the available context, memory, and recent activity only. If fresh data is limited, say that directly and still produce the best concise brief you can. Format it as a Telegram-ready update with: 1) current status in 1-2 sentences, 2) important signals or changes, 3) urgent open items, 4) the main risk or blocker, 5) one recommended next step.",
+      "Prepare the daily brief for the leader in Russian. Do not ask follow-up questions. Use the available context, memory, and recent activity only. If fresh data is limited, say that directly, do not fill gaps with invented business claims, and still produce the best concise brief you can. Format it as a Telegram-ready update with: 1) current status in 1-2 sentences, 2) important signals or changes, 3) urgent open items, 4) the main risk or blocker, 5) one recommended next step.",
   },
   {
     job_type: "weekly_digest",
@@ -20,7 +20,7 @@ const REGISTERED_JOBS = Object.freeze([
     schedule: "monday morning",
     output_summary: "Weekly digest for the leader with decisions, risks, and unresolved items.",
     request_text:
-      "Prepare the weekly digest for the leader in Russian. Do not ask follow-up questions. Use the available context, memory, tasks, decisions, and recent activity only. If confirmed information is limited, say that directly and still produce the best concise digest you can. Format it as a Telegram-ready update with: 1) what changed this week, 2) main decisions or shifts, 3) unresolved items, 4) risks or blockers, 5) the most important focus for next week.",
+      "Prepare the weekly digest for the leader in Russian. Do not ask follow-up questions. Use the available context, memory, tasks, decisions, and recent activity only. If confirmed information is limited, say that directly, do not fill gaps with invented business claims, and still produce the best concise digest you can. Format it as a Telegram-ready update with: 1) what changed this week, 2) main decisions or shifts, 3) unresolved items, 4) risks or blockers, 5) the most important focus for next week.",
   },
   {
     job_type: "competitor_watch",
@@ -29,7 +29,7 @@ const REGISTERED_JOBS = Object.freeze([
     schedule: "daily",
     output_summary: "Daily competitor watch with grounded market signals and escalation notes.",
     request_text:
-      "Run the daily competitor watch in Russian. Do not ask follow-up questions. Use only available context, memory, tasks, decisions, and recent activity. If confirmed competitor information is limited, say that directly and still produce the best concise report you can. Format it as a compact update with: 1) confirmed competitor or market signals, 2) why they matter for us, 3) what should be escalated to assistant, methodist, or finance_analyst, 4) one recommended next action.",
+      "Run the daily competitor watch in Russian. Do not ask follow-up questions. Use only available context, memory, tasks, decisions, and recent activity. If confirmed competitor information is limited, say that directly, do not fill gaps with invented market signals, and still produce the best concise report you can. Format it as a compact update with: 1) confirmed competitor or market signals, 2) why they matter for us, 3) what should be escalated to assistant, methodist, or finance_analyst, 4) one recommended next action.",
   },
   {
     job_type: "branch_finance_review",
@@ -38,7 +38,7 @@ const REGISTERED_JOBS = Object.freeze([
     schedule: "friday evening",
     output_summary: "Branch-level finance review with anomalies, risks, and practical recommendations.",
     request_text:
-      "Prepare the branch finance review in Russian. Do not ask follow-up questions. Use only available context, memory, tasks, decisions, and recent activity. If confirmed financial information is limited, say that directly and still produce the best concise review you can. Format it as a compact report with: 1) branch-level anomalies or unusual shifts, 2) risky trends in numbers, 3) what requires escalation to the leader, 4) one practical recommendation or next action.",
+      "Prepare the branch finance review in Russian. Do not ask follow-up questions. Use only available context, memory, tasks, decisions, and recent activity. If confirmed financial information is limited, say that directly, do not fill gaps with invented financial anomalies, and still produce the best concise review you can. Format it as a compact report with: 1) branch-level anomalies or unusual shifts, 2) risky trends in numbers, 3) what requires escalation to the leader, 4) one practical recommendation or next action.",
   },
   {
     job_type: "weekly_risk_review",
@@ -47,7 +47,7 @@ const REGISTERED_JOBS = Object.freeze([
     schedule: "friday evening after finance review",
     output_summary: "Weekly risk review with contradictions, weak assumptions, and escalation notes.",
     request_text:
-      "Prepare the weekly risk review in Russian. Do not ask follow-up questions. Use only available context, memory, tasks, decisions, artifacts, and recent activity. If confirmed evidence is limited, say that directly and still produce the best concise review you can. Format it as a compact critic report with: 1) contradictions or tension points, 2) weak assumptions or fragile reasoning, 3) what may become risky next, 4) one escalation note or corrective action.",
+      "Prepare the weekly risk review in Russian. Do not ask follow-up questions. Use only available context, memory, tasks, decisions, artifacts, and recent activity. If confirmed evidence is limited, say that directly, do not fill gaps with invented risks or contradictions, and still produce the best concise review you can. Format it as a compact critic report with: 1) contradictions or tension points, 2) weak assumptions or fragile reasoning, 3) what may become risky next, 4) one escalation note or corrective action.",
   },
   {
     job_type: "memory_cleanup",
@@ -56,7 +56,7 @@ const REGISTERED_JOBS = Object.freeze([
     schedule: "twice per week",
     output_summary: "Memory cleanup report with compaction, promotion, and noise reduction notes.",
     request_text:
-      "Run memory cleanup in Russian. Do not ask follow-up questions. Use only available context, memory, decisions, artifacts, and recent activity. If compactable evidence is limited, say that directly and still produce the best concise curator report you can. Format it as a compact memory report with: 1) what should be compacted or merged, 2) what should be promoted into durable memory, 3) what looks noisy, duplicated, or stale, 4) one corrective memory action.",
+      "Run memory cleanup in Russian. Do not ask follow-up questions. Use only available context, memory, decisions, artifacts, and recent activity. If compactable evidence is limited, say that directly, do not fill gaps with invented memory actions, and still produce the best concise curator report you can. Format it as a compact memory report with: 1) what should be compacted or merged, 2) what should be promoted into durable memory, 3) what looks noisy, duplicated, or stale, 4) one corrective memory action.",
   },
 ]);
 

@@ -220,7 +220,7 @@ test("buildSystemPrompt adds scheduled-run guardrails to prevent clarification l
 
   assert.match(result.prompt, /Scheduled-run rules:/);
   assert.match(result.prompt, /Do not ask follow-up questions/);
-  assert.match(result.prompt, /If fresh information is limited/);
+  assert.match(result.prompt, /If fresh information is limited, say that explicitly, do not invent missing facts/i);
   assert.equal(result.meta.request_type, "task-execution");
 });
 
@@ -245,6 +245,7 @@ test("buildSystemPrompt adds direct-answer guardrails for assistant urgency ques
 
   assert.match(result.prompt, /Direct-answer rules:/);
   assert.match(result.prompt, /Do not ask generic follow-up questions/);
+  assert.match(result.prompt, /If evidence is thin, say that directly, do not guess/i);
   assert.match(result.prompt, /best available answer plus one concrete next step/i);
   assert.match(result.prompt, /Do not end the answer with a request to clarify the whole situation/i);
   assert.match(result.prompt, /Never quote raw memory labels or internal scope tags/i);

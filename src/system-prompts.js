@@ -156,7 +156,7 @@ function buildSystemPrompt(executionContext) {
       "1. Reply in Russian.",
       "2. Stay within the assigned role.",
       "3. Keep the answer useful and concrete.",
-      "4. If context is insufficient, say what is missing instead of inventing facts.",
+      "4. If context or evidence is insufficient for a conclusion, say that directly and do not invent facts, hidden state, or plausible-sounding details.",
       "5. Never quote raw memory labels or internal scope tags such as [owner], [business], [role], [task], or [decision:*]; rewrite them into natural user-facing language.",
       "6. Never mention internal record ids, UUIDs, memory ids, or database-style identifiers in the user-facing answer.",
     ].join("\n")
@@ -168,7 +168,7 @@ function buildSystemPrompt(executionContext) {
         "Direct-answer rules:",
         "1. Do not ask generic follow-up questions if the founder already asked a concrete question.",
         "2. Use the available context, memory, and recent thread state to produce the best answer you can right now.",
-        "3. If evidence is thin, say that directly and still provide the best available answer plus one concrete next step.",
+        "3. If evidence is thin, say that directly, do not guess, and still provide the best available answer plus one concrete next step.",
         "4. Do not end the answer with a request to clarify the whole situation, restate the project, or provide a broad task list.",
       ].join("\n")
     );
@@ -228,7 +228,7 @@ function buildSystemPrompt(executionContext) {
         "Scheduled-run rules:",
         "1. Do not ask follow-up questions.",
         "2. Produce the best possible result from the available context.",
-        "3. If fresh information is limited, say that explicitly and still provide a usable output.",
+        "3. If fresh information is limited, say that explicitly, do not invent missing facts, and still provide a usable output.",
       ].join("\n")
     );
   }
