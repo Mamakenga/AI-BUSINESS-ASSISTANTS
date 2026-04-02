@@ -186,3 +186,30 @@ test("buildSystemPrompt adds scheduled-run guardrails to prevent clarification l
   assert.match(result.prompt, /If fresh information is limited/);
   assert.equal(result.meta.request_type, "task-execution");
 });
+
+test("buildSystemPrompt adds direct-answer guardrails for assistant urgency questions", () => {
+  const result = buildSystemPrompt({
+    role: {
+      id: "assistant",
+      execution_mode: "single_role_worker",
+      output_contract: "assistant_summary_v1",
+    },
+    run: {
+      task_id: null,
+      requested_by_agent: null,
+    },
+    task: null,
+    founder_request: "@assistant что у нас сейчас самое срочное?",
+    handoff_messages: [],
+    memory_bundle: {
+      owner: [{ fact: "Leader prefers concise practical answers." }],
+    },
+  });
+
+  assert.match(result.prompt, /Direct-answer rules:/);
+  assert.match(result.prompt, /Do not ask generic follow-up questions/);
+  assert.match(result.prompt, /best available answer plus one concrete next step/i);
+  assert.match(result.prompt, /Assistant direct-answer rules:/);
+  assert.match(result.prompt, /answer from the available context instead of asking for a broad project restatement/i);
+  assert.equal(result.meta.request_type, "direct-answer");
+});

@@ -140,6 +140,27 @@ function buildSystemPrompt(executionContext) {
     ].join("\n")
   );
 
+  if (requestType === "direct-answer") {
+    sections.push(
+      [
+        "Direct-answer rules:",
+        "1. Do not ask generic follow-up questions if the founder already asked a concrete question.",
+        "2. Use the available context, memory, and recent thread state to produce the best answer you can right now.",
+        "3. If evidence is thin, say that directly and still provide the best available answer plus one concrete next step.",
+      ].join("\n")
+    );
+  }
+
+  if (requestType === "direct-answer" && roleId === "assistant") {
+    sections.push(
+      [
+        "Assistant direct-answer rules:",
+        "1. If the founder asks what is urgent, current, or important now, answer from the available context instead of asking for a broad project restatement.",
+        "2. If the current state is unclear, say that the confirmed context is limited and give the safest practical next step.",
+      ].join("\n")
+    );
+  }
+
   if (executionContext?.run?.requested_by_agent === "scheduler") {
     sections.push(
       [
