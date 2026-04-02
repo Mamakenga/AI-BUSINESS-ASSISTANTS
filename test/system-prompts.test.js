@@ -209,8 +209,10 @@ test("buildSystemPrompt adds direct-answer guardrails for assistant urgency ques
   assert.match(result.prompt, /Direct-answer rules:/);
   assert.match(result.prompt, /Do not ask generic follow-up questions/);
   assert.match(result.prompt, /best available answer plus one concrete next step/i);
+  assert.match(result.prompt, /Do not end the answer with a request to clarify the whole situation/i);
   assert.match(result.prompt, /Assistant direct-answer rules:/);
   assert.match(result.prompt, /answer from the available context instead of asking for a broad project restatement/i);
+  assert.match(result.prompt, /what is confirmed right now, b\) what is unclear, c\) the safest next action/i);
   assert.equal(result.meta.request_type, "direct-answer");
 });
 

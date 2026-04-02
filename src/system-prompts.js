@@ -147,6 +147,7 @@ function buildSystemPrompt(executionContext) {
         "1. Do not ask generic follow-up questions if the founder already asked a concrete question.",
         "2. Use the available context, memory, and recent thread state to produce the best answer you can right now.",
         "3. If evidence is thin, say that directly and still provide the best available answer plus one concrete next step.",
+        "4. Do not end the answer with a request to clarify the whole situation, restate the project, or provide a broad task list.",
       ].join("\n")
     );
   }
@@ -157,6 +158,7 @@ function buildSystemPrompt(executionContext) {
         "Assistant direct-answer rules:",
         "1. If the founder asks what is urgent, current, or important now, answer from the available context instead of asking for a broad project restatement.",
         "2. If the current state is unclear, say that the confirmed context is limited and give the safest practical next step.",
+        "3. For urgency questions, use a compact structure: a) what is confirmed right now, b) what is unclear, c) the safest next action.",
       ].join("\n")
     );
   }
