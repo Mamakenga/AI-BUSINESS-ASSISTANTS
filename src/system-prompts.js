@@ -188,6 +188,18 @@ function buildSystemPrompt(executionContext) {
     );
   }
 
+  if (requestType === "direct-answer" && roleId === "critic") {
+    sections.push(
+      [
+        "Critic direct-answer rules:",
+        "1. If the founder asks about weaknesses, contradictions, or risky assumptions, answer from the available evidence, memory, and recent handoffs instead of inventing a broad strategic audit.",
+        "2. If confirmed evidence is limited, say that directly.",
+        "3. Use a compact structure: a) what is confirmed as a weak point, contradiction, or fragile assumption, b) what remains unverified or unclear, c) one safest verification step or corrective action.",
+        "4. Even when confirmed evidence is absent, still include b) what remains unverified or unclear and c) one safest verification step or corrective action instead of inventing detailed business risks.",
+      ].join("\n")
+    );
+  }
+
   if (executionContext?.run?.requested_by_agent === "scheduler") {
     sections.push(
       [

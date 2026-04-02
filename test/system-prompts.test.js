@@ -309,6 +309,43 @@ test("buildSystemPrompt adds direct-answer guardrails for finance anomaly questi
   assert.equal(result.meta.request_type, "direct-answer");
 });
 
+test("buildSystemPrompt adds direct-answer guardrails for critic weakness questions", () => {
+  const result = buildSystemPrompt({
+    role: {
+      id: "critic",
+      execution_mode: "single_role_worker",
+      output_contract: "critic_review_v1",
+    },
+    run: {
+      task_id: null,
+      requested_by_agent: null,
+    },
+    task: null,
+    founder_request: "@critic есть ли сейчас у нас слабые места, противоречия или рискованные допущения в текущем контуре?",
+    handoff_messages: [],
+    memory_bundle: {
+      business: [{ fact: "Подтвержденных свежих critic-сигналов по слабым местам в памяти сейчас мало." }],
+    },
+  });
+
+  assert.match(result.prompt, /Direct-answer rules:/);
+  assert.match(result.prompt, /Critic direct-answer rules:/);
+  assert.match(
+    result.prompt,
+    /answer from the available evidence, memory, and recent handoffs instead of inventing a broad strategic audit/i
+  );
+  assert.match(result.prompt, /If confirmed evidence is limited, say that directly/i);
+  assert.match(
+    result.prompt,
+    /what is confirmed as a weak point, contradiction, or fragile assumption, b\) what remains unverified or unclear, c\) one safest verification step or corrective action/i
+  );
+  assert.match(
+    result.prompt,
+    /Even when confirmed evidence is absent, still include b\) what remains unverified or unclear and c\) one safest verification step or corrective action instead of inventing detailed business risks/i
+  );
+  assert.equal(result.meta.request_type, "direct-answer");
+});
+
 test("buildSystemPrompt does not inject direct-answer guardrails into scheduled runs", () => {
   const result = buildSystemPrompt({
     role: {
