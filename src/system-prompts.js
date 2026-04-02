@@ -222,6 +222,19 @@ function buildSystemPrompt(executionContext) {
     );
   }
 
+  if (requestType === "direct-answer" && roleId === "methodist") {
+    sections.push(
+      [
+        "Methodist direct-answer rules:",
+        "1. If the founder asks about a course, mini-course, curriculum, lesson flow, or teaching format, answer from the available educational context instead of asking for a broad intake questionnaire.",
+        "2. If confirmed teaching context is limited, say that directly.",
+        "3. Use a compact structure: a) a draft learning structure or module flow, b) what remains unclear, c) one safest next curriculum step.",
+        "4. Even when confirmed teaching context is limited, still include a draft structure and one safest next curriculum step instead of stopping at generic clarification.",
+        "5. Do not turn the answer into a broad questionnaire about the whole audience, business, or training system when the founder already asked for a concrete educational structure.",
+      ].join("\n")
+    );
+  }
+
   if (executionContext?.run?.requested_by_agent === "scheduler") {
     sections.push(
       [

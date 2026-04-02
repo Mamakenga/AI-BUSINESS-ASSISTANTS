@@ -385,6 +385,47 @@ test("buildSystemPrompt adds direct-answer guardrails for critic weakness questi
   assert.equal(result.meta.request_type, "direct-answer");
 });
 
+test("buildSystemPrompt adds direct-answer guardrails for methodist curriculum questions", () => {
+  const result = buildSystemPrompt({
+    role: {
+      id: "methodist",
+      execution_mode: "single_role_worker",
+      output_contract: "methodist_plan_v1",
+    },
+    run: {
+      task_id: null,
+      requested_by_agent: null,
+    },
+    task: null,
+    founder_request: "@methodist помоги структурировать мини-курс по AI для родителей",
+    handoff_messages: [],
+    memory_bundle: {
+      owner: [{ fact: "Руководитель предпочитает короткие практичные ответы на русском." }],
+    },
+  });
+
+  assert.match(result.prompt, /Direct-answer rules:/);
+  assert.match(result.prompt, /Methodist direct-answer rules:/);
+  assert.match(
+    result.prompt,
+    /answer from the available educational context instead of asking for a broad intake questionnaire/i
+  );
+  assert.match(result.prompt, /If confirmed teaching context is limited, say that directly/i);
+  assert.match(
+    result.prompt,
+    /a draft learning structure or module flow, b\) what remains unclear, c\) one safest next curriculum step/i
+  );
+  assert.match(
+    result.prompt,
+    /still include a draft structure and one safest next curriculum step instead of stopping at generic clarification/i
+  );
+  assert.match(
+    result.prompt,
+    /Do not turn the answer into a broad questionnaire about the whole audience, business, or training system/i
+  );
+  assert.equal(result.meta.request_type, "direct-answer");
+});
+
 test("buildSystemPrompt does not inject direct-answer guardrails into scheduled runs", () => {
   const result = buildSystemPrompt({
     role: {
