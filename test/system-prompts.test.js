@@ -268,6 +268,10 @@ test("buildSystemPrompt adds direct-answer guardrails for researcher signal ques
   assert.match(result.prompt, /answer from the available evidence instead of asking for a broad research brief/i);
   assert.match(result.prompt, /If no fresh confirmed signals exist, say that directly/i);
   assert.match(result.prompt, /confirmed signals, b\) what remains unconfirmed, c\) one focused next research step/i);
+  assert.match(
+    result.prompt,
+    /Even when fresh confirmed signals are absent, still include b\) what remains unconfirmed and c\) one focused next research step/i
+  );
   assert.equal(result.meta.request_type, "direct-answer");
 });
 
