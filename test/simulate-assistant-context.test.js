@@ -30,11 +30,24 @@ test("resolveScenario returns seeded assistant context", () => {
   assert.ok(resolved.execution_context.handoff_messages.length >= 1);
 });
 
+test("resolveScenario returns business leader simulation without ops-specific handoff dependence", () => {
+  const resolved = resolveScenario({
+    scenario: "seeded_business_leader",
+    founder_request: "@assistant что у нас сейчас самое срочное?",
+  });
+
+  assert.equal(resolved.scenario_id, "seeded_business_leader");
+  assert.equal(resolved.execution_context.role.id, "assistant");
+  assert.match(JSON.stringify(resolved.execution_context.memory_bundle), /Telegram-first/);
+  assert.match(JSON.stringify(resolved.execution_context.memory_bundle), /полезные ответы ролей/i);
+});
+
 test("buildSimulationScenarios rewrites founder request into both scenarios", () => {
   const scenarios = buildSimulationScenarios("@assistant что сейчас важно?");
 
   assert.equal(scenarios.empty_context.founder_request, "@assistant что сейчас важно?");
   assert.equal(scenarios.seeded_ops_focus.founder_request, "@assistant что сейчас важно?");
+  assert.equal(scenarios.seeded_business_leader.founder_request, "@assistant что сейчас важно?");
 });
 
 test("runAssistantSimulation supports dry-run preview without executor call", async () => {
