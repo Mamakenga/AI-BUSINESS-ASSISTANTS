@@ -37,10 +37,12 @@
 6. живой LiteLLM-backed `@assistant` и `@researcher` smoke уже прошел на VPS через Telegram supergroup `AI_KiberOne чат`;
 7. scheduled trigger -> VPS execution -> Telegram delivery уже прошел живьем;
 8. scheduled delivery в тему `01 Assistant` уже подтверждена.
+9. manual thin-context sweep для `daily_founder_brief`, `weekly_digest`, `competitor_watch`, `branch_finance_review` и `weekly_risk_review` уже пройден без выдуманных фактов;
+10. первый живой dispatch в тему `03 Methodist` уже подтвержден, но quality-signoff для роли пока не пройден.
 
 Следующий практический фокус:
-1. прогнать manual tests для уже готовых ролей и scheduled jobs;
-2. затем перейти к hardening;
+1. перейти к `Phase 9` hardening;
+2. отдельно вернуться к качеству живого ответа `methodist`;
 3. держать `DEPLOY_RUNBOOK.md` как канонический операторский сценарий для VPS updates.
 4. считать Phase 6 completed на уровне job contracts and trigger path, а не как полный live-quality signoff для каждого scheduled use-case.
 
@@ -199,7 +201,7 @@
 ## Next Step
 
 Следующий шаг по этому чеклисту:
-1. вернуться к `Phase 6` scheduled jobs;
-2. после этого перейти к `Phase 9` hardening;
+1. перейти к `Phase 9` hardening;
+2. после hardening вернуться к live-quality pass для `methodist`;
 3. использовать `DEPLOY_RUNBOOK.md` как канонический VPS update flow.
 

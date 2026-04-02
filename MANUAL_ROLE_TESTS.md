@@ -18,9 +18,9 @@ Before manual tests:
 5. role topics are present and bound at least once:
    - `01 Assistant`
    - `02 Researcher`
+   - `03 Methodist`
    - `04 Finance`
    - `05 Critic`
-6. `03 Methodist` is intentionally outside the standard live sweep until the first confirmed live methodist dispatch is recorded
 
 ## 2. What Good Looks Like
 
@@ -35,8 +35,7 @@ For every manual test, check:
 ## 3. Founder-Facing Role Tests
 
 Deferred for now:
-1. `methodist` is implemented at the routing/profile level, but the canonical live manual sweep should include it only after the first confirmed live methodist dispatch
-2. `orchestrator` is intentionally deferred here because it needs a multi-role scenario, not a single-role prompt in one topic
+1. `orchestrator` is intentionally deferred here because it needs a multi-role scenario, not a single-role prompt in one topic
 
 ### 3.1 Assistant
 
@@ -65,7 +64,24 @@ Pass:
 3. if no confirmed signals exist, says that explicitly
 4. suggests what should be escalated or checked next
 
-### 3.3 Finance
+### 3.3 Methodist
+
+Telegram topic:
+1. `03 Methodist`
+
+Suggested input:
+1. `@methodist помоги структурировать мини-курс по AI для родителей`
+
+Current live note:
+1. first live methodist dispatch is confirmed
+2. quality signoff is still pending because the first live reply drifted into a broad intake questionnaire
+
+Pass:
+1. stays in educational / curriculum framing
+2. proposes structure, learning flow, or teaching format instead of a generic role introduction
+3. does not ask a broad questionnaire when a concrete teaching request is already present
+
+### 3.4 Finance
 
 Telegram topic:
 1. `04 Finance`
@@ -79,7 +95,7 @@ Pass:
 3. if hard evidence is missing, says that explicitly
 4. ends with one practical recommendation or escalation
 
-### 3.4 Critic
+### 3.5 Critic
 
 Telegram topic:
 1. `05 Critic`
