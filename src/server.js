@@ -16,6 +16,7 @@ const { buildMemoryBundleRequest, createEmptyBundleResult, trimMemoryBundle } = 
 const { buildMemoryCompaction, normalizeSourceMemoryIds } = require("./memory-compaction");
 const { buildMemoryCandidate, parseMemoryQuery } = require("./memory-service");
 const { buildRunCompletion } = require("./run-completion");
+const { buildRunLogFields, createStructuredLogger } = require("./structured-logging");
 const { buildTelegramIntakePlan } = require("./telegram-intake");
 const { buildTelegramContext, resolveTelegramIntakeContext } = require("./telegram-intake-context");
 const { buildTelegramReply } = require("./telegram-reply");
@@ -295,6 +296,12 @@ function buildTaskUpdate(body) {
 
 const app = express();
 app.use(express.json({ limit: "1mb" }));
+const logger = createStructuredLogger({
+  service: "control-api",
+  baseFields: {
+    pid: process.pid,
+  },
+});
 
 app.get("/health", async (_req, res, next) => {
   try {
@@ -494,9 +501,18 @@ app.post("/jobs/:jobType/trigger", async (req, res, next) => {
       throw new Error(`Failed to merge triggered job snapshot for job_type: ${registeredJob.job_type}`);
     }
 
+    const mappedRun = mapRunRow(runResult.rows[0]);
+    logger.info(
+      "scheduled_job_triggered",
+      buildRunLogFields(mappedRun, {
+        job_type: mergedJob.job_type,
+        next_run_at: mergedJob.next_run_at,
+      })
+    );
+
     return res.status(201).json({
       job: mergedJob,
-      run: mapRunRow(runResult.rows[0]),
+      run: mappedRun,
       trigger: trigger.trigger,
     });
   } catch (error) {
@@ -805,6 +821,7 @@ app.post("/telegram/intake", async (req, res, next) => {
   const intakeContext = resolveTelegramIntakeContext(req.body, persistedTopicName);
   const topicName = intakeContext.topicName;
   const telegramContext = intakeContext.telegramContext;
+  const topicRestored = Boolean(persistedTopicName);
   const intakePlan = buildTelegramIntakePlan({
     text,
     topic_name: topicName,
@@ -818,6 +835,16 @@ app.post("/telegram/intake", async (req, res, next) => {
     if (client) {
       client.release();
     }
+    logger.info("telegram_intake_skipped", {
+      thread_id: intakePlan.thread_id,
+      topic_name: topicName,
+      topic_restored: topicRestored,
+      interaction_type: intakePlan.route?.interaction_type || null,
+      resolved_role: intakePlan.route?.resolved_role || null,
+      needs_clarification: Boolean(intakePlan.route?.needs_clarification),
+      chat_id: telegramContext?.chat_id || null,
+      message_thread_id: telegramContext?.message_thread_id ?? null,
+    });
     return res.status(200).json({
       persisted: false,
       reply,
@@ -922,6 +949,19 @@ app.post("/telegram/intake", async (req, res, next) => {
 
     await client.query("COMMIT");
 
+    const mappedRun = mapRunRow(runResult.rows[0]);
+    logger.info(
+      "telegram_intake_persisted",
+      buildRunLogFields(mappedRun, {
+        topic_name: topicName,
+        topic_restored: topicRestored,
+        interaction_type: intakePlan.route?.interaction_type || null,
+        resolved_role: intakePlan.route?.resolved_role || null,
+        chat_id: telegramContext?.chat_id || null,
+        message_thread_id: telegramContext?.message_thread_id ?? null,
+      })
+    );
+
     return res.status(201).json({
       persisted: true,
       reply,
@@ -930,7 +970,7 @@ app.post("/telegram/intake", async (req, res, next) => {
       telegram_thread: telegramThreadRow,
       task: taskRow,
       founder_message: mapMessageRow(messageResult.rows[0]),
-      run: mapRunRow(runResult.rows[0]),
+      run: mappedRun,
     });
   } catch (error) {
     await client.query("ROLLBACK");
@@ -1006,8 +1046,17 @@ app.post("/runs/follow-up", async (req, res, next) => {
 
     await client.query("COMMIT");
 
+    const mappedRun = mapRunRow(runResult.rows[0]);
+    logger.info(
+      "follow_up_run_created",
+      buildRunLogFields(mappedRun, {
+        handoff_from_agent: followUpRun.handoff_message.from_agent,
+        handoff_to_agent: followUpRun.handoff_message.to_agent,
+      })
+    );
+
     return res.status(201).json({
-      run: mapRunRow(runResult.rows[0]),
+      run: mappedRun,
       handoff_message: mapMessageRow(messageResult.rows[0]),
     });
   } catch (error) {
@@ -1083,8 +1132,20 @@ app.post("/runs/:id/complete", async (req, res, next) => {
 
     await client.query("COMMIT");
 
+    const mappedRun = mapRunRow(updatedRunResult.rows[0]);
+    logger.info(
+      "run_completed",
+      buildRunLogFields(mappedRun, {
+        model_used: mappedRun.model_used,
+        fallback_chain: mappedRun.fallback_chain,
+        fallback_count: Array.isArray(mappedRun.fallback_chain) ? mappedRun.fallback_chain.length : 0,
+        artifact_created: Boolean(artifactRow),
+        artifact_type: artifactRow?.artifact_type || null,
+      })
+    );
+
     return res.status(200).json({
-      run: mapRunRow(updatedRunResult.rows[0]),
+      run: mappedRun,
       artifact: artifactRow,
     });
   } catch (error) {
@@ -1297,16 +1358,22 @@ app.use((error, _req, res, _next) => {
     return res.status(400).json({ error: error.message });
   }
 
-  console.error(error);
+  logger.error("control_api_unhandled_error", {
+    error,
+  });
   return res.status(500).json({ error: "Internal server error" });
 });
 
 const server = app.listen(PORT, () => {
-  console.log(`control-api listening on ${PORT}`);
+  logger.info("control_api_started", {
+    port: PORT,
+  });
 });
 
 function shutdown(signal) {
-  console.log(`received ${signal}, shutting down`);
+  logger.info("control_api_shutdown_requested", {
+    signal,
+  });
   server.close(() => {
     pool.end().finally(() => {
       process.exit(0);

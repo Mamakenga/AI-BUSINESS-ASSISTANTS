@@ -6,6 +6,7 @@ const { resolveScheduledTelegramTarget } = require("../src/scheduled-telegram-ta
 const { buildTelegramTextMessage, callTelegramApi, normalizeTelegramBotConfig } = require("../src/telegram-bot-client");
 const { executeRoleRun } = require("../src/executor-client");
 const { buildRunCompletionInput, buildRunExecutionContext, normalizeWorkerRoleIds } = require("../src/run-worker");
+const { buildRunLogFields, createStructuredLogger } = require("../src/structured-logging");
 
 const DATABASE_URL = String(process.env.DATABASE_URL || "").trim();
 const CONTROL_API_URL = String(process.env.CONTROL_API_URL || "http://127.0.0.1:3000").trim();
@@ -14,6 +15,12 @@ const WORKER_ROLE_IDS = normalizeWorkerRoleIds(process.env.WORKER_ROLE_IDS);
 const WORKER_POLL_INTERVAL_MS = Number.parseInt(process.env.WORKER_POLL_INTERVAL_MS || "3000", 10);
 const TELEGRAM_CONFIG = process.env.TELEGRAM_BOT_TOKEN ? normalizeTelegramBotConfig(process.env) : null;
 const TELEGRAM_ALLOWED_CHAT_ID = String(process.env.TELEGRAM_ALLOWED_CHAT_ID || "").trim() || null;
+const logger = createStructuredLogger({
+  service: "role-worker",
+  baseFields: {
+    pid: process.pid,
+  },
+});
 
 if (!DATABASE_URL) {
   throw new Error("DATABASE_URL is required");
@@ -243,9 +250,10 @@ async function processOneRun(runRow) {
 }
 
 async function main() {
-  console.log("[role-worker] starting");
-  console.log(`[role-worker] control api: ${CONTROL_API_URL}`);
-  console.log(`[role-worker] roles: ${WORKER_ROLE_IDS.join(", ")}`);
+  logger.info("worker_started", {
+    control_api_url: CONTROL_API_URL,
+    roles: WORKER_ROLE_IDS,
+  });
 
   const pollIntervalMs = normalizePollIntervalMs(WORKER_POLL_INTERVAL_MS);
 
@@ -259,7 +267,10 @@ async function main() {
         client.release();
       }
     } catch (error) {
-      console.error("[role-worker] claim error, retrying in 5s", error);
+      logger.error("run_claim_failed", {
+        poll_retry_ms: 5000,
+        error,
+      });
       await sleep(5000);
       continue;
     }
@@ -269,10 +280,28 @@ async function main() {
       continue;
     }
 
+    logger.info("run_claimed", buildRunLogFields(claimedRun));
+
+    let stage = "execution";
+    let deliveryContext = {};
     try {
       const result = await processOneRun(claimedRun);
-      console.log(`[role-worker] completed run ${claimedRun.id} for ${claimedRun.agent}`);
+      logger.info(
+        "run_execution_completed",
+        buildRunLogFields(claimedRun, {
+          model_used: result.completion_response?.run?.model_used || null,
+          fallback_chain: result.completion_response?.run?.fallback_chain || [],
+          reply_text_present: Boolean(result.reply_text),
+          artifact_created: Boolean(result.completion_response?.artifact),
+        })
+      );
+      stage = "delivery";
       if (result.reply_text && result.telegram_thread && TELEGRAM_CONFIG) {
+        deliveryContext = {
+          delivery_mode: "thread_reply",
+          chat_id: result.telegram_thread.chat_id,
+          message_thread_id: result.telegram_thread.message_thread_id,
+        };
         const sendMessagePayload = buildTelegramTextMessage({
           chat_id: result.telegram_thread.chat_id,
           message_thread_id: result.telegram_thread.message_thread_id,
@@ -283,8 +312,20 @@ async function main() {
         await callTelegramApi("sendMessage", sendMessagePayload, {
           config: TELEGRAM_CONFIG,
         });
-        console.log(`[role-worker] delivered telegram reply for run ${claimedRun.id}`);
+        logger.info(
+          "run_delivery_completed",
+          buildRunLogFields(claimedRun, {
+            ...deliveryContext,
+          })
+        );
       } else if (result.reply_text && result.scheduled_telegram_target && TELEGRAM_CONFIG) {
+        deliveryContext = {
+          delivery_mode: "scheduled_topic_delivery",
+          target_mode: result.scheduled_telegram_target.target_mode,
+          chat_id: result.scheduled_telegram_target.chat_id,
+          message_thread_id: result.scheduled_telegram_target.message_thread_id,
+          topic_name: result.scheduled_telegram_target.topic_name,
+        };
         const sendMessagePayload = buildTelegramTextMessage({
           chat_id: result.scheduled_telegram_target.chat_id,
           message_thread_id: result.scheduled_telegram_target.message_thread_id,
@@ -294,21 +335,42 @@ async function main() {
         await callTelegramApi("sendMessage", sendMessagePayload, {
           config: TELEGRAM_CONFIG,
         });
-        console.log(
-          `[role-worker] delivered scheduled telegram reply for run ${claimedRun.id} via ${result.scheduled_telegram_target.target_mode}`
+        logger.info(
+          "run_delivery_completed",
+          buildRunLogFields(claimedRun, {
+            ...deliveryContext,
+          })
         );
       } else if (result.reply_text) {
-        console.log(`[role-worker] reply text captured for run ${claimedRun.id}`);
+        deliveryContext = {
+          delivery_mode: "not_delivered",
+        };
+        logger.info(
+          "run_reply_captured",
+          buildRunLogFields(claimedRun, {
+            ...deliveryContext,
+          })
+        );
       }
     } catch (error) {
-      console.error(`[role-worker] failed run ${claimedRun.id}`, error);
+      logger.error(
+        stage === "delivery" ? "run_delivery_failed" : "run_execution_failed",
+        {
+          ...buildRunLogFields(claimedRun),
+          stage,
+          ...deliveryContext,
+          error,
+        }
+      );
       await sleep(pollIntervalMs);
     }
   }
 }
 
 main().catch(async (error) => {
-  console.error("[role-worker] fatal error", error);
+  logger.error("worker_fatal_error", {
+    error,
+  });
   await pool.end();
   process.exit(1);
 });

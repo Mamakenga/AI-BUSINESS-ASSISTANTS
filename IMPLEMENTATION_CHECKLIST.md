@@ -39,13 +39,16 @@
 8. scheduled delivery в тему `01 Assistant` уже подтверждена.
 9. manual thin-context sweep для `daily_founder_brief`, `weekly_digest`, `competitor_watch`, `branch_finance_review` и `weekly_risk_review` уже пройден без выдуманных фактов;
 10. первый живой dispatch в тему `03 Methodist` уже подтвержден, но quality-signoff для роли пока не пройден.
+11. базовый structured logging foundation уже добавлен для `control-api`, `telegram-bridge` и `role-worker`;
+12. run-level trace по `run_id` теперь виден от intake до completion/delivery в JSON-логах.
 
 Следующий практический фокус:
 1. перейти к `Phase 9` hardening;
-2. отдельно вернуться к качеству живого ответа `methodist`;
-3. держать `DEPLOY_RUNBOOK.md` как канонический операторский сценарий для VPS updates.
-4. считать Phase 6 completed на уровне job contracts and trigger path, а не как полный live-quality signoff для каждого scheduled use-case.
-5. зафиксировать founder-facing UX, где implicit routing в родной теме роли станет рекомендуемым live-path без обязательного `@role`, как отдельный future polish после hardening.
+2. внутри `Phase 9A` продолжить observability: usage/cost telemetry и queryable `fallback_chain`;
+3. отдельно вернуться к качеству живого ответа `methodist`;
+4. держать `DEPLOY_RUNBOOK.md` как канонический операторский сценарий для VPS updates.
+5. считать Phase 6 completed на уровне job contracts and trigger path, а не как полный live-quality signoff для каждого scheduled use-case.
+6. зафиксировать founder-facing UX, где implicit routing в родной теме роли станет рекомендуемым live-path без обязательного `@role`, как отдельный future polish после hardening.
 
 ## Phase 0. Project Bootstrap
 
@@ -192,8 +195,8 @@ Closure criteria для `Phase 9`:
 
 ### Phase 9A. Observability & Runtime Guards
 - [ ] Добавить единый источник истины для списка ролей
-- [ ] Добавить structured logging
-- [ ] Сделать run-level trace visibility от Telegram intake до delivery
+- [x] Добавить structured logging
+- [x] Сделать run-level trace visibility от Telegram intake до delivery
 - [ ] Сохранять token / usage / cost telemetry per run
 - [ ] Сделать `fallback_chain` queryable и удобным для ops-debug
 - [ ] Добавить token / cost boundaries per role с реальным enforcement
@@ -231,7 +234,7 @@ Closure criteria для `Phase 9`:
 
 Следующий шаг по этому чеклисту:
 1. перейти к `Phase 9` hardening;
-2. внутри `Phase 9` начать со structured logging и observability;
+2. внутри `Phase 9A` продолжить observability через usage/cost telemetry и queryable `fallback_chain`;
 3. после hardening вернуться к live-quality pass для `methodist`;
 4. founder-facing implicit same-topic routing без `@role` держать как UX-polish шаг после hardening, а не как недостающую routing-capability;
 5. использовать `DEPLOY_RUNBOOK.md` как канонический VPS update flow.
