@@ -7,7 +7,7 @@ function isPlainObject(value) {
   return Object.getPrototypeOf(value) === Object.prototype;
 }
 
-function sanitizeLogValue(value) {
+function sanitizeLogValue(value, seen = new WeakSet()) {
   if (value === undefined) {
     return undefined;
   }
@@ -20,28 +20,51 @@ function sanitizeLogValue(value) {
   if (value instanceof Date) {
     return value.toISOString();
   }
+  let trackedObject = false;
+  if (typeof value === "object") {
+    if (seen.has(value)) {
+      return "[Circular]";
+    }
+    seen.add(value);
+    trackedObject = true;
+  }
   if (value instanceof Error) {
     const extraFields = Object.fromEntries(
       Object.entries(value)
-        .map(([key, item]) => [key, sanitizeLogValue(item)])
+        .map(([key, item]) => [key, sanitizeLogValue(item, seen)])
         .filter(([, item]) => item !== undefined)
     );
-    return {
+    const sanitizedError = {
       name: value.name,
       message: value.message,
       stack: value.stack || null,
       ...extraFields,
     };
+    if (trackedObject) {
+      seen.delete(value);
+    }
+    return sanitizedError;
   }
   if (Array.isArray(value)) {
-    return value.map((item) => sanitizeLogValue(item)).filter((item) => item !== undefined);
+    const sanitizedArray = value.map((item) => sanitizeLogValue(item, seen)).filter((item) => item !== undefined);
+    if (trackedObject) {
+      seen.delete(value);
+    }
+    return sanitizedArray;
   }
   if (isPlainObject(value)) {
-    return Object.fromEntries(
+    const sanitizedObject = Object.fromEntries(
       Object.entries(value)
-        .map(([key, item]) => [key, sanitizeLogValue(item)])
+        .map(([key, item]) => [key, sanitizeLogValue(item, seen)])
         .filter(([, item]) => item !== undefined)
     );
+    if (trackedObject) {
+      seen.delete(value);
+    }
+    return sanitizedObject;
+  }
+  if (trackedObject) {
+    seen.delete(value);
   }
   return String(value);
 }
@@ -101,14 +124,15 @@ function createStructuredLogger({ service, sink = console, baseFields = {} }) {
   };
 }
 
-function buildRunLogFields(run = {}, extraFields = {}) {
+function buildRunLogFields(run, extraFields = {}) {
+  const normalizedRun = run && typeof run === "object" ? run : {};
   return {
-    run_id: run.id ?? null,
-    agent: run.agent ?? null,
-    task_id: run.task_id ?? null,
-    thread_id: run.thread_id ?? null,
-    requested_by_agent: run.requested_by_agent ?? null,
-    dispatch_reason: run.dispatch_reason ?? null,
+    run_id: normalizedRun.id ?? null,
+    agent: normalizedRun.agent ?? null,
+    task_id: normalizedRun.task_id ?? null,
+    thread_id: normalizedRun.thread_id ?? null,
+    requested_by_agent: normalizedRun.requested_by_agent ?? null,
+    dispatch_reason: normalizedRun.dispatch_reason ?? null,
     ...extraFields,
   };
 }

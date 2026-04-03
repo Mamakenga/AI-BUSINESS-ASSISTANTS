@@ -26,6 +26,7 @@
     "test:jobs": "node --test test/jobs-registry.test.js",
     "test:smoke-job-trigger": "node --test test/smoke-job-trigger.test.js",
     "test:completion": "node --test test/run-completion.test.js",
+    "test:logging": "node --test test/structured-logging.test.js",
     "test:memory": "node --test test/memory-service.test.js",
     "test:bundles": "node --test test/memory-bundles.test.js",
     "test:compaction": "node --test test/memory-compaction.test.js",

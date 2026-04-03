@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { buildLogEntry, buildRunLogFields, createStructuredLogger } = require("../src/structured-logging");
+const { buildLogEntry, buildRunLogFields, createStructuredLogger, sanitizeLogValue } = require("../src/structured-logging");
 
 test("buildLogEntry returns structured JSON-safe payload", () => {
   const error = new Error("boom");
@@ -36,6 +36,63 @@ test("buildLogEntry returns structured JSON-safe payload", () => {
   });
   assert.equal(entry.error.migrate_to_chat_id, "-100123");
   assert.match(entry.ts, /^\d{4}-\d{2}-\d{2}T/);
+});
+
+test("buildLogEntry requires service and event", () => {
+  assert.throws(
+    () =>
+      buildLogEntry({
+        level: "info",
+        event: "missing_service",
+      }),
+    /service is required/
+  );
+
+  assert.throws(
+    () =>
+      buildLogEntry({
+        level: "info",
+        service: "control-api",
+      }),
+    /event is required/
+  );
+});
+
+test("sanitizeLogValue handles circular structures without throwing", () => {
+  const value = {
+    id: 42,
+    created_at: new Date("2026-04-03T10:00:00.000Z"),
+    count: 7n,
+  };
+  value.self = value;
+
+  assert.deepEqual(sanitizeLogValue(value), {
+    id: 42,
+    created_at: "2026-04-03T10:00:00.000Z",
+    count: "7",
+    self: "[Circular]",
+  });
+});
+
+test("sanitizeLogValue preserves repeated shared references that are not circular", () => {
+  const shared = {
+    kind: "shared",
+  };
+
+  assert.deepEqual(
+    sanitizeLogValue({
+      a: shared,
+      b: shared,
+    }),
+    {
+      a: {
+        kind: "shared",
+      },
+      b: {
+        kind: "shared",
+      },
+    }
+  );
 });
 
 test("createStructuredLogger writes JSON log lines to the matching sink method", () => {
@@ -95,4 +152,15 @@ test("buildRunLogFields keeps the core trace identifiers together", () => {
       dispatch_reason: "competitor watch",
     }
   );
+});
+
+test("buildRunLogFields stays null-safe for missing run objects", () => {
+  assert.deepEqual(buildRunLogFields(null), {
+    run_id: null,
+    agent: null,
+    task_id: null,
+    thread_id: null,
+    requested_by_agent: null,
+    dispatch_reason: null,
+  });
 });
