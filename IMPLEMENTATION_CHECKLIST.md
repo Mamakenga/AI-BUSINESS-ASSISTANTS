@@ -45,6 +45,7 @@
 2. отдельно вернуться к качеству живого ответа `methodist`;
 3. держать `DEPLOY_RUNBOOK.md` как канонический операторский сценарий для VPS updates.
 4. считать Phase 6 completed на уровне job contracts and trigger path, а не как полный live-quality signoff для каждого scheduled use-case.
+5. зафиксировать founder-facing UX, где implicit routing в родной теме роли станет рекомендуемым live-path без обязательного `@role`, как отдельный future polish после hardening.
 
 ## Phase 0. Project Bootstrap
 
@@ -175,6 +176,7 @@
 
 ## Phase 8. UX Polish
 
+- [ ] Сделать founder-facing implicit routing в родной теме роли рекомендуемым live UX path без обязательного `@role`
 - [ ] Проверить mobile UX Mini App внутри Telegram
 - [ ] Только после этого решить, нужен ли drag & drop
 - [ ] Если нужен, сделать drag & drop отдельным шагом
@@ -182,12 +184,39 @@
 
 ## Phase 9. Hardening
 
+Closure criteria для `Phase 9`:
+1. founder-facing runs traceable от intake до delivery;
+2. роли и auth-политики имеют один понятный источник истины;
+3. quality/safety guards срабатывают автоматически, а не вручную;
+4. production contour имеет канонический deploy/rollback/monitoring path.
+
+### Phase 9A. Observability & Runtime Guards
 - [ ] Добавить единый источник истины для списка ролей
+- [ ] Добавить structured logging
+- [ ] Сделать run-level trace visibility от Telegram intake до delivery
+- [ ] Сохранять token / usage / cost telemetry per run
+- [ ] Сделать `fallback_chain` queryable и удобным для ops-debug
+- [ ] Добавить token / cost boundaries per role с реальным enforcement
+- [ ] Добавить automated quality gates перед founder-facing delivery
+- [ ] Расширить sanitization coverage и тесты на leakage внутренних labels / ids / scope tags
+
+### Phase 9B. Registry, Validation & Auth
 - [ ] Убрать дублирование role validation между SQL и API
 - [ ] Добавить auth / internal protection layer для Control API
-- [ ] Добавить structured logging
+- [ ] Закрыть auth coverage для всех внутренних endpoint-ов Control API
+- [ ] Зафиксировать policy для rotation / renewal internal tokens
+
+### Phase 9C. Deploy Hardening
 - [ ] Добавить smoke-runbook для deploy
 - [ ] Добавить Railway/VPS deployment notes в отдельный ops-файл
+- [ ] Формализовать smoke -> deploy -> smoke pipeline как канонический deploy path
+- [ ] Зафиксировать rollback procedure для VPS deploy
+- [ ] Добавить health-check / monitoring notes для ops-контура
+
+## Phase 9.x. Post-Hardening Refactor Backlog
+
+- [ ] Завершить DRY-refactor для normalize/config helpers, которые сейчас дублируются в нескольких файлах
+- [ ] Декомпозировать `server.js`, чтобы intake / jobs / memory / runs не жили в одном большом модуле
 
 ## Server Validation Gates
 
@@ -202,6 +231,8 @@
 
 Следующий шаг по этому чеклисту:
 1. перейти к `Phase 9` hardening;
-2. после hardening вернуться к live-quality pass для `methodist`;
-3. использовать `DEPLOY_RUNBOOK.md` как канонический VPS update flow.
+2. внутри `Phase 9` начать со structured logging и observability;
+3. после hardening вернуться к live-quality pass для `methodist`;
+4. founder-facing implicit same-topic routing без `@role` держать как UX-polish шаг после hardening, а не как недостающую routing-capability;
+5. использовать `DEPLOY_RUNBOOK.md` как канонический VPS update flow.
 
