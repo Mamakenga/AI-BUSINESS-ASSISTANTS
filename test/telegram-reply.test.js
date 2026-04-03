@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -27,7 +27,7 @@ test("reply keeps clarification human-readable and in the same topic", () => {
   assert.match(reply.text, /Не удалось определить роль/);
 });
 
-test("reply for one-role task stays short and does not expose internals", () => {
+test("reply for one-role task skips ack inside the role's own topic", () => {
   const intakePlan = buildTelegramIntakePlan(
     {
       text: "@researcher сравни конкурентов в Варне",
@@ -38,6 +38,38 @@ test("reply for one-role task stays short and does not expose internals", () => 
 
   const reply = buildTelegramReply(intakePlan, {
     topic_name: "02 Researcher",
+  });
+
+  assert.equal(reply.text, null);
+});
+
+test("reply for one-role task also skips ack when the role topic casing differs", () => {
+  const intakePlan = buildTelegramIntakePlan(
+    {
+      text: "@researcher сравни конкурентов в Варне",
+      topic_name: "02 researcher",
+    },
+    { idFactory: createDeterministicIdFactory() }
+  );
+
+  const reply = buildTelegramReply(intakePlan, {
+    topic_name: "02 researcher",
+  });
+
+  assert.equal(reply.text, null);
+});
+
+test("reply for one-role task keeps ack when task is assigned from another topic", () => {
+  const intakePlan = buildTelegramIntakePlan(
+    {
+      text: "@researcher сравни конкурентов в Варне",
+      topic_name: "General",
+    },
+    { idFactory: createDeterministicIdFactory() }
+  );
+
+  const reply = buildTelegramReply(intakePlan, {
+    topic_name: "General",
   });
 
   assert.equal(reply.text, "Принял. Ставлю задачу ресерчеру.");
