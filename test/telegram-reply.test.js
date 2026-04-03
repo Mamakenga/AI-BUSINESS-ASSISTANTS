@@ -40,6 +40,7 @@ test("reply for one-role task skips ack inside the role's own topic", () => {
     topic_name: "02 Researcher",
   });
 
+  assert.equal(reply.topic_name, "02 Researcher");
   assert.equal(reply.text, null);
 });
 

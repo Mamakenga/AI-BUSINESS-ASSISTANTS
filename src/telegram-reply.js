@@ -4,7 +4,12 @@ const { ROLE_LABELS_DATIVE, ROLE_PROFILES } = require("./runtime-profiles");
 
 function normalizeTopicName(topicName) {
   const normalized = String(topicName || "").trim();
-  return normalized.length > 0 ? normalized.toLowerCase() : null;
+  return normalized.length > 0 ? normalized : null;
+}
+
+function normalizeTopicKey(topicName) {
+  const normalized = normalizeTopicName(topicName);
+  return normalized ? normalized.toLowerCase() : null;
 }
 
 function shouldSkipIntermediateAck(intakePlan, input = {}) {
@@ -16,8 +21,8 @@ function shouldSkipIntermediateAck(intakePlan, input = {}) {
     return false;
   }
 
-  const activeTopic = normalizeTopicName(input.topic_name);
-  const roleTopic = normalizeTopicName(ROLE_PROFILES[intakePlan.route.resolved_role]?.telegram_topic);
+  const activeTopic = normalizeTopicKey(input.topic_name);
+  const roleTopic = normalizeTopicKey(ROLE_PROFILES[intakePlan.route.resolved_role]?.telegram_topic);
   return Boolean(activeTopic && roleTopic && activeTopic === roleTopic);
 }
 
