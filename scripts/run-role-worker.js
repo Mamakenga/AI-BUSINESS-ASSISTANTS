@@ -291,6 +291,10 @@ async function main() {
         buildRunLogFields(claimedRun, {
           model_used: result.completion_response?.run?.model_used || null,
           fallback_chain: result.completion_response?.run?.fallback_chain || [],
+          prompt_tokens: result.completion_response?.run?.prompt_tokens ?? null,
+          completion_tokens: result.completion_response?.run?.completion_tokens ?? null,
+          total_tokens: result.completion_response?.run?.total_tokens ?? null,
+          response_cost_usd: result.completion_response?.run?.response_cost_usd ?? null,
           reply_text_present: Boolean(result.reply_text),
           artifact_created: Boolean(result.completion_response?.artifact),
         })

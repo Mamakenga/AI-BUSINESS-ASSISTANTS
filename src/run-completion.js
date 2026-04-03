@@ -37,6 +37,47 @@ function normalizeArtifactContent(value) {
   return value;
 }
 
+function normalizeOptionalInteger(value, fieldName) {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value === null || value === "") {
+    return null;
+  }
+  const parsed = Number.parseInt(String(value), 10);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`${fieldName} must be a non-negative integer`);
+  }
+  return parsed;
+}
+
+function normalizeOptionalDecimal(value, fieldName) {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value === null || value === "") {
+    return null;
+  }
+  const parsed = Number.parseFloat(String(value));
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`${fieldName} must be a non-negative number`);
+  }
+  return parsed;
+}
+
+function normalizeUsageJson(value) {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value === null) {
+    return null;
+  }
+  if (Array.isArray(value) || typeof value !== "object") {
+    throw new Error("usage_json must be an object");
+  }
+  return value;
+}
+
 function buildRunCompletion(input, runRow) {
   if (!runRow) {
     throw new Error("run_row is required");
@@ -59,6 +100,11 @@ function buildRunCompletion(input, runRow) {
   const modelUsed = normalizeOptionalString(input.model_used);
   const fallbackChain = normalizeFallbackChain(input.fallback_chain);
   const artifactContent = normalizeArtifactContent(input.artifact_content);
+  const usageJson = normalizeUsageJson(input.usage_json);
+  const promptTokens = normalizeOptionalInteger(input.prompt_tokens, "prompt_tokens");
+  const completionTokens = normalizeOptionalInteger(input.completion_tokens, "completion_tokens");
+  const totalTokens = normalizeOptionalInteger(input.total_tokens, "total_tokens");
+  const responseCostUsd = normalizeOptionalDecimal(input.response_cost_usd, "response_cost_usd");
 
   if (status === "completed" && runRow.task_id && artifactContent === undefined) {
     throw new Error("artifact_content is required for task-bound completed runs");
@@ -75,6 +121,11 @@ function buildRunCompletion(input, runRow) {
       status,
       model_used: modelUsed,
       fallback_chain: fallbackChain === undefined ? runRow.fallback_chain || [] : fallbackChain,
+      usage_json: usageJson === undefined ? runRow.usage_json ?? null : usageJson,
+      prompt_tokens: promptTokens === undefined ? runRow.prompt_tokens ?? null : promptTokens,
+      completion_tokens: completionTokens === undefined ? runRow.completion_tokens ?? null : completionTokens,
+      total_tokens: totalTokens === undefined ? runRow.total_tokens ?? null : totalTokens,
+      response_cost_usd: responseCostUsd === undefined ? runRow.response_cost_usd ?? null : responseCostUsd,
     },
     artifact:
       status === "completed" && runRow.task_id

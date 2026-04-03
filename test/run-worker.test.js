@@ -114,12 +114,30 @@ test("buildRunCompletionInput creates artifact payload for task-bound run", () =
       status: "completed",
       model_used: "gpt",
       fallback_chain: ["gpt"],
+      usage_json: {
+        prompt_tokens: 15,
+        completion_tokens: 20,
+        total_tokens: 35,
+      },
+      prompt_tokens: 15,
+      completion_tokens: 20,
+      total_tokens: 35,
+      response_cost_usd: 0.0025,
       reply_text: "Here is your digest.",
     }
   );
 
   assert.equal(result.completion.actor_agent, "assistant");
   assert.equal(result.completion.status, "completed");
+  assert.deepEqual(result.completion.usage_json, {
+    prompt_tokens: 15,
+    completion_tokens: 20,
+    total_tokens: 35,
+  });
+  assert.equal(result.completion.prompt_tokens, 15);
+  assert.equal(result.completion.completion_tokens, 20);
+  assert.equal(result.completion.total_tokens, 35);
+  assert.equal(result.completion.response_cost_usd, 0.0025);
   assert.deepEqual(result.completion.artifact_content, {
     reply_text: "Here is your digest.",
   });

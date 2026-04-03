@@ -105,6 +105,54 @@ function extractAssistantText(payload) {
   return null;
 }
 
+function normalizeUsageObject(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  return value;
+}
+
+function normalizeNonNegativeInteger(value) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+  const parsed = Number.parseInt(String(value), 10);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+  return parsed;
+}
+
+function normalizeNonNegativeDecimal(value) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+  const parsed = Number.parseFloat(String(value));
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+  return parsed;
+}
+
+function extractResponseCostUsd(payload) {
+  return (
+    normalizeNonNegativeDecimal(payload?.response_cost_usd) ??
+    normalizeNonNegativeDecimal(payload?.response_cost) ??
+    normalizeNonNegativeDecimal(payload?._hidden_params?.response_cost)
+  );
+}
+
+function extractUsageTelemetry(payload) {
+  const usage = normalizeUsageObject(payload?.usage);
+  return {
+    usage_json: usage,
+    prompt_tokens: normalizeNonNegativeInteger(usage?.prompt_tokens),
+    completion_tokens: normalizeNonNegativeInteger(usage?.completion_tokens),
+    total_tokens: normalizeNonNegativeInteger(usage?.total_tokens),
+    response_cost_usd: extractResponseCostUsd(payload),
+  };
+}
+
 function normalizeExecutorResponse(payload, executionContext, request) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     throw new Error("Executor response must be an object");
@@ -115,17 +163,25 @@ function normalizeExecutorResponse(payload, executionContext, request) {
     throw new Error("Executor response must include assistant text");
   }
 
+  const telemetry = extractUsageTelemetry(payload);
+
   return {
     status: "completed",
     model_used: normalizeOptionalString(payload.model) || request.model,
     fallback_chain: [],
+    usage_json: telemetry.usage_json,
+    prompt_tokens: telemetry.prompt_tokens,
+    completion_tokens: telemetry.completion_tokens,
+    total_tokens: telemetry.total_tokens,
+    response_cost_usd: telemetry.response_cost_usd,
     reply_text: replyText,
     artifact_type: executionContext.role.output_contract,
     artifact_content: executionContext.run?.task_id
       ? {
           reply_text: replyText,
           source: "litellm_executor_v1",
-          usage: payload.usage || null,
+          usage: telemetry.usage_json,
+          response_cost_usd: telemetry.response_cost_usd,
         }
       : null,
   };

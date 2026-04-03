@@ -27,6 +27,15 @@ test("task-bound completed run creates an artifact with default output contract"
       actor_agent: "researcher",
       status: "completed",
       model_used: "gemini",
+      usage_json: {
+        prompt_tokens: 12,
+        completion_tokens: 30,
+        total_tokens: 42,
+      },
+      prompt_tokens: 12,
+      completion_tokens: 30,
+      total_tokens: 42,
+      response_cost_usd: 0.0012,
       artifact_content: {
         summary: "Competitor comparison is ready",
       },
@@ -37,6 +46,15 @@ test("task-bound completed run creates an artifact with default output contract"
   assert.equal(completion.run_update.status, "completed");
   assert.equal(completion.run_update.model_used, "gemini");
   assert.deepEqual(completion.run_update.fallback_chain, []);
+  assert.deepEqual(completion.run_update.usage_json, {
+    prompt_tokens: 12,
+    completion_tokens: 30,
+    total_tokens: 42,
+  });
+  assert.equal(completion.run_update.prompt_tokens, 12);
+  assert.equal(completion.run_update.completion_tokens, 30);
+  assert.equal(completion.run_update.total_tokens, 42);
+  assert.equal(completion.run_update.response_cost_usd, 0.0012);
   assert.deepEqual(completion.artifact, {
     task_id: "task_123",
     artifact_type: "research_summary_v1",
@@ -120,5 +138,33 @@ test("fallback chain must stay an array", () => {
         createRunRow()
       ),
     /fallback_chain must be an array/
+  );
+});
+
+test("telemetry fields must stay normalized", () => {
+  assert.throws(
+    () =>
+      buildRunCompletion(
+        {
+          actor_agent: "researcher",
+          status: "failed",
+          prompt_tokens: -1,
+        },
+        createRunRow()
+      ),
+    /prompt_tokens must be a non-negative integer/
+  );
+
+  assert.throws(
+    () =>
+      buildRunCompletion(
+        {
+          actor_agent: "researcher",
+          status: "failed",
+          usage_json: "bad",
+        },
+        createRunRow()
+      ),
+    /usage_json must be an object/
   );
 });

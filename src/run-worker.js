@@ -241,6 +241,11 @@ function normalizeExecutionResult(runRow, payload = {}) {
     status,
     model_used: modelUsed,
     fallback_chain: fallbackChain,
+    usage_json: payload.usage_json === undefined ? null : payload.usage_json,
+    prompt_tokens: payload.prompt_tokens === undefined ? null : payload.prompt_tokens,
+    completion_tokens: payload.completion_tokens === undefined ? null : payload.completion_tokens,
+    total_tokens: payload.total_tokens === undefined ? null : payload.total_tokens,
+    response_cost_usd: payload.response_cost_usd === undefined ? null : payload.response_cost_usd,
     artifact_type: artifactType,
     artifact_content: artifactContent,
     reply_text: replyText,
@@ -322,6 +327,11 @@ function buildRunCompletionInput(runRow, executionResult, executionContext = nul
     status: normalized.status,
     model_used: normalized.model_used,
     fallback_chain: normalized.fallback_chain,
+    usage_json: normalized.usage_json,
+    prompt_tokens: normalized.prompt_tokens,
+    completion_tokens: normalized.completion_tokens,
+    total_tokens: normalized.total_tokens,
+    response_cost_usd: normalized.response_cost_usd,
   };
 
   if (runRow.task_id && normalized.status === "completed") {

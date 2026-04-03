@@ -64,7 +64,12 @@ test("normalizeExecutorResponse extracts assistant text", () => {
         },
       ],
       usage: {
+        prompt_tokens: 23,
+        completion_tokens: 100,
         total_tokens: 123,
+      },
+      _hidden_params: {
+        response_cost: 0.0042,
       },
     },
     createExecutionContext(),
@@ -74,6 +79,15 @@ test("normalizeExecutorResponse extracts assistant text", () => {
   assert.equal(result.status, "completed");
   assert.equal(result.model_used, "assistant-model");
   assert.equal(result.reply_text, "Short founder-facing answer.");
+  assert.deepEqual(result.usage_json, {
+    prompt_tokens: 23,
+    completion_tokens: 100,
+    total_tokens: 123,
+  });
+  assert.equal(result.prompt_tokens, 23);
+  assert.equal(result.completion_tokens, 100);
+  assert.equal(result.total_tokens, 123);
+  assert.equal(result.response_cost_usd, 0.0042);
 });
 
 test("executeRoleRun wraps timeout as retryable executor error", async () => {

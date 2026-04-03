@@ -16,6 +16,7 @@ const { buildMemoryBundleRequest, createEmptyBundleResult, trimMemoryBundle } = 
 const { buildMemoryCompaction, normalizeSourceMemoryIds } = require("./memory-compaction");
 const { buildMemoryCandidate, parseMemoryQuery } = require("./memory-service");
 const { buildRunCompletion } = require("./run-completion");
+const { mapRunRow } = require("./run-row-mapping");
 const { buildRunLogFields, createStructuredLogger } = require("./structured-logging");
 const { buildTelegramIntakePlan } = require("./telegram-intake");
 const { buildTelegramContext, resolveTelegramIntakeContext } = require("./telegram-intake-context");
@@ -171,23 +172,6 @@ function mapMessageRow(row) {
     message_type: row.message_type,
     content: row.content,
     status: row.status,
-    created_at: row.created_at,
-  };
-}
-
-function mapRunRow(row) {
-  return {
-    id: row.id,
-    agent: row.agent,
-    task_id: row.task_id,
-    thread_id: row.thread_id,
-    status: row.status,
-    requested_by_agent: row.requested_by_agent,
-    dispatch_reason: row.dispatch_reason,
-    model_used: row.model_used,
-    fallback_chain: row.fallback_chain,
-    started_at: row.started_at,
-    finished_at: row.finished_at,
     created_at: row.created_at,
   };
 }
@@ -471,7 +455,7 @@ app.post("/jobs/:jobType/trigger", async (req, res, next) => {
           agent, task_id, thread_id, status, requested_by_agent, dispatch_reason
         )
         VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, started_at, finished_at, created_at
+        RETURNING id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, usage_json, prompt_tokens, completion_tokens, total_tokens, response_cost_usd, started_at, finished_at, created_at
       `,
       [
         trigger.run.agent,
@@ -935,7 +919,7 @@ app.post("/telegram/intake", async (req, res, next) => {
           agent, task_id, thread_id, status, requested_by_agent, dispatch_reason
         )
         VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, started_at, finished_at, created_at
+        RETURNING id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, usage_json, prompt_tokens, completion_tokens, total_tokens, response_cost_usd, started_at, finished_at, created_at
       `,
       [
         intakePlan.run.agent,
@@ -1013,7 +997,7 @@ app.post("/runs/follow-up", async (req, res, next) => {
           agent, task_id, thread_id, status, requested_by_agent, dispatch_reason
         )
         VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, started_at, finished_at, created_at
+        RETURNING id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, usage_json, prompt_tokens, completion_tokens, total_tokens, response_cost_usd, started_at, finished_at, created_at
       `,
       [
         followUpRun.run.agent,
@@ -1074,7 +1058,7 @@ app.post("/runs/:id/complete", async (req, res, next) => {
 
     const runResult = await client.query(
       `
-        SELECT id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, started_at, finished_at, created_at
+        SELECT id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, usage_json, prompt_tokens, completion_tokens, total_tokens, response_cost_usd, started_at, finished_at, created_at
         FROM runs
         WHERE id = $1
         FOR UPDATE
@@ -1097,16 +1081,26 @@ app.post("/runs/:id/complete", async (req, res, next) => {
           status = $2,
           model_used = $3,
           fallback_chain = $4,
+          usage_json = $5,
+          prompt_tokens = $6,
+          completion_tokens = $7,
+          total_tokens = $8,
+          response_cost_usd = $9,
           started_at = COALESCE(started_at, now()),
           finished_at = now()
         WHERE id = $1
-        RETURNING id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, started_at, finished_at, created_at
+        RETURNING id, agent, task_id, thread_id, status, requested_by_agent, dispatch_reason, model_used, fallback_chain, usage_json, prompt_tokens, completion_tokens, total_tokens, response_cost_usd, started_at, finished_at, created_at
       `,
       [
         req.params.id,
         completion.run_update.status,
         completion.run_update.model_used,
         JSON.stringify(completion.run_update.fallback_chain),
+        completion.run_update.usage_json ? JSON.stringify(completion.run_update.usage_json) : null,
+        completion.run_update.prompt_tokens,
+        completion.run_update.completion_tokens,
+        completion.run_update.total_tokens,
+        completion.run_update.response_cost_usd,
       ]
     );
 
@@ -1139,6 +1133,10 @@ app.post("/runs/:id/complete", async (req, res, next) => {
         model_used: mappedRun.model_used,
         fallback_chain: mappedRun.fallback_chain,
         fallback_count: Array.isArray(mappedRun.fallback_chain) ? mappedRun.fallback_chain.length : 0,
+        prompt_tokens: mappedRun.prompt_tokens,
+        completion_tokens: mappedRun.completion_tokens,
+        total_tokens: mappedRun.total_tokens,
+        response_cost_usd: mappedRun.response_cost_usd,
         artifact_created: Boolean(artifactRow),
         artifact_type: artifactRow?.artifact_type || null,
       })
@@ -1292,6 +1290,16 @@ app.use((error, _req, res, _next) => {
   }
 
   if (error.message === "fallback_chain must be an array") {
+    return res.status(400).json({ error: error.message });
+  }
+
+  if (
+    error.message === "usage_json must be an object" ||
+    error.message === "prompt_tokens must be a non-negative integer" ||
+    error.message === "completion_tokens must be a non-negative integer" ||
+    error.message === "total_tokens must be a non-negative integer" ||
+    error.message === "response_cost_usd must be a non-negative number"
+  ) {
     return res.status(400).json({ error: error.message });
   }
 
