@@ -17,6 +17,7 @@ const { buildMemoryCompaction, normalizeSourceMemoryIds } = require("./memory-co
 const { buildMemoryCandidate, parseMemoryQuery } = require("./memory-service");
 const { buildRunCompletion } = require("./run-completion");
 const { buildTelegramIntakePlan } = require("./telegram-intake");
+const { buildTelegramContext, resolveTelegramIntakeContext } = require("./telegram-intake-context");
 const { buildTelegramReply } = require("./telegram-reply");
 const { ALLOWED_TASK_ROLES } = require("./runtime-profiles");
 const { resolveTelegramRouting } = require("./telegram-routing");
@@ -252,6 +253,32 @@ function mapTelegramThreadRow(row) {
   };
 }
 
+async function loadPersistedTelegramTopicName(client, telegramContext) {
+  if (
+    !telegramContext?.chat_id ||
+    telegramContext.message_thread_id === null ||
+    telegramContext.message_thread_id === undefined ||
+    telegramContext.topic_name
+  ) {
+    return null;
+  }
+
+  const result = await client.query(
+    `
+      SELECT topic_name
+      FROM telegram_threads
+      WHERE chat_id = $1
+        AND message_thread_id = $2
+        AND topic_name IS NOT NULL
+      ORDER BY updated_at DESC, created_at DESC
+      LIMIT 1
+    `,
+    [telegramContext.chat_id, telegramContext.message_thread_id]
+  );
+
+  return normalizeNullableString(result.rows[0]?.topic_name) || null;
+}
+
 function buildTaskUpdate(body) {
   const candidate = {
     title: body.title !== undefined ? normalizeTitle(body.title) : undefined,
@@ -366,10 +393,14 @@ app.post("/jobs/sync", async (_req, res, next) => {
       items: mergeRegisteredJobsWithStoredRows(syncedResult.rows.map(mapJobRow)),
     });
   } catch (error) {
-    await client.query("ROLLBACK");
+    if (client) {
+      await client.query("ROLLBACK");
+    }
     return next(error);
   } finally {
-    client.release();
+    if (client) {
+      client.release();
+    }
   }
 });
 
@@ -743,13 +774,37 @@ app.post("/telegram/route-preview", (req, res, next) => {
 });
 
 app.post("/telegram/intake", async (req, res, next) => {
-  const text = normalizeNullableString(req.body.text);
-  const topicName = normalizeNullableString(req.body.topic_name);
+  let client = null;
+  let persistedTopicName = null;
+  const telegramContextSeed = buildTelegramContext(req.body.telegram);
 
+  const text = normalizeNullableString(req.body.text);
   if (!text) {
     return res.status(400).json({ error: "text is required" });
   }
 
+  const needsPersistedTopicRestore =
+    normalizeNullableString(req.body.topic_name) === null &&
+    telegramContextSeed?.topic_name === null &&
+    telegramContextSeed?.chat_id &&
+    telegramContextSeed?.message_thread_id !== null &&
+    telegramContextSeed?.message_thread_id !== undefined;
+
+  try {
+    if (needsPersistedTopicRestore) {
+      client = await pool.connect();
+      persistedTopicName = await loadPersistedTelegramTopicName(client, telegramContextSeed);
+    }
+  } catch (error) {
+    if (client) {
+      client.release();
+    }
+    return next(error);
+  }
+
+  const intakeContext = resolveTelegramIntakeContext(req.body, persistedTopicName);
+  const topicName = intakeContext.topicName;
+  const telegramContext = intakeContext.telegramContext;
   const intakePlan = buildTelegramIntakePlan({
     text,
     topic_name: topicName,
@@ -758,20 +813,11 @@ app.post("/telegram/intake", async (req, res, next) => {
   const reply = buildTelegramReply(intakePlan, {
     topic_name: topicName,
   });
-  const telegramContext =
-    req.body?.telegram && typeof req.body.telegram === "object" && !Array.isArray(req.body.telegram)
-      ? {
-          chat_id: normalizeNullableString(req.body.telegram.chat_id),
-          message_id: normalizeBoardOrder(req.body.telegram.message_id),
-          message_thread_id:
-            req.body.telegram.message_thread_id === null || req.body.telegram.message_thread_id === undefined
-              ? null
-              : normalizeBoardOrder(req.body.telegram.message_thread_id),
-          topic_name: normalizeNullableString(req.body.telegram.topic_name),
-        }
-      : null;
 
   if (!intakePlan.should_persist) {
+    if (client) {
+      client.release();
+    }
     return res.status(200).json({
       persisted: false,
       reply,
@@ -779,8 +825,10 @@ app.post("/telegram/intake", async (req, res, next) => {
     });
   }
 
-  const client = await pool.connect();
   try {
+    if (!client) {
+      client = await pool.connect();
+    }
     await client.query("BEGIN");
 
     let telegramThreadRow = null;
@@ -795,7 +843,7 @@ app.post("/telegram/intake", async (req, res, next) => {
           DO UPDATE SET
             chat_id = EXCLUDED.chat_id,
             message_thread_id = EXCLUDED.message_thread_id,
-            topic_name = EXCLUDED.topic_name,
+            topic_name = COALESCE(EXCLUDED.topic_name, telegram_threads.topic_name),
             last_founder_message_id = EXCLUDED.last_founder_message_id,
             updated_at = now()
           RETURNING thread_id, chat_id, message_thread_id, topic_name, last_founder_message_id, created_at, updated_at
