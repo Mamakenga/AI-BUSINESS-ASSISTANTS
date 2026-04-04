@@ -1,5 +1,6 @@
 "use strict";
 
+const { findFounderReplyQualityIssues } = require("./founder-facing-quality");
 const { ROLE_PROFILES } = require("./runtime-profiles");
 
 const WORKER_ROLE_IDS = Object.freeze(
@@ -273,6 +274,35 @@ function buildRuntimeBudgetGuardReply(runRow) {
   return "Не удалось безопасно подготовить ответ в пределах runtime-лимита роли. Попробуйте сузить запрос или разбить его на более узкую задачу.";
 }
 
+function buildFounderReplyQualityGuardReply(runRow) {
+  if (runRow?.requested_by_agent === "scheduler") {
+    return buildScheduledFounderQualityGuardFallback(runRow);
+  }
+
+  return "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e \u043f\u043e\u0434\u0433\u043e\u0442\u043e\u0432\u0438\u0442\u044c \u043e\u0442\u0432\u0435\u0442 \u0431\u0435\u0437 \u0432\u043d\u0443\u0442\u0440\u0435\u043d\u043d\u0438\u0445 \u0441\u043b\u0443\u0436\u0435\u0431\u043d\u044b\u0445 \u043c\u0430\u0440\u043a\u0435\u0440\u043e\u0432. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u043f\u043e\u0432\u0442\u043e\u0440\u0438\u0442\u044c \u0437\u0430\u043f\u0440\u043e\u0441 \u0432 \u0431\u043e\u043b\u0435\u0435 \u0443\u0437\u043a\u043e\u0439 \u0444\u043e\u0440\u043c\u0443\u043b\u0438\u0440\u043e\u0432\u043a\u0435; \u043f\u0440\u043e\u0431\u043b\u0435\u043c\u0430 \u0443\u0436\u0435 \u043e\u0442\u043c\u0435\u0447\u0435\u043d\u0430 quality gate.";
+}
+
+function buildScheduledFounderQualityGuardFallback(runRow) {
+  const kind = classifyScheduledThinContextRun(runRow);
+  const titleByKind = {
+    daily_leader_digest: "**Ежедневный бриф для руководителя**",
+    weekly_leader_digest: "**Еженедельный дайджест для руководителя**",
+    competitor_watch: "**Ежедневный мониторинг конкурентов**",
+    branch_finance_review: "**Финансовый обзор филиала**",
+    weekly_risk_review: "**Еженедельный обзор рисков**",
+  };
+
+  return [
+    titleByKind[kind] || "**Плановое обновление**",
+    "",
+    "**Статус публикации**",
+    "- Автоматическая quality-проверка остановила публикацию этого черновика, потому что в нем появились внутренние служебные маркеры.",
+    "",
+    "**Безопасный следующий шаг**",
+    "- Повторите прогон после cleanup служебных маркеров в ответе.",
+  ].join("\n");
+}
+
 function applyRuntimeUsageLimits(runRow, executionResult, executionContext) {
   if (!executionContext?.role?.runtime_limits || executionResult.status !== "completed") {
     return executionResult;
@@ -323,6 +353,34 @@ function applyRuntimeUsageLimits(runRow, executionResult, executionContext) {
     artifact_type: null,
     artifact_content: null,
     reply_text: buildRuntimeBudgetGuardReply(runRow),
+  };
+}
+
+function applyFounderFacingQualityGate(runRow, executionResult) {
+  if (!runRow || !["founder", "scheduler"].includes(runRow.requested_by_agent)) {
+    return executionResult;
+  }
+
+  const issues = findFounderReplyQualityIssues(executionResult?.reply_text);
+  if (issues.length === 0) {
+    return executionResult;
+  }
+
+  const markers = Array.from(
+    new Set([
+      ...(Array.isArray(executionResult.fallback_chain) ? executionResult.fallback_chain : []),
+      "founder_reply_quality_guard",
+      ...issues.map((issue) => `founder_reply_quality_guard/${issue}`),
+    ])
+  );
+
+  return {
+    ...executionResult,
+    status: "failed",
+    fallback_chain: markers,
+    artifact_type: null,
+    artifact_content: null,
+    reply_text: buildFounderReplyQualityGuardReply(runRow),
   };
 }
 
@@ -398,27 +456,28 @@ function buildRunCompletionInput(runRow, executionResult, executionContext = nul
   }
 
   const enforced = applyRuntimeUsageLimits(runRow, normalized, executionContext);
+  const qualityChecked = applyFounderFacingQualityGate(runRow, enforced);
 
   const completion = {
     actor_agent: runRow.agent,
-    status: enforced.status,
-    model_used: enforced.model_used,
-    fallback_chain: enforced.fallback_chain,
-    usage_json: enforced.usage_json,
-    prompt_tokens: enforced.prompt_tokens,
-    completion_tokens: enforced.completion_tokens,
-    total_tokens: enforced.total_tokens,
-    response_cost_usd: enforced.response_cost_usd,
+    status: qualityChecked.status,
+    model_used: qualityChecked.model_used,
+    fallback_chain: qualityChecked.fallback_chain,
+    usage_json: qualityChecked.usage_json,
+    prompt_tokens: qualityChecked.prompt_tokens,
+    completion_tokens: qualityChecked.completion_tokens,
+    total_tokens: qualityChecked.total_tokens,
+    response_cost_usd: qualityChecked.response_cost_usd,
   };
 
-  if (runRow.task_id && enforced.status === "completed") {
-    completion.artifact_type = enforced.artifact_type;
-    completion.artifact_content = enforced.artifact_content;
+  if (runRow.task_id && qualityChecked.status === "completed") {
+    completion.artifact_type = qualityChecked.artifact_type;
+    completion.artifact_content = qualityChecked.artifact_content;
   }
 
   return {
     completion,
-    reply_text: enforced.reply_text,
+    reply_text: qualityChecked.reply_text,
   };
 }
 

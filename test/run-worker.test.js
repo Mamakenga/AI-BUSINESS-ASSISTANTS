@@ -489,3 +489,151 @@ test("buildRunCompletionInput keeps a safe reply for founder task threads when r
   assert.ok(result.completion.fallback_chain.includes("runtime_budget_guard"));
   assert.equal(result.completion.artifact_content, undefined);
 });
+
+test("buildRunCompletionInput blocks founder-facing replies that leak internal metadata", () => {
+  const result = buildRunCompletionInput(
+    {
+      id: 98,
+      agent: "assistant",
+      task_id: null,
+      requested_by_agent: "founder",
+      dispatch_reason: null,
+    },
+    {
+      status: "completed",
+      model_used: "assistant-model",
+      fallback_chain: [],
+      reply_text: "Подтверждено: [business] есть только один факт, thread_id: 7a04104a-18c8-4f1f-8f98-58d63737c820.",
+    },
+    {
+      run: {
+        id: 98,
+        agent: "assistant",
+        task_id: null,
+        requested_by_agent: "founder",
+        dispatch_reason: null,
+      },
+      role: {
+        id: "assistant",
+        runtime_limits: {
+          max_completion_tokens: 900,
+          max_total_tokens: 2500,
+          max_response_cost_usd: 0.02,
+        },
+      },
+      task: null,
+      handoff_messages: [],
+      memory_bundle: null,
+    }
+  );
+
+  assert.equal(result.completion.status, "failed");
+  assert.ok(result.completion.fallback_chain.includes("founder_reply_quality_guard"));
+  assert.ok(result.completion.fallback_chain.includes("founder_reply_quality_guard/internal_scope_tag"));
+  assert.ok(result.completion.fallback_chain.includes("founder_reply_quality_guard/internal_identifier"));
+  assert.match(result.reply_text, /внутренних служебных маркеров/i);
+});
+
+test("buildRunCompletionInput replaces unsafe scheduled founder-facing output with safe fallback", () => {
+  const result = buildRunCompletionInput(
+    {
+      id: 99,
+      agent: "assistant",
+      task_id: null,
+      requested_by_agent: "scheduler",
+      dispatch_reason: "Prepare the daily brief for the leader in Russian.",
+    },
+    {
+      status: "completed",
+      model_used: "assistant-model",
+      fallback_chain: [],
+      reply_text: "Источник memory_curator:long_term_fact. [decision:owner] запись 7a04104a.",
+    },
+    {
+      run: {
+        id: 99,
+        agent: "assistant",
+        task_id: null,
+        requested_by_agent: "scheduler",
+        dispatch_reason: "Prepare the daily brief for the leader in Russian.",
+      },
+      role: {
+        id: "assistant",
+        runtime_limits: {
+          max_completion_tokens: 900,
+          max_total_tokens: 2500,
+          max_response_cost_usd: 0.02,
+        },
+      },
+      task: null,
+      handoff_messages: [
+        {
+          from_agent: "researcher",
+          content: "Есть один подтвержденный рыночный факт.",
+        },
+      ],
+      memory_bundle: {
+        business: [{ fact: "Есть один подтвержденный бизнес-факт." }],
+      },
+    }
+  );
+
+  assert.equal(result.completion.status, "failed");
+  assert.ok(result.completion.fallback_chain.includes("founder_reply_quality_guard"));
+  assert.ok(result.completion.fallback_chain.includes("founder_reply_quality_guard/internal_scope_tag"));
+  assert.ok(result.completion.fallback_chain.includes("founder_reply_quality_guard/internal_identifier"));
+  assert.ok(result.completion.fallback_chain.includes("founder_reply_quality_guard/internal_source_label"));
+  assert.match(result.reply_text, /Ежедневный бриф для руководителя/i);
+  assert.match(result.reply_text, /Статус публикации/i);
+});
+
+test("buildRunCompletionInput does not apply founder-facing quality gate to internal orchestrated runs", () => {
+  const result = buildRunCompletionInput(
+    {
+      id: 100,
+      agent: "researcher",
+      task_id: "task_100",
+      requested_by_agent: "orchestrator",
+      dispatch_reason: "Research follow-up for pricing comparison.",
+    },
+    {
+      status: "completed",
+      model_used: "researcher-model",
+      fallback_chain: [],
+      artifact_content: {
+        summary: "Contains [business] handoff notation for internal processing.",
+      },
+      reply_text: "Internal follow-up mentions [business] and thread_id: 7a04104a-18c8-4f1f-8f98-58d63737c820.",
+    },
+    {
+      run: {
+        id: 100,
+        agent: "researcher",
+        task_id: "task_100",
+        requested_by_agent: "orchestrator",
+        dispatch_reason: "Research follow-up for pricing comparison.",
+      },
+      role: {
+        id: "researcher",
+        runtime_limits: {
+          max_completion_tokens: 1200,
+          max_total_tokens: 3500,
+          max_response_cost_usd: 0.03,
+        },
+      },
+      task: {
+        id: "task_100",
+        title: "Compare competitors",
+      },
+      handoff_messages: [],
+      memory_bundle: null,
+    }
+  );
+
+  assert.equal(result.completion.status, "completed");
+  assert.deepEqual(result.completion.fallback_chain, []);
+  assert.equal(result.reply_text, "Internal follow-up mentions [business] and thread_id: 7a04104a-18c8-4f1f-8f98-58d63737c820.");
+  assert.deepEqual(result.completion.artifact_content, {
+    summary: "Contains [business] handoff notation for internal processing.",
+  });
+});
