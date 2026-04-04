@@ -5,6 +5,7 @@ const express = require("express");
 const { Pool } = require("pg");
 const {
   authorizeInternalRequest,
+  hasConfiguredInternalToken,
   INTERNAL_AUTH_ROUTE_PREFIXES,
 } = require("./control-api-auth");
 const { buildFollowUpRun } = require("./follow-up-run");
@@ -1394,6 +1395,11 @@ app.use((error, _req, res, _next) => {
 });
 
 const server = app.listen(PORT, () => {
+  if (!hasConfiguredInternalToken(CONTROL_API_INTERNAL_TOKEN)) {
+    logger.warn("control_api_internal_auth_not_configured", {
+      internal_auth_enabled: false,
+    });
+  }
   logger.info("control_api_started", {
     port: PORT,
   });

@@ -16,9 +16,13 @@ function buildInternalAuthError(status, message) {
   };
 }
 
+function hasConfiguredInternalToken(expectedToken) {
+  return String(expectedToken || "").trim().length > 0;
+}
+
 function authorizeInternalRequest(headers = {}, expectedToken) {
   const configuredToken = String(expectedToken || "").trim();
-  if (!configuredToken) {
+  if (!hasConfiguredInternalToken(configuredToken)) {
     return buildInternalAuthError(503, "CONTROL_API_INTERNAL_TOKEN is not configured");
   }
 
@@ -34,7 +38,7 @@ function authorizeInternalRequest(headers = {}, expectedToken) {
 
 function buildInternalAuthHeaders(expectedToken, headers = {}) {
   const configuredToken = String(expectedToken || "").trim();
-  if (!configuredToken) {
+  if (!hasConfiguredInternalToken(configuredToken)) {
     return { ...headers };
   }
 
@@ -47,5 +51,6 @@ function buildInternalAuthHeaders(expectedToken, headers = {}) {
 module.exports = {
   authorizeInternalRequest,
   buildInternalAuthHeaders,
+  hasConfiguredInternalToken,
   INTERNAL_AUTH_ROUTE_PREFIXES,
 };

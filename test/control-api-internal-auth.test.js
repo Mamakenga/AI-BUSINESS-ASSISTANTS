@@ -9,6 +9,7 @@ const express = require("express");
 const {
   authorizeInternalRequest,
   buildInternalAuthHeaders,
+  hasConfiguredInternalToken,
   INTERNAL_AUTH_ROUTE_PREFIXES,
 } = require("../src/control-api-auth");
 
@@ -47,6 +48,14 @@ test("authorizeInternalRequest returns ok=true when bearer token matches", () =>
   const result = authorizeInternalRequest({ authorization: "Bearer shared-secret" }, "shared-secret");
 
   assert.deepEqual(result, { ok: true });
+});
+
+test("hasConfiguredInternalToken returns true only for non-empty trimmed tokens", () => {
+  assert.equal(hasConfiguredInternalToken("shared-secret"), true);
+  assert.equal(hasConfiguredInternalToken("  shared-secret  "), true);
+  assert.equal(hasConfiguredInternalToken(""), false);
+  assert.equal(hasConfiguredInternalToken("   "), false);
+  assert.equal(hasConfiguredInternalToken(null), false);
 });
 
 test("buildInternalAuthHeaders injects bearer token while preserving existing headers", () => {
