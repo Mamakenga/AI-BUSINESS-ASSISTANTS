@@ -1,5 +1,13 @@
 "use strict";
 
+const INTERNAL_AUTH_ROUTE_PREFIXES = Object.freeze([
+  "/jobs",
+  "/memories",
+  "/memory",
+  "/telegram",
+  "/runs",
+]);
+
 function buildInternalAuthError(status, message) {
   return {
     ok: false,
@@ -24,6 +32,20 @@ function authorizeInternalRequest(headers = {}, expectedToken) {
   };
 }
 
+function buildInternalAuthHeaders(expectedToken, headers = {}) {
+  const configuredToken = String(expectedToken || "").trim();
+  if (!configuredToken) {
+    return { ...headers };
+  }
+
+  return {
+    ...headers,
+    authorization: `Bearer ${configuredToken}`,
+  };
+}
+
 module.exports = {
   authorizeInternalRequest,
+  buildInternalAuthHeaders,
+  INTERNAL_AUTH_ROUTE_PREFIXES,
 };

@@ -9,8 +9,10 @@ const {
 const { callTelegramApi, normalizeTelegramBotConfig } = require("../src/telegram-bot-client");
 const { createStructuredLogger } = require("../src/structured-logging");
 const { setTimeout: sleep } = require("node:timers/promises");
+const { buildInternalAuthHeaders } = require("../src/control-api-auth");
 
 const CONTROL_API_URL = String(process.env.CONTROL_API_URL || "http://127.0.0.1:3000").trim();
+const CONTROL_API_INTERNAL_TOKEN = String(process.env.CONTROL_API_INTERNAL_TOKEN || "").trim();
 const TELEGRAM_ALLOWED_CHAT_ID = String(process.env.TELEGRAM_ALLOWED_CHAT_ID || "").trim() || null;
 const TELEGRAM_POLL_TIMEOUT_SECONDS = Number.parseInt(process.env.TELEGRAM_POLL_TIMEOUT_SECONDS || "30", 10);
 const TELEGRAM_TOPIC_MAP = parseTelegramTopicMap(process.env.TELEGRAM_TOPIC_MAP);
@@ -33,9 +35,9 @@ function normalizePollTimeoutSeconds(value) {
 async function callControlApi(path, body) {
   const response = await fetch(`${CONTROL_API_URL}${path}`, {
     method: "POST",
-    headers: {
+    headers: buildInternalAuthHeaders(CONTROL_API_INTERNAL_TOKEN, {
       "content-type": "application/json",
-    },
+    }),
     body: JSON.stringify(body),
   });
 

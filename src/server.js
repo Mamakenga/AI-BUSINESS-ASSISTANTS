@@ -3,7 +3,10 @@
 const crypto = require("node:crypto");
 const express = require("express");
 const { Pool } = require("pg");
-const { authorizeInternalRequest } = require("./control-api-auth");
+const {
+  authorizeInternalRequest,
+  INTERNAL_AUTH_ROUTE_PREFIXES,
+} = require("./control-api-auth");
 const { buildFollowUpRun } = require("./follow-up-run");
 const { buildJobTrigger } = require("./job-trigger");
 const {
@@ -301,6 +304,14 @@ app.get("/health", async (_req, res, next) => {
   }
 });
 
+app.use(INTERNAL_AUTH_ROUTE_PREFIXES, (req, res, next) => {
+  const authFailure = requireInternalAuth(req, res);
+  if (authFailure) {
+    return authFailure;
+  }
+  return next();
+});
+
 app.get("/jobs", async (_req, res, next) => {
   try {
     const result = await pool.query(
@@ -397,11 +408,6 @@ app.post("/jobs/sync", async (_req, res, next) => {
 });
 
 app.post("/jobs/:jobType/trigger", async (req, res, next) => {
-  const authFailure = requireInternalAuth(req, res);
-  if (authFailure) {
-    return authFailure;
-  }
-
   const client = await pool.connect();
   let transactionStarted = false;
   try {

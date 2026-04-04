@@ -2,6 +2,7 @@
 
 const { Pool } = require("pg");
 const { setTimeout: sleep } = require("node:timers/promises");
+const { buildInternalAuthHeaders } = require("../src/control-api-auth");
 const { resolveScheduledTelegramTarget } = require("../src/scheduled-telegram-target");
 const { buildTelegramTextMessage, callTelegramApi, normalizeTelegramBotConfig } = require("../src/telegram-bot-client");
 const { executeRoleRun } = require("../src/executor-client");
@@ -10,6 +11,7 @@ const { buildRunLogFields, createStructuredLogger } = require("../src/structured
 
 const DATABASE_URL = String(process.env.DATABASE_URL || "").trim();
 const CONTROL_API_URL = String(process.env.CONTROL_API_URL || "http://127.0.0.1:3000").trim();
+const CONTROL_API_INTERNAL_TOKEN = String(process.env.CONTROL_API_INTERNAL_TOKEN || "").trim();
 const PGSSLMODE = String(process.env.PGSSLMODE || "").trim();
 const WORKER_ROLE_IDS = normalizeWorkerRoleIds(process.env.WORKER_ROLE_IDS);
 const WORKER_POLL_INTERVAL_MS = Number.parseInt(process.env.WORKER_POLL_INTERVAL_MS || "3000", 10);
@@ -41,9 +43,9 @@ function normalizePollIntervalMs(value) {
 async function callControlApi(path, body) {
   const response = await fetch(`${CONTROL_API_URL}${path}`, {
     method: "POST",
-    headers: {
+    headers: buildInternalAuthHeaders(CONTROL_API_INTERNAL_TOKEN, {
       "content-type": "application/json",
-    },
+    }),
     body: JSON.stringify(body),
   });
 

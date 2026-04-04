@@ -5,6 +5,7 @@ const { spawn } = require("node:child_process");
 const path = require("node:path");
 const process = require("node:process");
 const { Pool } = require("pg");
+const { buildInternalAuthHeaders } = require("../src/control-api-auth");
 
 const DATABASE_URL = process.env.DATABASE_URL || "";
 
@@ -14,6 +15,7 @@ if (!DATABASE_URL) {
 
 const PORT = Number.parseInt(process.env.SMOKE_PORT || "3100", 10);
 const BASE_URL = `http://127.0.0.1:${PORT}`;
+const INTERNAL_TOKEN = "smoke-internal-token";
 const suffix = Date.now().toString(36);
 const appPath = path.join(__dirname, "..", "src", "server.js");
 const cleanupState = {
@@ -29,9 +31,12 @@ async function sleep(ms) {
 }
 
 async function request(method, pathname, body) {
+  const headers = body
+    ? buildInternalAuthHeaders(INTERNAL_TOKEN, { "content-type": "application/json" })
+    : buildInternalAuthHeaders(INTERNAL_TOKEN);
   const response = await fetch(`${BASE_URL}${pathname}`, {
     method,
-    headers: body ? { "content-type": "application/json" } : undefined,
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
 
@@ -139,6 +144,7 @@ async function main() {
       ...process.env,
       PORT: String(PORT),
       DATABASE_URL,
+      CONTROL_API_INTERNAL_TOKEN: INTERNAL_TOKEN,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
