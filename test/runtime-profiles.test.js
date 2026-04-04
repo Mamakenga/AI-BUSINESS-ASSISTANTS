@@ -44,6 +44,10 @@ test("each runtime profile declares a model route and an output contract", () =>
     assert.equal(profile.preferred_models.length, 3);
     assert.equal(typeof profile.model_alias, "string");
     assert.ok(profile.model_alias.length > 0);
+    assert.equal(typeof profile.runtime_limits, "object");
+    assert.ok(profile.runtime_limits.max_completion_tokens > 0);
+    assert.ok(profile.runtime_limits.max_total_tokens > 0);
+    assert.ok(profile.runtime_limits.max_response_cost_usd > 0);
     assert.equal(typeof profile.output_contract, "string");
     assert.ok(profile.output_contract.length > 0);
     assert.ok(profile.memory_scopes.length > 0);

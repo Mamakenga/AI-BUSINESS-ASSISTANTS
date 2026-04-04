@@ -44,7 +44,7 @@
 
 Следующий практический фокус:
 1. перейти к `Phase 9` hardening;
-2. внутри `Phase 9A` продолжить observability: usage/cost telemetry и queryable `fallback_chain`;
+2. внутри `Phase 9A` после observability перейти к automated quality gates и расширению sanitization coverage;
 3. отдельно вернуться к качеству живого ответа `methodist`;
 4. держать `DEPLOY_RUNBOOK.md` как канонический операторский сценарий для VPS updates.
 5. считать Phase 6 completed на уровне job contracts and trigger path, а не как полный live-quality signoff для каждого scheduled use-case.
@@ -197,9 +197,9 @@ Closure criteria для `Phase 9`:
 - [ ] Добавить единый источник истины для списка ролей
 - [x] Добавить structured logging
 - [x] Сделать run-level trace visibility от Telegram intake до delivery
-- [ ] Сохранять token / usage / cost telemetry per run
-- [ ] Сделать `fallback_chain` queryable и удобным для ops-debug
-- [ ] Добавить token / cost boundaries per role с реальным enforcement
+- [x] Сохранять token / usage / cost telemetry per run
+- [x] Сделать `fallback_chain` queryable и удобным для ops-debug
+- [x] Добавить token / cost boundaries per role с реальным enforcement
 - [ ] Добавить automated quality gates перед founder-facing delivery
 - [ ] Расширить sanitization coverage и тесты на leakage внутренних labels / ids / scope tags
 
@@ -234,7 +234,7 @@ Closure criteria для `Phase 9`:
 
 Следующий шаг по этому чеклисту:
 1. перейти к `Phase 9` hardening;
-2. внутри `Phase 9A` продолжить observability через usage/cost telemetry и queryable `fallback_chain`;
+2. внутри `Phase 9A` перейти от observability к automated quality gates и расширению sanitization coverage;
 3. после hardening вернуться к live-quality pass для `methodist`;
 4. founder-facing implicit same-topic routing без `@role` держать как UX-polish шаг после hardening, а не как недостающую routing-capability;
 5. использовать `DEPLOY_RUNBOOK.md` как канонический VPS update flow.

@@ -54,6 +54,7 @@ test("buildRunExecutionContext extracts founder request and handoff messages", (
   assert.equal(context.handoff_messages[0].content, "Need price comparison.");
   assert.equal(context.role.id, "researcher");
   assert.equal(context.role.model_alias, "researcher-model");
+  assert.equal(context.role.runtime_limits.max_completion_tokens, 1200);
 });
 
 test("buildRunExecutionContext falls back to scheduler dispatch_reason when founder request is absent", () => {
@@ -340,4 +341,151 @@ test("normalizeExecutionResult requires reply_text for direct-answer runs", () =
       ),
     /Execution direct-answer response must include reply_text/
   );
+});
+
+test("buildRunCompletionInput enforces runtime usage limits for direct answers", () => {
+  const result = buildRunCompletionInput(
+    {
+      id: 95,
+      agent: "assistant",
+      task_id: null,
+      requested_by_agent: "founder",
+      dispatch_reason: null,
+    },
+    {
+      status: "completed",
+      model_used: "assistant-model",
+      fallback_chain: [],
+      completion_tokens: 950,
+      total_tokens: 2600,
+      response_cost_usd: 0.03,
+      reply_text: "This answer exceeded the allowed runtime budget.",
+    },
+    {
+      run: {
+        id: 95,
+        agent: "assistant",
+        task_id: null,
+        requested_by_agent: "founder",
+        dispatch_reason: null,
+      },
+      role: {
+        id: "assistant",
+        runtime_limits: {
+          max_completion_tokens: 900,
+          max_total_tokens: 2500,
+          max_response_cost_usd: 0.02,
+        },
+      },
+      task: null,
+      handoff_messages: [],
+      memory_bundle: null,
+    }
+  );
+
+  assert.equal(result.completion.status, "failed");
+  assert.ok(result.completion.fallback_chain.includes("runtime_budget_guard"));
+  assert.ok(result.completion.fallback_chain.includes("runtime_budget_guard/completion_tokens"));
+  assert.ok(result.completion.fallback_chain.includes("runtime_budget_guard/total_tokens"));
+  assert.ok(result.completion.fallback_chain.includes("runtime_budget_guard/response_cost_usd"));
+  assert.match(result.reply_text, /runtime-лимита роли/i);
+});
+
+test("buildRunCompletionInput suppresses scheduled delivery when runtime usage limits are exceeded", () => {
+  const result = buildRunCompletionInput(
+    {
+      id: 96,
+      agent: "assistant",
+      task_id: null,
+      requested_by_agent: "scheduler",
+      dispatch_reason: "Prepare the daily brief for the leader in Russian.",
+    },
+    {
+      status: "completed",
+      model_used: "assistant-model",
+      fallback_chain: ["scheduled_empty_context_guard"],
+      completion_tokens: 1000,
+      total_tokens: 2700,
+      response_cost_usd: 0.025,
+      reply_text: "Over-budget scheduled output.",
+    },
+    {
+      run: {
+        id: 96,
+        agent: "assistant",
+        task_id: null,
+        requested_by_agent: "scheduler",
+        dispatch_reason: "Prepare the daily brief for the leader in Russian.",
+      },
+      role: {
+        id: "assistant",
+        runtime_limits: {
+          max_completion_tokens: 900,
+          max_total_tokens: 2500,
+          max_response_cost_usd: 0.02,
+        },
+      },
+      task: null,
+      handoff_messages: [],
+      memory_bundle: {
+        business: [{ fact: "Есть подтвержденный факт." }],
+      },
+    }
+  );
+
+  assert.equal(result.completion.status, "failed");
+  assert.equal(result.reply_text, null);
+  assert.ok(result.completion.fallback_chain.includes("runtime_budget_guard"));
+});
+
+test("buildRunCompletionInput keeps a safe reply for founder task threads when runtime usage limits are exceeded", () => {
+  const result = buildRunCompletionInput(
+    {
+      id: 97,
+      agent: "researcher",
+      task_id: "task_97",
+      requested_by_agent: "founder",
+      dispatch_reason: null,
+    },
+    {
+      status: "completed",
+      model_used: "researcher-model",
+      fallback_chain: [],
+      completion_tokens: 1300,
+      total_tokens: 3600,
+      response_cost_usd: 0.05,
+      artifact_content: {
+        summary: "Should not survive the budget guard.",
+      },
+      reply_text: "Over-budget founder task reply.",
+    },
+    {
+      run: {
+        id: 97,
+        agent: "researcher",
+        task_id: "task_97",
+        requested_by_agent: "founder",
+        dispatch_reason: null,
+      },
+      role: {
+        id: "researcher",
+        runtime_limits: {
+          max_completion_tokens: 1200,
+          max_total_tokens: 3500,
+          max_response_cost_usd: 0.03,
+        },
+      },
+      task: {
+        id: "task_97",
+        title: "Compare competitors",
+      },
+      handoff_messages: [],
+      memory_bundle: null,
+    }
+  );
+
+  assert.equal(result.completion.status, "failed");
+  assert.match(result.reply_text, /runtime-лимита роли/i);
+  assert.ok(result.completion.fallback_chain.includes("runtime_budget_guard"));
+  assert.equal(result.completion.artifact_content, undefined);
 });

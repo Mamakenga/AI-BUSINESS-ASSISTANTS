@@ -17,6 +17,11 @@ function createExecutionContext() {
       id: "assistant",
       execution_mode: "single_role_worker",
       model_alias: "assistant-model",
+      runtime_limits: {
+        max_completion_tokens: 900,
+        max_total_tokens: 2500,
+        max_response_cost_usd: 0.02,
+      },
       output_contract: "assistant_summary_v1",
     },
     run: {
@@ -46,6 +51,7 @@ test("buildExecutorRequest creates OpenAI-compatible chat request", () => {
 
   assert.equal(request.model, "assistant-model");
   assert.equal(request.stream, false);
+  assert.equal(request.max_tokens, 900);
   assert.equal(request.messages[0].role, "system");
   assert.equal(request.messages[1].role, "user");
   assert.equal(request.metadata.role_id, "assistant");

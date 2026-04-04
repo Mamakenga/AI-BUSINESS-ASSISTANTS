@@ -60,9 +60,12 @@ function buildExecutorRequest(executionContext) {
 
   const { messages, prompt_meta } = buildExecutionMessages(executionContext);
 
+  const maxTokens = executionContext?.role?.runtime_limits?.max_completion_tokens;
+
   return {
     model: resolveModelAlias(executionContext),
     messages,
+    ...(Number.isFinite(maxTokens) && maxTokens > 0 ? { max_tokens: maxTokens } : {}),
     metadata: {
       role_id: executionContext.role.id,
       run_id: executionContext.run?.id || null,

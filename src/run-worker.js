@@ -252,6 +252,80 @@ function normalizeExecutionResult(runRow, payload = {}) {
   };
 }
 
+function normalizeNonNegativeNumber(value) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  const parsed = Number.parseFloat(String(value));
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+
+  return parsed;
+}
+
+function buildRuntimeBudgetGuardReply(runRow) {
+  if (!runRow || runRow.requested_by_agent === "scheduler") {
+    return null;
+  }
+
+  return "Не удалось безопасно подготовить ответ в пределах runtime-лимита роли. Попробуйте сузить запрос или разбить его на более узкую задачу.";
+}
+
+function applyRuntimeUsageLimits(runRow, executionResult, executionContext) {
+  if (!executionContext?.role?.runtime_limits || executionResult.status !== "completed") {
+    return executionResult;
+  }
+
+  const limits = executionContext.role.runtime_limits;
+  const violations = [];
+
+  const completionTokens = normalizeNonNegativeNumber(executionResult.completion_tokens);
+  if (
+    Number.isFinite(limits.max_completion_tokens) &&
+    completionTokens !== null &&
+    completionTokens > limits.max_completion_tokens
+  ) {
+    violations.push("completion_tokens");
+  }
+
+  const totalTokens = normalizeNonNegativeNumber(executionResult.total_tokens);
+  if (Number.isFinite(limits.max_total_tokens) && totalTokens !== null && totalTokens > limits.max_total_tokens) {
+    violations.push("total_tokens");
+  }
+
+  const responseCostUsd = normalizeNonNegativeNumber(executionResult.response_cost_usd);
+  if (
+    Number.isFinite(limits.max_response_cost_usd) &&
+    responseCostUsd !== null &&
+    responseCostUsd > limits.max_response_cost_usd
+  ) {
+    violations.push("response_cost_usd");
+  }
+
+  if (violations.length === 0) {
+    return executionResult;
+  }
+
+  const markers = Array.from(
+    new Set([
+      ...(Array.isArray(executionResult.fallback_chain) ? executionResult.fallback_chain : []),
+      "runtime_budget_guard",
+      ...violations.map((field) => `runtime_budget_guard/${field}`),
+    ])
+  );
+
+  return {
+    ...executionResult,
+    status: "failed",
+    fallback_chain: markers,
+    artifact_type: null,
+    artifact_content: null,
+    reply_text: buildRuntimeBudgetGuardReply(runRow),
+  };
+}
+
 function buildRunExecutionContext(input = {}) {
   const run = input.run;
   if (!run) {
@@ -295,6 +369,7 @@ function buildRunExecutionContext(input = {}) {
       execution_mode: roleProfile.execution_mode,
       preferred_models: [...roleProfile.preferred_models],
       model_alias: roleProfile.model_alias,
+      runtime_limits: roleProfile.runtime_limits || null,
       output_contract: roleProfile.output_contract,
     },
     task: input.task
@@ -322,26 +397,28 @@ function buildRunCompletionInput(runRow, executionResult, executionContext = nul
     normalized.fallback_chain = [...normalized.fallback_chain, "scheduled_empty_context_guard"];
   }
 
+  const enforced = applyRuntimeUsageLimits(runRow, normalized, executionContext);
+
   const completion = {
     actor_agent: runRow.agent,
-    status: normalized.status,
-    model_used: normalized.model_used,
-    fallback_chain: normalized.fallback_chain,
-    usage_json: normalized.usage_json,
-    prompt_tokens: normalized.prompt_tokens,
-    completion_tokens: normalized.completion_tokens,
-    total_tokens: normalized.total_tokens,
-    response_cost_usd: normalized.response_cost_usd,
+    status: enforced.status,
+    model_used: enforced.model_used,
+    fallback_chain: enforced.fallback_chain,
+    usage_json: enforced.usage_json,
+    prompt_tokens: enforced.prompt_tokens,
+    completion_tokens: enforced.completion_tokens,
+    total_tokens: enforced.total_tokens,
+    response_cost_usd: enforced.response_cost_usd,
   };
 
-  if (runRow.task_id && normalized.status === "completed") {
-    completion.artifact_type = normalized.artifact_type;
-    completion.artifact_content = normalized.artifact_content;
+  if (runRow.task_id && enforced.status === "completed") {
+    completion.artifact_type = enforced.artifact_type;
+    completion.artifact_content = enforced.artifact_content;
   }
 
   return {
     completion,
-    reply_text: normalized.reply_text,
+    reply_text: enforced.reply_text,
   };
 }
 

@@ -1,5 +1,13 @@
 "use strict";
 
+function buildRuntimeLimits(maxCompletionTokens, maxTotalTokens, maxResponseCostUsd) {
+  return Object.freeze({
+    max_completion_tokens: maxCompletionTokens,
+    max_total_tokens: maxTotalTokens,
+    max_response_cost_usd: maxResponseCostUsd,
+  });
+}
+
 const ROLE_PROFILES = Object.freeze({
   orchestrator: Object.freeze({
     id: "orchestrator",
@@ -11,6 +19,7 @@ const ROLE_PROFILES = Object.freeze({
     execution_mode: "multi_role_router",
     preferred_models: Object.freeze(["claude", "gpt", "gemini"]),
     model_alias: "orchestrator-model",
+    runtime_limits: buildRuntimeLimits(1200, 4000, 0.03),
     memory_scopes: Object.freeze(["owner", "business", "task", "decisions"]),
     output_contract: "orchestrator_summary_v1",
   }),
@@ -24,6 +33,7 @@ const ROLE_PROFILES = Object.freeze({
     execution_mode: "single_role_worker",
     preferred_models: Object.freeze(["gpt", "claude", "gemini"]),
     model_alias: "assistant-model",
+    runtime_limits: buildRuntimeLimits(900, 2500, 0.02),
     memory_scopes: Object.freeze(["owner", "business", "role", "task", "decisions"]),
     output_contract: "assistant_summary_v1",
   }),
@@ -37,6 +47,7 @@ const ROLE_PROFILES = Object.freeze({
     execution_mode: "single_role_worker",
     preferred_models: Object.freeze(["gemini", "claude", "gpt"]),
     model_alias: "researcher-model",
+    runtime_limits: buildRuntimeLimits(1200, 3500, 0.03),
     memory_scopes: Object.freeze(["owner", "business", "role", "task"]),
     output_contract: "research_summary_v1",
   }),
@@ -50,6 +61,7 @@ const ROLE_PROFILES = Object.freeze({
     execution_mode: "single_role_worker",
     preferred_models: Object.freeze(["claude", "gpt", "gemini"]),
     model_alias: "methodist-model",
+    runtime_limits: buildRuntimeLimits(1200, 3000, 0.025),
     memory_scopes: Object.freeze(["owner", "business", "role", "task", "decisions"]),
     output_contract: "methodist_program_update_v1",
   }),
@@ -63,6 +75,7 @@ const ROLE_PROFILES = Object.freeze({
     execution_mode: "single_role_worker",
     preferred_models: Object.freeze(["gpt", "claude", "gemini"]),
     model_alias: "finance-model",
+    runtime_limits: buildRuntimeLimits(900, 2500, 0.02),
     memory_scopes: Object.freeze(["owner", "business", "role", "task", "decisions"]),
     output_contract: "finance_review_v1",
   }),
@@ -76,6 +89,7 @@ const ROLE_PROFILES = Object.freeze({
     execution_mode: "review_worker",
     preferred_models: Object.freeze(["claude", "gpt", "gemini"]),
     model_alias: "critic-model",
+    runtime_limits: buildRuntimeLimits(900, 2500, 0.02),
     memory_scopes: Object.freeze(["owner", "business", "task", "decisions"]),
     output_contract: "critic_verdict_v1",
   }),
@@ -89,6 +103,7 @@ const ROLE_PROFILES = Object.freeze({
     execution_mode: "memory_service",
     preferred_models: Object.freeze(["gemini", "gpt", "claude"]),
     model_alias: "memory-curator-model",
+    runtime_limits: buildRuntimeLimits(1000, 3000, 0.02),
     memory_scopes: Object.freeze(["owner", "business", "role", "task", "decisions"]),
     output_contract: "memory_compaction_report_v1",
   }),
