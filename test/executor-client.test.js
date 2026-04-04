@@ -90,6 +90,36 @@ test("normalizeExecutorResponse extracts assistant text", () => {
   assert.equal(result.response_cost_usd, 0.0042);
 });
 
+test("normalizeExecutorResponse extracts cost from usage payload when top-level fields are absent", () => {
+  const result = normalizeExecutorResponse(
+    {
+      model: "assistant-model",
+      choices: [
+        {
+          message: {
+            content: "Telemetry-backed answer.",
+          },
+        },
+      ],
+      usage: {
+        prompt_tokens: 360,
+        completion_tokens: 163,
+        total_tokens: 523,
+        cost: 0.0001518,
+        cost_details: {
+          upstream_inference_cost: 0.0001518,
+          upstream_inference_prompt_cost: 0.000054,
+          upstream_inference_completions_cost: 0.0000978,
+        },
+      },
+    },
+    createExecutionContext(),
+    { model: "assistant-model" }
+  );
+
+  assert.equal(result.response_cost_usd, 0.0001518);
+});
+
 test("executeRoleRun wraps timeout as retryable executor error", async () => {
   await assert.rejects(
     () =>

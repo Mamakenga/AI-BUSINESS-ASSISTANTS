@@ -135,10 +135,13 @@ function normalizeNonNegativeDecimal(value) {
 }
 
 function extractResponseCostUsd(payload) {
+  const usage = normalizeUsageObject(payload?.usage);
   return (
     normalizeNonNegativeDecimal(payload?.response_cost_usd) ??
     normalizeNonNegativeDecimal(payload?.response_cost) ??
-    normalizeNonNegativeDecimal(payload?._hidden_params?.response_cost)
+    normalizeNonNegativeDecimal(payload?._hidden_params?.response_cost) ??
+    normalizeNonNegativeDecimal(usage?.cost) ??
+    normalizeNonNegativeDecimal(usage?.cost_details?.upstream_inference_cost)
   );
 }
 
