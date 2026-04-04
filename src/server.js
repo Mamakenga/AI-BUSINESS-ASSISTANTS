@@ -16,6 +16,7 @@ const { buildMemoryBundleRequest, createEmptyBundleResult, trimMemoryBundle } = 
 const { buildMemoryCompaction, normalizeSourceMemoryIds } = require("./memory-compaction");
 const { buildMemoryCandidate, parseMemoryQuery } = require("./memory-service");
 const { buildRunCompletion } = require("./run-completion");
+const { buildRunsListQuery } = require("./run-list-query");
 const { mapRunRow } = require("./run-row-mapping");
 const { buildRunLogFields, createStructuredLogger } = require("./structured-logging");
 const { buildTelegramIntakePlan } = require("./telegram-intake");
@@ -1151,6 +1152,20 @@ app.post("/runs/:id/complete", async (req, res, next) => {
     return next(error);
   } finally {
     client.release();
+  }
+});
+
+app.get("/runs", async (req, res, next) => {
+  try {
+    const listQuery = buildRunsListQuery(req.query || {});
+    const result = await pool.query(listQuery.sql, listQuery.values);
+
+    return res.json({
+      items: result.rows.map(mapRunRow),
+      filters: listQuery.filters,
+    });
+  } catch (error) {
+    return next(error);
   }
 });
 

@@ -10,6 +10,8 @@ function normalizeOptionalNumber(value) {
 }
 
 function mapRunRow(row) {
+  const fallbackChain = Array.isArray(row.fallback_chain) ? row.fallback_chain : [];
+
   return {
     id: row.id,
     agent: row.agent,
@@ -20,6 +22,8 @@ function mapRunRow(row) {
     dispatch_reason: row.dispatch_reason,
     model_used: row.model_used,
     fallback_chain: row.fallback_chain,
+    fallback_count: fallbackChain.length,
+    has_fallback: fallbackChain.length > 0,
     usage_json: row.usage_json,
     prompt_tokens: row.prompt_tokens,
     completion_tokens: row.completion_tokens,
