@@ -738,6 +738,67 @@ Therefore:
 2. optimize for summaries, not raw chat dumps
 3. optimize for role isolation
 
+### 14.1 Human-Friendly Budget Control
+
+The next practical layer after runtime limits should be founder-friendly rather than technical.
+
+Goal:
+
+1. allow budget tuning without server access and without code edits
+2. avoid forcing the user to reason in tokens, dollars, or internal limits
+3. keep technical numbers under the hood as system mechanics
+
+The user-facing interface should look like this:
+
+1. every founder-visible role gets a simple mode selector:
+   - `Economy`
+   - `Balanced`
+   - `Flexible`
+2. optionally add a second simple preference:
+   - `Short`
+   - `Normal`
+   - `Detailed`
+3. raw fields such as `max_completion_tokens`, `max_total_tokens`, and `max_response_cost_usd` should stay hidden by default.
+
+How it works internally:
+
+1. code-level defaults remain the safe baseline for every role
+2. a database table stores per-role overrides
+3. the worker reads DB overrides first and falls back to `runtime-profiles.js` defaults if none exist
+4. each friendly mode (`Economy / Balanced / Flexible`) maps to concrete technical limits behind the scenes
+
+Minimal implementation plan:
+
+1. add a `role_runtime_limits` table with:
+   - `role_id`
+   - `budget_mode`
+   - `max_completion_tokens`
+   - `max_total_tokens`
+   - `max_response_cost_usd`
+   - `updated_at`
+2. add merged limit loading:
+   - `db override -> fallback to runtime-profiles.js`
+3. add Control API endpoints:
+   - `GET /runtime-limits`
+   - `PATCH /runtime-limits/:roleId`
+4. return a founder-friendly payload:
+   - role
+   - current mode
+   - short explanation of what the mode means
+5. only then add a small UI:
+   - a Mini App / ops page
+   - or a founder-friendly settings screen
+
+Important guardrails:
+
+1. the default UX must remain "simple modes", not engineering numbers
+2. advanced numeric settings may exist, but only in a separate advanced view
+3. every mode change must explain the tradeoff clearly:
+   - cheaper but shorter
+   - balanced
+   - fuller but more expensive
+4. even with self-service controls, the runtime budget guard in the worker remains mandatory and cannot be disabled from the UI.
+
 ## 15. Success Criteria
 
 The assistant department is considered working when:
