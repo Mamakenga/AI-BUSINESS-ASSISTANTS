@@ -229,3 +229,75 @@ Validated on 2026-03-30:
    - `completed run 21 for assistant`
    - `completed run 22 for researcher`
    - matching Telegram reply delivery lines
+
+## 9. Internal Token Rotation Policy
+
+`CONTROL_API_INTERNAL_TOKEN` is the shared bearer secret for:
+1. `ops-telegram.service -> ops-api.service`
+2. `ops-worker.service -> ops-api.service`
+3. internal operator smokes such as `smoke:job-trigger`
+
+This token must:
+1. live only in `/etc/ops.env`
+2. be treated as a VPS-local operational secret
+3. never be committed to git, copied into docs, or pasted into chat
+
+### 9.1. When Rotation Is Required
+
+Rotate immediately when any of these is true:
+1. the token may have been exposed in chat, screenshots, shell history, or logs
+2. VPS access changed hands
+3. `/etc/ops.env` was rebuilt or manually edited under uncertainty
+4. internal auth failures suggest token drift between services
+
+Recommended planned renewal:
+1. renew on a regular cadence, for example every 90 days
+2. renew before or after a larger infrastructure handoff if ownership changed
+
+### 9.2. Rotation Rules
+
+1. rotate `ops-api`, `ops-worker`, and `ops-telegram` together
+2. do not rotate only one service in isolation
+3. after editing `/etc/ops.env`, restart all three services in one window
+4. treat rotation as incomplete until smoke passes
+
+### 9.3. Canonical Rotation Procedure
+
+1. generate a new token on VPS:
+   `openssl rand -hex 32`
+2. replace only `CONTROL_API_INTERNAL_TOKEN` in `/etc/ops.env`
+3. restart:
+   - `sudo systemctl restart ops-api.service`
+   - `sudo systemctl restart ops-telegram.service`
+   - `sudo systemctl restart ops-worker.service`
+4. run internal auth smoke:
+   `sudo -u ops bash -lc 'cd /opt/ops/app && export CONTROL_API_URL=http://127.0.0.1:3300 && export CONTROL_API_INTERNAL_TOKEN=$(grep "^CONTROL_API_INTERNAL_TOKEN=" /etc/ops.env | cut -d= -f2-) && npm run smoke:job-trigger'`
+5. send one founder-facing Telegram message and verify:
+   - intake succeeds
+   - worker completes run
+   - reply returns to the same topic
+
+Pass condition:
+1. `smoke:job-trigger` succeeds
+2. one real Telegram request also succeeds
+3. fresh post-restart API log lines do not show `control_api_internal_auth_not_configured`
+4. services remain healthy after restart
+
+### 9.4. Renewal vs Emergency Rotation
+
+Planned renewal:
+1. use the canonical procedure above
+2. no rollback is expected if smoke passes
+
+Emergency rotation after possible exposure:
+1. replace the token immediately
+2. restart all three services immediately
+3. run `smoke:job-trigger`
+4. run one Telegram smoke
+5. if smoke fails, fix `/etc/ops.env` and restart again rather than disabling internal auth
+
+### 9.5. Non-Rules
+
+1. do not disable internal auth to "get the contour working again"
+2. do not keep old and new tokens in parallel
+3. do not store the token in ad-hoc shell files outside `/etc/ops.env`

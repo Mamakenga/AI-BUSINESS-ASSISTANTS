@@ -207,7 +207,7 @@ Closure criteria для `Phase 9`:
 - [x] Убрать дублирование role validation между SQL и API
 - [x] Добавить auth / internal protection layer для Control API
 - [x] Закрыть auth coverage для всех внутренних endpoint-ов Control API
-- [ ] Зафиксировать policy для rotation / renewal internal tokens
+- [x] Зафиксировать policy для rotation / renewal internal tokens
 
 ### Phase 9C. Deploy Hardening
 - [ ] Добавить smoke-runbook для deploy
@@ -234,7 +234,7 @@ Closure criteria для `Phase 9`:
 
 Следующий шаг по этому чеклисту:
 1. перейти к `Phase 9` hardening;
-2. внутри `Phase 9B` зафиксировать policy для rotation / renewal internal tokens;
+2. перейти к `Phase 9C` deploy hardening и формализовать smoke -> deploy -> smoke path;
 3. после hardening вернуться к live-quality pass для `methodist`;
 4. founder-facing implicit same-topic routing без `@role` держать как UX-polish шаг после hardening, а не как недостающую routing-capability;
 5. использовать `DEPLOY_RUNBOOK.md` как канонический VPS update flow.
