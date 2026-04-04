@@ -1,7 +1,7 @@
 "use strict";
 
 const { getJobDispatchStatus } = require("./job-trigger");
-const { ROLE_PROFILES } = require("./runtime-profiles");
+const { hasRegisteredRoleId } = require("./role-catalog");
 
 const REGISTERED_JOBS = Object.freeze([
   {
@@ -91,7 +91,7 @@ function validateRegisteredJobs() {
     }
     seen.add(job.job_type);
 
-    if (!ROLE_PROFILES[job.assigned_agent]) {
+    if (!hasRegisteredRoleId(job.assigned_agent)) {
       throw new Error(`Unknown assigned_agent in job registry: ${job.assigned_agent}`);
     }
   }

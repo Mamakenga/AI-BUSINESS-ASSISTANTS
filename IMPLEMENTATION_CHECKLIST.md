@@ -194,7 +194,7 @@ Closure criteria для `Phase 9`:
 4. production contour имеет канонический deploy/rollback/monitoring path.
 
 ### Phase 9A. Observability & Runtime Guards
-- [ ] Добавить единый источник истины для списка ролей
+- [x] Добавить единый источник истины для списка ролей
 - [x] Добавить structured logging
 - [x] Сделать run-level trace visibility от Telegram intake до delivery
 - [x] Сохранять token / usage / cost telemetry per run
@@ -204,7 +204,7 @@ Closure criteria для `Phase 9`:
 - [x] Расширить sanitization coverage и тесты на leakage внутренних labels / ids / scope tags
 
 ### Phase 9B. Registry, Validation & Auth
-- [ ] Убрать дублирование role validation между SQL и API
+- [x] Убрать дублирование role validation между SQL и API
 - [ ] Добавить auth / internal protection layer для Control API
 - [ ] Закрыть auth coverage для всех внутренних endpoint-ов Control API
 - [ ] Зафиксировать policy для rotation / renewal internal tokens

@@ -1,8 +1,6 @@
 "use strict";
 
-const { ROLE_PROFILES } = require("./runtime-profiles");
-
-const WORKER_DISPATCH_MODES = new Set(["single_role_worker", "review_worker"]);
+const { getRegisteredRoleCatalogRow, isWorkerDispatchableRoleId } = require("./role-catalog");
 
 function normalizeRequiredString(value, fieldName) {
   const normalized = String(value || "").trim();
@@ -32,15 +30,15 @@ function normalizeOptionalDate(value, fieldName) {
 }
 
 function getJobDispatchStatus(assignedAgent) {
-  const roleProfile = ROLE_PROFILES[assignedAgent];
-  if (!roleProfile) {
+  const roleRow = getRegisteredRoleCatalogRow(assignedAgent);
+  if (!roleRow) {
     return {
       dispatch_status: "unknown_role",
-      dispatch_reason: "Assigned role is not defined in runtime profiles.",
+      dispatch_reason: "Assigned role is not defined in the role catalog.",
     };
   }
 
-  if (WORKER_DISPATCH_MODES.has(roleProfile.execution_mode)) {
+  if (isWorkerDispatchableRoleId(assignedAgent)) {
     return {
       dispatch_status: "worker_dispatchable",
       dispatch_reason: "Current VPS worker contour can execute this scheduled job.",
@@ -96,5 +94,4 @@ function buildJobTrigger(input = {}, registeredJob) {
 module.exports = {
   buildJobTrigger,
   getJobDispatchStatus,
-  WORKER_DISPATCH_MODES,
 };

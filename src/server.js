@@ -22,7 +22,7 @@ const { buildRunLogFields, createStructuredLogger } = require("./structured-logg
 const { buildTelegramIntakePlan } = require("./telegram-intake");
 const { buildTelegramContext, resolveTelegramIntakeContext } = require("./telegram-intake-context");
 const { buildTelegramReply } = require("./telegram-reply");
-const { ALLOWED_TASK_ROLES } = require("./runtime-profiles");
+const { isTaskAssignableRoleId } = require("./role-catalog");
 const { resolveTelegramRouting } = require("./telegram-routing");
 
 const PORT = Number.parseInt(process.env.PORT || "3000", 10);
@@ -90,7 +90,7 @@ function normalizeTaskRole(value) {
   if (normalized === null) {
     return null;
   }
-  if (!ALLOWED_TASK_ROLES.has(normalized)) {
+  if (!isTaskAssignableRoleId(normalized)) {
     throw new Error("Invalid assigned_role");
   }
   return normalized;

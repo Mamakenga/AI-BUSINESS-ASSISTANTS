@@ -3,6 +3,7 @@
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { Pool } = require("pg");
+const { syncRoleCatalog } = require("../src/role-catalog");
 
 const DATABASE_URL = process.env.DATABASE_URL || "";
 
@@ -84,6 +85,13 @@ async function main() {
 
     if (appliedCount === 0) {
       console.log("No pending migrations");
+    }
+
+    const syncResult = await syncRoleCatalog(client);
+    if (syncResult.skipped) {
+      console.log("Skipping role catalog sync (role_catalog table is not present)");
+    } else {
+      console.log(`Synced role catalog (${syncResult.synced} roles)`);
     }
   } finally {
     client.release();
