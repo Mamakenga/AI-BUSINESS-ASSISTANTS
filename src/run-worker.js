@@ -60,6 +60,9 @@ function countMemoryBundleItems(memoryBundle) {
     count += items.length;
   }
 
+  const compiledPages = Array.isArray(memoryBundle.compiled_pages) ? memoryBundle.compiled_pages : [];
+  count += compiledPages.length;
+
   return count;
 }
 

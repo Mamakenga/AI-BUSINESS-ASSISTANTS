@@ -56,6 +56,11 @@ test("buildSystemPrompt includes role, task, memory, and handoff context", () =>
       { from_agent: "orchestrator", content: "Need focus on pricing." },
     ],
     memory_bundle: {
+      compiled_pages: [
+        {
+          summary_short: "Parents respond better to practical AI examples than to abstract theory.",
+        },
+      ],
       owner: [{ fact: "Founder prefers concise answers." }],
       business: [{ fact: "School is based in Varna." }],
       decisions: {
@@ -66,6 +71,8 @@ test("buildSystemPrompt includes role, task, memory, and handoff context", () =>
 
   assert.match(result.prompt, /Role id: researcher/);
   assert.match(result.prompt, /Compare competitors in Varna/);
+  assert.match(result.prompt, /Compiled knowledge:/);
+  assert.match(result.prompt, /Parents respond better to practical AI examples/);
   assert.match(result.prompt, /Founder prefers concise answers/);
   assert.match(result.prompt, /Need focus on pricing/);
   assert.equal(result.meta.request_type, "task-execution");
@@ -166,6 +173,49 @@ test("buildSystemPrompt trims memory facts to budget and preserves task context"
   assert.ok(result.meta.memory_fact_count >= 1);
   assert.ok(result.meta.memory_fact_count < 10);
   assert.ok(result.prompt.length <= FIXED_SCAFFOLDING_TOKEN_CEILING * 4);
+});
+
+test("buildSystemPrompt trims compiled knowledge snippets separately from atomic memory facts", () => {
+  const longSummary = (label) => `${label} ${"x".repeat(220)}`;
+  const result = buildSystemPrompt({
+    role: {
+      id: "assistant",
+      execution_mode: "single_role_worker",
+      output_contract: "assistant_summary_v1",
+    },
+    run: {
+      task_id: "task_91",
+    },
+    task: {
+      id: "task_91",
+      title: "Prepare a short founder update",
+      status: "inbox",
+      priority: "medium",
+    },
+    handoff_messages: [],
+    memory_bundle: {
+      compiled_pages: [
+        { summary_short: longSummary("compiled-summary-1") },
+        { summary_short: longSummary("compiled-summary-2") },
+        { summary_short: longSummary("compiled-summary-3") },
+      ],
+      owner: [{ fact: "Founder prefers concise answers." }],
+      business: [],
+      role: [],
+      task: [],
+      decisions: {
+        owner: [],
+        business: [],
+        task: [],
+      },
+    },
+  });
+
+  assert.match(result.prompt, /Compiled knowledge:/);
+  assert.match(result.prompt, /compiled-summary-1/);
+  assert.doesNotMatch(result.prompt, /compiled-summary-3/);
+  assert.equal(result.meta.compiled_knowledge_count, 2);
+  assert.match(result.prompt, /Founder prefers concise answers/);
 });
 
 test("buildSystemPrompt sanitizes internal identifiers from memory facts and handoffs", () => {

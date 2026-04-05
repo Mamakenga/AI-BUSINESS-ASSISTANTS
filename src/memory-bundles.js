@@ -3,6 +3,8 @@
 const { ROLE_PROFILES } = require("./runtime-profiles");
 const { normalizeLooseOptionalString, normalizeRequiredString } = require("./string-normalizers");
 
+const MAX_COMPILED_PAGES = 2;
+
 function parseLimit(value, fallback = 10, max = 50) {
   const parsed = Number.parseInt(value || "", 10);
   if (Number.isNaN(parsed) || parsed <= 0) {
@@ -22,6 +24,7 @@ function createEmptyBundleResult(bundleRequest) {
     business: [],
     role: [],
     task: [],
+    compiled_pages: [],
     decisions: {
       owner: [],
       business: [],
@@ -106,12 +109,18 @@ function trimMemoryBundle(bundle, bundleRequest) {
     trimmed[scope] = takeItems(scope, bundle[scope] || []);
   }
 
+  const compiledPages = Array.isArray(bundle.compiled_pages) ? bundle.compiled_pages.slice(0, MAX_COMPILED_PAGES) : [];
+  const compiledPagesTruncated = Array.isArray(bundle.compiled_pages) && bundle.compiled_pages.length > compiledPages.length;
+  trimmed.compiled_pages = compiledPages;
+
   trimmed.meta = {
     scope_order: bundleRequest.scope_order,
     max_total_items: bundleRequest.max_total_items,
     included_items: includedItems,
     truncated,
     truncated_scopes: truncatedScopes,
+    compiled_pages_included: compiledPages.length,
+    compiled_pages_truncated: compiledPagesTruncated,
   };
 
   return trimmed;

@@ -3,7 +3,14 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { buildDecisionLookup, mapDecisionRow, mapMemoryRow } = require("../src/memory-routes");
+const {
+  buildDecisionLookup,
+  buildKnowledgePageLookup,
+  mapDecisionRow,
+  mapKnowledgePageRow,
+  mapMemoryRow,
+  rankCompiledPageScope,
+} = require("../src/memory-routes");
 
 test("mapMemoryRow keeps memory API shape stable", () => {
   const mapped = mapMemoryRow({
@@ -73,4 +80,62 @@ test("buildDecisionLookup scopes task decisions to the active task", () => {
 
 test("buildDecisionLookup skips task decisions without task_id", () => {
   assert.equal(buildDecisionLookup("task", 7, null), null);
+});
+
+test("mapKnowledgePageRow keeps compiled page API shape stable", () => {
+  const mapped = mapKnowledgePageRow({
+    id: 7,
+    page_type: "scope_summary",
+    scope: "task",
+    scope_id: "task_123",
+    title: "task knowledge summary: task_123",
+    status: "active",
+    updated_at: "2026-04-05T10:00:00.000Z",
+    version_no: 2,
+    summary_short: "Parents need practical AI examples.",
+    summary_full: "Parents need practical AI examples and safe home use cases.",
+    key_facts_json: ["Parents need practical AI examples."],
+    contradictions_json: [],
+    compiled_markdown: "# task knowledge summary: task_123",
+  });
+
+  assert.deepEqual(mapped, {
+    id: 7,
+    page_type: "scope_summary",
+    scope: "task",
+    scope_id: "task_123",
+    title: "task knowledge summary: task_123",
+    status: "active",
+    updated_at: "2026-04-05T10:00:00.000Z",
+    version_no: 2,
+    summary_short: "Parents need practical AI examples.",
+    summary_full: "Parents need practical AI examples and safe home use cases.",
+    key_facts: ["Parents need practical AI examples."],
+    contradictions: [],
+    compiled_markdown: "# task knowledge summary: task_123",
+  });
+});
+
+test("buildKnowledgePageLookup scopes owner pages globally", () => {
+  const lookup = buildKnowledgePageLookup("owner");
+
+  assert.deepEqual(lookup.values, ["owner"]);
+  assert.match(lookup.text, /p\.page_type = 'scope_summary'/);
+  assert.match(lookup.text, /p\.scope = \$1/);
+  assert.match(lookup.text, /p\.scope_id IS NULL/);
+});
+
+test("buildKnowledgePageLookup scopes task pages to the active task", () => {
+  const lookup = buildKnowledgePageLookup("task", "task_42");
+
+  assert.deepEqual(lookup.values, ["task", "task_42"]);
+  assert.match(lookup.text, /p\.scope = \$1/);
+  assert.match(lookup.text, /p\.scope_id = \$2/);
+});
+
+test("rankCompiledPageScope prioritizes task pages over broader scopes", () => {
+  assert.equal(rankCompiledPageScope("task"), 0);
+  assert.equal(rankCompiledPageScope("role"), 1);
+  assert.equal(rankCompiledPageScope("business"), 2);
+  assert.equal(rankCompiledPageScope("owner"), 3);
 });

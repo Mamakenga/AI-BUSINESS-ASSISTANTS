@@ -30,6 +30,24 @@ function mapDecisionRow(row) {
   };
 }
 
+function mapKnowledgePageRow(row) {
+  return {
+    id: row.id,
+    page_type: row.page_type,
+    scope: row.scope,
+    scope_id: row.scope_id,
+    title: row.title,
+    status: row.status,
+    updated_at: row.updated_at,
+    version_no: row.version_no,
+    summary_short: row.summary_short,
+    summary_full: row.summary_full,
+    key_facts: Array.isArray(row.key_facts_json) ? row.key_facts_json : [],
+    contradictions: Array.isArray(row.contradictions_json) ? row.contradictions_json : [],
+    compiled_markdown: row.compiled_markdown,
+  };
+}
+
 function buildDecisionLookup(scope, limit, scopeId = null) {
   const values = [scope];
   const where = ["scope = $1", "status = 'active'"];
@@ -57,6 +75,58 @@ function buildDecisionLookup(scope, limit, scopeId = null) {
     `,
     values,
   };
+}
+
+function buildKnowledgePageLookup(scope, scopeId = null) {
+  const values = [scope];
+  const where = ["p.page_type = 'scope_summary'", "p.status = 'active'", "p.scope = $1", "p.current_version_id IS NOT NULL"];
+
+  if (scopeId === null) {
+    where.push("p.scope_id IS NULL");
+  } else {
+    values.push(scopeId);
+    where.push(`p.scope_id = $${values.length}`);
+  }
+
+  return {
+    text: `
+      SELECT
+        p.id,
+        p.page_type,
+        p.scope,
+        p.scope_id,
+        p.title,
+        p.status,
+        p.updated_at,
+        v.version_no,
+        v.summary_short,
+        v.summary_full,
+        v.key_facts_json,
+        v.contradictions_json,
+        v.compiled_markdown
+      FROM knowledge_pages p
+      JOIN knowledge_page_versions v ON v.id = p.current_version_id
+      WHERE ${where.join(" AND ")}
+      ORDER BY p.updated_at DESC, p.id DESC
+      LIMIT 1
+    `,
+    values,
+  };
+}
+
+function rankCompiledPageScope(scope) {
+  switch (scope) {
+    case "task":
+      return 0;
+    case "role":
+      return 1;
+    case "business":
+      return 2;
+    case "owner":
+      return 3;
+    default:
+      return 4;
+  }
 }
 
 function registerMemoryRoutes(app, { pool }) {
@@ -272,23 +342,54 @@ function registerMemoryRoutes(app, { pool }) {
         return queryResult.rows.map(mapDecisionRow);
       }
 
+      async function loadCompiledPage(scope, scopeId = null) {
+        const lookup = buildKnowledgePageLookup(scope, scopeId);
+        const queryResult = await pool.query(lookup.text, lookup.values);
+        return queryResult.rows[0] ? mapKnowledgePageRow(queryResult.rows[0]) : null;
+      }
+
       if (bundleRequest.scopes.owner) {
         result.owner = await loadMemories("owner", null);
+        const ownerPage = await loadCompiledPage("owner");
+        if (ownerPage) {
+          result.compiled_pages.push(ownerPage);
+        }
       }
       if (bundleRequest.scopes.business) {
         result.business = await loadMemories("business", null);
+        const businessPage = await loadCompiledPage("business");
+        if (businessPage) {
+          result.compiled_pages.push(businessPage);
+        }
       }
       if (bundleRequest.scopes.role) {
         result.role = await loadMemories("role", bundleRequest.role_id);
+        const rolePage = await loadCompiledPage("role", bundleRequest.role_id);
+        if (rolePage) {
+          result.compiled_pages.push(rolePage);
+        }
       }
       if (bundleRequest.scopes.task && bundleRequest.task_id) {
         result.task = await loadMemories("task", bundleRequest.task_id);
+        const taskPage = await loadCompiledPage("task", bundleRequest.task_id);
+        if (taskPage) {
+          result.compiled_pages.push(taskPage);
+        }
       }
       if (bundleRequest.scopes.decisions) {
         result.decisions.owner = await loadDecisions("owner");
         result.decisions.business = await loadDecisions("business");
         result.decisions.task = await loadDecisions("task", bundleRequest.task_id);
       }
+
+      result.compiled_pages.sort((left, right) => {
+        const rankDelta = rankCompiledPageScope(left?.scope) - rankCompiledPageScope(right?.scope);
+        if (rankDelta !== 0) {
+          return rankDelta;
+        }
+
+        return String(right?.updated_at || "").localeCompare(String(left?.updated_at || ""));
+      });
 
       return res.json(trimMemoryBundle(result, bundleRequest));
     } catch (error) {
@@ -299,7 +400,10 @@ function registerMemoryRoutes(app, { pool }) {
 
 module.exports = {
   buildDecisionLookup,
+  buildKnowledgePageLookup,
   mapDecisionRow,
+  mapKnowledgePageRow,
   mapMemoryRow,
+  rankCompiledPageScope,
   registerMemoryRoutes,
 };

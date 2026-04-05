@@ -100,6 +100,7 @@ test("trimMemoryBundle limits the total amount of injected context", () => {
       business: [{ id: 3 }, { id: 4 }],
       role: [{ id: 5 }],
       task: [{ id: 6 }],
+      compiled_pages: [{ id: 10 }, { id: 11 }, { id: 12 }],
       decisions: {
         owner: [{ id: 7 }],
         business: [{ id: 8 }],
@@ -113,8 +114,11 @@ test("trimMemoryBundle limits the total amount of injected context", () => {
   assert.deepEqual(trimmed.business, [{ id: 3 }, { id: 4 }]);
   assert.deepEqual(trimmed.role, []);
   assert.deepEqual(trimmed.task, []);
+  assert.deepEqual(trimmed.compiled_pages, [{ id: 10 }, { id: 11 }]);
   assert.deepEqual(trimmed.decisions.owner, []);
   assert.equal(trimmed.meta.included_items, 4);
   assert.equal(trimmed.meta.truncated, true);
   assert.deepEqual(trimmed.meta.truncated_scopes, ["role", "task", "decisions.owner", "decisions.business", "decisions.task"]);
+  assert.equal(trimmed.meta.compiled_pages_included, 2);
+  assert.equal(trimmed.meta.compiled_pages_truncated, true);
 });

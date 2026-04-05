@@ -4,6 +4,8 @@ const CHARS_PER_TOKEN = 4;
 const FIXED_SCAFFOLDING_TOKEN_CEILING = 1000;
 const MEMORY_BUDGET_TOKENS = 500;
 const HANDOFF_BUDGET_TOKENS = 200;
+const COMPILED_KNOWLEDGE_BUDGET_TOKENS = 300;
+const MAX_COMPILED_KNOWLEDGE_SNIPPETS = 2;
 
 function normalizeOptionalString(value) {
   if (value === undefined || value === null) {
@@ -98,6 +100,26 @@ function buildMemoryFacts(memoryBundle) {
 
       facts.push(decision);
     }
+  }
+
+  return facts;
+}
+
+function buildCompiledKnowledgeFacts(memoryBundle) {
+  if (!memoryBundle || typeof memoryBundle !== "object") {
+    return [];
+  }
+
+  const pages = Array.isArray(memoryBundle.compiled_pages) ? memoryBundle.compiled_pages : [];
+  const facts = [];
+
+  for (const page of pages.slice(0, MAX_COMPILED_KNOWLEDGE_SNIPPETS)) {
+    const summary = sanitizeUserFacingPromptText(page?.summary_short || page?.summary_full);
+    if (!summary) {
+      continue;
+    }
+
+    facts.push(summary);
   }
 
   return facts;
@@ -277,6 +299,12 @@ function buildSystemPrompt(executionContext) {
     sections.push(["Recent handoffs:", ...handoffLines].join("\n"));
   }
 
+  const compiledKnowledgeFacts = buildCompiledKnowledgeFacts(executionContext.memory_bundle);
+  const compiledKnowledgeLines = trimBulletList(compiledKnowledgeFacts, toCharBudget(COMPILED_KNOWLEDGE_BUDGET_TOKENS));
+  if (compiledKnowledgeLines.length > 0) {
+    sections.push(["Compiled knowledge:", ...compiledKnowledgeLines].join("\n"));
+  }
+
   const memoryFacts = buildMemoryFacts(executionContext.memory_bundle);
   const memoryLines = trimBulletList(memoryFacts, toCharBudget(MEMORY_BUDGET_TOKENS));
   if (memoryLines.length > 0) {
@@ -289,6 +317,7 @@ function buildSystemPrompt(executionContext) {
     prompt,
     meta: {
       request_type: requestType,
+      compiled_knowledge_count: compiledKnowledgeLines.length,
       memory_fact_count: memoryLines.length,
       handoff_count: handoffLines.length,
     },
@@ -332,7 +361,9 @@ function buildExecutionMessages(executionContext) {
 module.exports = {
   FIXED_SCAFFOLDING_TOKEN_CEILING,
   HANDOFF_BUDGET_TOKENS,
+  COMPILED_KNOWLEDGE_BUDGET_TOKENS,
   MEMORY_BUDGET_TOKENS,
+  MAX_COMPILED_KNOWLEDGE_SNIPPETS,
   buildExecutionMessages,
   buildSystemPrompt,
   deriveRequestType,

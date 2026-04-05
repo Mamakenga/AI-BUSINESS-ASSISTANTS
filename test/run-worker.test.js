@@ -215,6 +215,41 @@ test("buildRunCompletionInput preserves scheduled leader digest output when cont
   assert.deepEqual(result.completion.fallback_chain, []);
 });
 
+test("buildRunCompletionInput treats compiled pages as valid scheduled context", () => {
+  const result = buildRunCompletionInput(
+    {
+      id: 911,
+      agent: "assistant",
+      task_id: null,
+      requested_by_agent: "scheduler",
+      dispatch_reason: "Prepare the weekly digest for the leader in Russian.",
+    },
+    {
+      status: "completed",
+      model_used: "assistant-model",
+      fallback_chain: [],
+      reply_text: "??? ????????????: ???? compiled knowledge context.",
+    },
+    {
+      run: {
+        id: 911,
+        agent: "assistant",
+        task_id: null,
+        requested_by_agent: "scheduler",
+        dispatch_reason: "Prepare the weekly digest for the leader in Russian.",
+      },
+      task: null,
+      handoff_messages: [],
+      memory_bundle: {
+        compiled_pages: [{ summary_short: "There is a compiled task summary available." }],
+      },
+    }
+  );
+
+  assert.equal(result.reply_text, "??? ????????????: ???? compiled knowledge context.");
+  assert.deepEqual(result.completion.fallback_chain, []);
+});
+
 test("buildRunCompletionInput replaces thin scheduled competitor watch output with safe fallback", () => {
   const result = buildRunCompletionInput(
     {
@@ -697,7 +732,7 @@ test("buildRunCompletionInput keeps generic leakage fallback for methodist metad
       status: "completed",
       model_used: "methodist-model",
       fallback_chain: [],
-      reply_text: "Подтверждено: [business] есть одна опорная программа, thread_id: 7a04104a-18c8-4f1f-8f98-58d63737c820.",
+      reply_text: "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: [business] пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, thread_id: 7a04104a-18c8-4f1f-8f98-58d63737c820.",
     },
     {
       run: {
