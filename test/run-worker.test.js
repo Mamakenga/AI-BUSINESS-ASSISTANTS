@@ -637,3 +637,93 @@ test("buildRunCompletionInput does not apply founder-facing quality gate to inte
     summary: "Contains [business] handoff notation for internal processing.",
   });
 });
+
+test("buildRunCompletionInput blocks methodist broad intake questionnaires and returns a safe curriculum scaffold", () => {
+  const result = buildRunCompletionInput(
+    {
+      id: 101,
+      agent: "methodist",
+      task_id: null,
+      requested_by_agent: "founder",
+      dispatch_reason: null,
+    },
+    {
+      status: "completed",
+      model_used: "methodist-model",
+      fallback_chain: [],
+      reply_text:
+        "\u0427\u0442\u043e\u0431\u044b \u0442\u043e\u0447\u043d\u043e \u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043a\u0443\u0440\u0441, \u043c\u043d\u0435 \u043d\u0443\u0436\u043d\u043e \u043f\u043e\u043d\u044f\u0442\u044c: \u043a\u0442\u043e \u0446\u0435\u043b\u0435\u0432\u0430\u044f \u0430\u0443\u0434\u0438\u0442\u043e\u0440\u0438\u044f? \u043a\u0430\u043a\u043e\u0439 \u0432\u043e\u0437\u0440\u0430\u0441\u0442 \u0440\u043e\u0434\u0438\u0442\u0435\u043b\u0435\u0439? \u043a\u0430\u043a\u043e\u0439 \u0443\u0440\u043e\u0432\u0435\u043d\u044c \u043f\u043e\u0434\u0433\u043e\u0442\u043e\u0432\u043a\u0438? \u043a\u0430\u043a\u043e\u0439 \u0444\u043e\u0440\u043c\u0430\u0442 \u0438 \u0434\u043b\u0438\u0442\u0435\u043b\u044c\u043d\u043e\u0441\u0442\u044c? \u0441\u043a\u043e\u043b\u044c\u043a\u043e \u0437\u0430\u043d\u044f\u0442\u0438\u0439 \u043d\u0443\u0436\u043d\u043e?",
+    },
+    {
+      run: {
+        id: 101,
+        agent: "methodist",
+        task_id: null,
+        requested_by_agent: "founder",
+        dispatch_reason: null,
+      },
+      role: {
+        id: "methodist",
+        runtime_limits: {
+          max_completion_tokens: 1200,
+          max_total_tokens: 3000,
+          max_response_cost_usd: 0.025,
+        },
+      },
+      task: null,
+      handoff_messages: [],
+      memory_bundle: null,
+    }
+  );
+
+  assert.equal(result.completion.status, "failed");
+  assert.ok(result.completion.fallback_chain.includes("founder_reply_quality_guard"));
+  assert.ok(result.completion.fallback_chain.includes("founder_reply_quality_guard/methodist_broad_intake"));
+  assert.match(result.reply_text, /\u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u044b\u0439 \u0441\u0442\u0430\u0440\u0442\u043e\u0432\u044b\u0439 \u043a\u0430\u0440\u043a\u0430\u0441/i);
+  assert.match(result.reply_text, /\u0427\u0435\u0440\u043d\u043e\u0432\u0430\u044f \u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0430 \u043c\u0438\u043d\u0438-\u043a\u0443\u0440\u0441\u0430/i);
+  assert.match(result.reply_text, /\u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u0435 \u0434\u043b\u0438\u0442\u0435\u043b\u044c\u043d\u043e\u0441\u0442\u044c \u0438 \u0444\u043e\u0440\u043c\u0430\u0442/i);
+});
+
+test("buildRunCompletionInput keeps generic leakage fallback for methodist metadata leaks", () => {
+  const result = buildRunCompletionInput(
+    {
+      id: 102,
+      agent: "methodist",
+      task_id: null,
+      requested_by_agent: "founder",
+      dispatch_reason: null,
+    },
+    {
+      status: "completed",
+      model_used: "methodist-model",
+      fallback_chain: [],
+      reply_text: "Подтверждено: [business] есть одна опорная программа, thread_id: 7a04104a-18c8-4f1f-8f98-58d63737c820.",
+    },
+    {
+      run: {
+        id: 102,
+        agent: "methodist",
+        task_id: null,
+        requested_by_agent: "founder",
+        dispatch_reason: null,
+      },
+      role: {
+        id: "methodist",
+        runtime_limits: {
+          max_completion_tokens: 1200,
+          max_total_tokens: 3000,
+          max_response_cost_usd: 0.025,
+        },
+      },
+      task: null,
+      handoff_messages: [],
+      memory_bundle: null,
+    }
+  );
+
+  assert.equal(result.completion.status, "failed");
+  assert.ok(result.completion.fallback_chain.includes("founder_reply_quality_guard/internal_scope_tag"));
+  assert.ok(result.completion.fallback_chain.includes("founder_reply_quality_guard/internal_identifier"));
+  assert.doesNotMatch(result.reply_text, /\u0441\u0442\u0430\u0440\u0442\u043e\u0432\u044b\u0439 \u043a\u0430\u0440\u043a\u0430\u0441/i);
+  assert.match(result.reply_text, /\u0432\u043d\u0443\u0442\u0440\u0435\u043d\u043d\u0438\u0445 \u0441\u043b\u0443\u0436\u0435\u0431\u043d\u044b\u0445 \u043c\u0430\u0440\u043a\u0435\u0440\u043e\u0432/i);
+});

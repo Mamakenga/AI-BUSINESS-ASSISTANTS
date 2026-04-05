@@ -274,7 +274,33 @@ function buildRuntimeBudgetGuardReply(runRow) {
   return "Не удалось безопасно подготовить ответ в пределах runtime-лимита роли. Попробуйте сузить запрос или разбить его на более узкую задачу.";
 }
 
-function buildFounderReplyQualityGuardReply(runRow) {
+function buildFounderReplyQualityGuardReply(runRow, issues = []) {
+  if (
+    runRow?.agent === "methodist" &&
+    runRow?.requested_by_agent !== "scheduler" &&
+    Array.isArray(issues) &&
+    issues.includes("methodist_broad_intake")
+  ) {
+    return [
+      "Подготовил безопасный стартовый каркас вместо широкой анкеты.",
+      "",
+      "Черновая структура мини-курса:",
+      "1. Что такое AI в повседневных сценариях родителей.",
+      "2. Где AI реально экономит время, а где нужен человеческий контроль.",
+      "3. Как безопасно использовать AI вместе с ребенком без ложных ожиданий.",
+      "4. Два-три практических семейных сценария с разбором ошибок.",
+      "5. Один следующий шаг для внедрения дома или в школьной коммуникации.",
+      "",
+      "Что пока остается неясным:",
+      "- желаемая длительность;",
+      "- онлайн или офлайн формат;",
+      "- насколько глубоко нужен практический блок.",
+      "",
+      "Безопасный следующий шаг:",
+      "- подтвердите длительность и формат, и я сразу сожму этот каркас в 3-5 конкретных занятий.",
+    ].join("\n");
+  }
+
   if (runRow?.requested_by_agent === "scheduler") {
     return buildScheduledFounderQualityGuardFallback(runRow);
   }
@@ -361,7 +387,9 @@ function applyFounderFacingQualityGate(runRow, executionResult) {
     return executionResult;
   }
 
-  const issues = findFounderReplyQualityIssues(executionResult?.reply_text);
+  const issues = findFounderReplyQualityIssues(executionResult?.reply_text, {
+    roleId: runRow.agent,
+  });
   if (issues.length === 0) {
     return executionResult;
   }
@@ -380,7 +408,7 @@ function applyFounderFacingQualityGate(runRow, executionResult) {
     fallback_chain: markers,
     artifact_type: null,
     artifact_content: null,
-    reply_text: buildFounderReplyQualityGuardReply(runRow),
+    reply_text: buildFounderReplyQualityGuardReply(runRow, issues),
   };
 }
 

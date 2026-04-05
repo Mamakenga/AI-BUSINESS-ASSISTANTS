@@ -413,7 +413,7 @@ test("buildSystemPrompt adds direct-answer guardrails for methodist curriculum q
   assert.match(result.prompt, /If confirmed teaching context is limited, say that directly/i);
   assert.match(
     result.prompt,
-    /a draft learning structure or module flow, b\) what remains unclear, c\) one safest next curriculum step/i
+    /a short draft learning goal or audience framing, b\) a 3-5 block module flow or lesson sequence, c\) one safest next curriculum step/i
   );
   assert.match(
     result.prompt,
@@ -422,6 +422,10 @@ test("buildSystemPrompt adds direct-answer guardrails for methodist curriculum q
   assert.match(
     result.prompt,
     /Do not turn the answer into a broad questionnaire about the whole audience, business, or training system/i
+  );
+  assert.match(
+    result.prompt,
+    /At most one short clarification may appear inside c\); never return a checklist or series of intake questions instead of the draft structure itself/i
   );
   assert.equal(result.meta.request_type, "direct-answer");
 });

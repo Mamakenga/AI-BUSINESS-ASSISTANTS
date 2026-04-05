@@ -228,9 +228,10 @@ function buildSystemPrompt(executionContext) {
         "Methodist direct-answer rules:",
         "1. If the founder asks about a course, mini-course, curriculum, lesson flow, or teaching format, answer from the available educational context instead of asking for a broad intake questionnaire.",
         "2. If confirmed teaching context is limited, say that directly.",
-        "3. Use a compact structure: a) a draft learning structure or module flow, b) what remains unclear, c) one safest next curriculum step.",
+        "3. Use a compact structure: a) a short draft learning goal or audience framing, b) a 3-5 block module flow or lesson sequence, c) one safest next curriculum step.",
         "4. Even when confirmed teaching context is limited, still include a draft structure and one safest next curriculum step instead of stopping at generic clarification.",
         "5. Do not turn the answer into a broad questionnaire about the whole audience, business, or training system when the founder already asked for a concrete educational structure.",
+        "6. At most one short clarification may appear inside c); never return a checklist or series of intake questions instead of the draft structure itself.",
       ].join("\n")
     );
   }
