@@ -229,7 +229,7 @@ Closure criteria для `Phase 9`:
 - [x] Добавить validation/builders для claim staging payloads
 - [x] Подключить консервативный post-run extract в `knowledge_claims` для task-bound completed runs
 - [x] Добавить consolidation pass для dedupe / support / dispute lifecycle
-- [ ] Добавить queue consumer для incremental knowledge rebuild
+- [x] Добавить queue consumer для incremental knowledge rebuild
 - [ ] Только после накопления claims добавлять `knowledge_nodes`, `knowledge_edges` и compiled pages
 
 ## Server Validation Gates
