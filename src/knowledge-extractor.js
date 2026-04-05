@@ -6,6 +6,7 @@ const { normalizeNullableString } = require("./string-normalizers");
 const MAX_EXTRACTED_CLAIMS = 3;
 const MIN_CLAIM_LENGTH = 30;
 const MAX_CLAIM_LENGTH = 280;
+const MIN_STRUCTURED_SENTENCE_LENGTH = 90;
 const CLAIM_SKIP_PATTERNS = [
   /^#{1,6}\s+/,
   /^module\s+\d+/i,
@@ -73,6 +74,18 @@ function shouldKeepClaimText(text) {
   return !CLAIM_SKIP_PATTERNS.some((pattern) => pattern.test(text));
 }
 
+function isStructuredFragment(text) {
+  if (!text) {
+    return false;
+  }
+
+  if (/[.!]$/.test(text)) {
+    return false;
+  }
+
+  return text.length < MIN_STRUCTURED_SENTENCE_LENGTH;
+}
+
 function extractClaimTexts(text, maxClaims = MAX_EXTRACTED_CLAIMS) {
   const normalized = normalizeKnowledgeText(text);
   if (!normalized) {
@@ -91,6 +104,7 @@ function extractClaimTexts(text, maxClaims = MAX_EXTRACTED_CLAIMS) {
           .split(/(?<=[.!])\s+/)
           .map((line) => line.trim())
           .filter(Boolean);
+  const structuredSource = lineCandidates.length > 1;
 
   const seen = new Set();
   const claims = [];
@@ -98,6 +112,9 @@ function extractClaimTexts(text, maxClaims = MAX_EXTRACTED_CLAIMS) {
   for (const candidate of sentenceCandidates) {
     const clean = normalizeKnowledgeText(candidate);
     if (!clean || !shouldKeepClaimText(clean)) {
+      continue;
+    }
+    if (structuredSource && isStructuredFragment(clean)) {
       continue;
     }
     const key = clean.toLowerCase();
