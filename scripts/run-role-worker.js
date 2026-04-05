@@ -178,6 +178,8 @@ async function loadMemoryBundle(runRow) {
     role_id: runRow.agent,
     task_id: runRow.task_id,
     max_total_items: 12,
+    requested_by_agent: runRow.requested_by_agent,
+    dispatch_reason: runRow.dispatch_reason,
   });
 }
 

@@ -4,6 +4,8 @@ const { buildMemoryBundleRequest, createEmptyBundleResult, trimMemoryBundle } = 
 const { buildMemoryCompaction, normalizeSourceMemoryIds } = require("./memory-compaction");
 const { buildMemoryCandidate, parseMemoryQuery } = require("./memory-service");
 
+const RECENT_TASK_COMPILED_PAGE_LIMIT = 2;
+
 function mapMemoryRow(row) {
   return {
     id: row.id,
@@ -112,6 +114,58 @@ function buildKnowledgePageLookup(scope, scopeId = null) {
     `,
     values,
   };
+}
+
+function buildRecentTaskKnowledgePagesLookup(limit = RECENT_TASK_COMPILED_PAGE_LIMIT) {
+  return {
+    text: `
+      SELECT
+        p.id,
+        p.page_type,
+        p.scope,
+        p.scope_id,
+        p.title,
+        p.status,
+        p.updated_at,
+        v.version_no,
+        v.summary_short,
+        v.summary_full,
+        v.key_facts_json,
+        v.contradictions_json,
+        v.compiled_markdown
+      FROM knowledge_pages p
+      JOIN knowledge_page_versions v ON v.id = p.current_version_id
+      WHERE p.page_type = 'scope_summary'
+        AND p.status = 'active'
+        AND p.scope = 'task'
+        AND p.scope_id IS NOT NULL
+        AND p.current_version_id IS NOT NULL
+      ORDER BY p.updated_at DESC, p.id DESC
+      LIMIT $1
+    `,
+    values: [limit],
+  };
+}
+
+function isLeaderDigestDispatchReason(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return normalized.includes("daily brief for the leader") || normalized.includes("weekly digest for the leader");
+}
+
+function shouldLoadRecentTaskCompiledPages({
+  role_id: roleId,
+  task_id: taskId,
+  requested_by_agent: requestedByAgent,
+  dispatch_reason: dispatchReason,
+  compiled_pages_count: compiledPagesCount = 0,
+} = {}) {
+  return (
+    requestedByAgent === "scheduler" &&
+    roleId === "assistant" &&
+    !taskId &&
+    compiledPagesCount === 0 &&
+    isLeaderDigestDispatchReason(dispatchReason)
+  );
 }
 
 function rankCompiledPageScope(scope) {
@@ -382,6 +436,20 @@ function registerMemoryRoutes(app, { pool }) {
         result.decisions.task = await loadDecisions("task", bundleRequest.task_id);
       }
 
+      if (
+        shouldLoadRecentTaskCompiledPages({
+          role_id: bundleRequest.role_id,
+          task_id: bundleRequest.task_id,
+          requested_by_agent: req.body?.requested_by_agent,
+          dispatch_reason: req.body?.dispatch_reason,
+          compiled_pages_count: result.compiled_pages.length,
+        })
+      ) {
+        const recentTaskPagesLookup = buildRecentTaskKnowledgePagesLookup();
+        const recentTaskPagesResult = await pool.query(recentTaskPagesLookup.text, recentTaskPagesLookup.values);
+        result.compiled_pages.push(...recentTaskPagesResult.rows.map(mapKnowledgePageRow));
+      }
+
       result.compiled_pages.sort((left, right) => {
         const rankDelta = rankCompiledPageScope(left?.scope) - rankCompiledPageScope(right?.scope);
         if (rankDelta !== 0) {
@@ -401,9 +469,12 @@ function registerMemoryRoutes(app, { pool }) {
 module.exports = {
   buildDecisionLookup,
   buildKnowledgePageLookup,
+  buildRecentTaskKnowledgePagesLookup,
+  isLeaderDigestDispatchReason,
   mapDecisionRow,
   mapKnowledgePageRow,
   mapMemoryRow,
   rankCompiledPageScope,
   registerMemoryRoutes,
+  shouldLoadRecentTaskCompiledPages,
 };
