@@ -222,6 +222,16 @@ Closure criteria для `Phase 9`:
 - [ ] Завершить DRY-refactor для normalize/config helpers, которые сейчас дублируются в нескольких файлах
 - [ ] Декомпозировать `server.js`, чтобы intake / jobs / memory / runs не жили в одном большом модуле
 
+## Phase 10. Knowledge Plane Core
+
+- [x] Зафиксировать `knowledge plane` architecture в implementation plan
+- [x] Добавить core schema для `knowledge_claims`, `knowledge_claim_sources`, `knowledge_dirty_queue`
+- [x] Добавить validation/builders для claim staging payloads
+- [ ] Подключить post-run extract в `knowledge_claims`
+- [ ] Добавить consolidation pass для dedupe / support / dispute lifecycle
+- [ ] Добавить queue consumer для incremental knowledge rebuild
+- [ ] Только после накопления claims добавлять `knowledge_nodes`, `knowledge_edges` и compiled pages
+
 ## Server Validation Gates
 
 - [x] Развернуть contour на VPS под пользователем `ops` в ручном demo-режиме
@@ -238,5 +248,6 @@ Closure criteria для `Phase 9`:
 2. если продолжаем founder-facing surface, проверить, хватает ли текущих `tasks` endpoints для Mini App board;
 3. после этого поднять минимальную Mini App страницу на Railway;
 4. затем вернуться к `Phase 8` и проверить mobile UX внутри Telegram;
-5. только после этого решать, нужен ли drag & drop и дополнительные board-filters.
+5. только после этого решать, нужен ли drag & drop и дополнительные board-filters;
+6. knowledge plane вести отдельным архитектурным треком, начиная с claims + sources + dirty queue без преждевременного graph/page overengineering.
 
