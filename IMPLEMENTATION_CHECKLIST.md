@@ -42,14 +42,14 @@
 11. базовый structured logging foundation уже добавлен для `control-api`, `telegram-bridge` и `role-worker`;
 12. run-level trace по `run_id` теперь виден от intake до completion/delivery в JSON-логах.
 13. `Phase 9` hardening canon теперь покрывает runtime guards, auth, deploy pipeline, rollback, monitoring и отдельные Railway/VPS deployment notes.
+14. founder-facing implicit same-topic routing без обязательного `@role` теперь подтвержден живьем на VPS для темы `01 Assistant`.
 
 Следующий практический фокус:
 1. считать `Phase 9` hardening практически закрытой;
-2. вернуться к live-quality pass для `methodist`;
-3. затем решить, брать ли `Phase 9.x` refactor backlog или `Phase 8` UX polish;
+2. считать `Phase 9.x` refactor backlog и founder-facing same-topic routing закрытыми;
+3. если идём дальше в founder-facing surface, вернуться к `Phase 7` Mini App board как следующему отдельному интерфейсу;
 4. держать `DEPLOY_RUNBOOK.md` как канонический операторский сценарий для VPS updates.
 5. считать Phase 6 completed на уровне job contracts and trigger path, а не как полный live-quality signoff для каждого scheduled use-case.
-6. зафиксировать founder-facing UX, где implicit routing в родной теме роли станет рекомендуемым live-path без обязательного `@role`, как отдельный future polish после hardening.
 
 ## Phase 0. Project Bootstrap
 
@@ -164,7 +164,7 @@
 
 ## Phase 7. Founder Mini App Board
 
-- [ ] Зафиксировать отдельный Mini App frontend spec
+- [x] Зафиксировать отдельный Mini App frontend spec
 - [ ] Добавить task board endpoints, которых не хватает Mini App
 - [ ] Поднять простую Mini App страницу на Railway
 - [ ] Реализовать колонку `Inbox`
@@ -180,7 +180,7 @@
 
 ## Phase 8. UX Polish
 
-- [ ] Сделать founder-facing implicit routing в родной теме роли рекомендуемым live UX path без обязательного `@role`
+- [x] Сделать founder-facing implicit routing в родной теме роли рекомендуемым live UX path без обязательного `@role`
 - [ ] Проверить mobile UX Mini App внутри Telegram
 - [ ] Только после этого решить, нужен ли drag & drop
 - [ ] Если нужен, сделать drag & drop отдельным шагом
@@ -234,9 +234,9 @@ Closure criteria для `Phase 9`:
 ## Next Step
 
 Следующий шаг по этому чеклисту:
-1. считать `Phase 9` hardening закрытой;
-2. вернуться к live-quality pass для `methodist`;
-3. после этого выбрать между `Phase 9.x` refactor backlog и `Phase 8` UX polish;
-4. founder-facing implicit same-topic routing без `@role` держать как UX-polish шаг после hardening, а не как недостающую routing-capability;
-5. использовать `DEPLOY_RUNBOOK.md` как канонический VPS update flow.
+1. считать `Phase 9` hardening, `Phase 9.x` refactor backlog и founder-facing same-topic routing закрытыми;
+2. если продолжаем founder-facing surface, проверить, хватает ли текущих `tasks` endpoints для Mini App board;
+3. после этого поднять минимальную Mini App страницу на Railway;
+4. затем вернуться к `Phase 8` и проверить mobile UX внутри Telegram;
+5. только после этого решать, нужен ли drag & drop и дополнительные board-filters.
 

@@ -14,10 +14,11 @@ If you feel lost, read only these files in this order:
 2. `IMPLEMENTATION_CHECKLIST.md`
 3. `RUNTIME_PROFILES.md`
 4. `TELEGRAM_ROUTING_SPEC.md`
-5. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4-RU.md`
-6. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md`
-7. `OPS_RAILWAY_VPS_NOTES.md`
-8. `OPS_DEPLOYMENT_SKELETON.md`
+5. `MINI_APP_FRONTEND_SPEC.md` when working on the founder board surface
+6. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4-RU.md`
+7. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md`
+8. `OPS_RAILWAY_VPS_NOTES.md`
+9. `OPS_DEPLOYMENT_SKELETON.md`
 
 ## Project Map
 
@@ -25,18 +26,19 @@ If you feel lost, read only these files in this order:
 2. `IMPLEMENTATION_CHECKLIST.md` - step-by-step execution checklist with current status
 3. `RUNTIME_PROFILES.md` - role runtime profiles, model routing, and memory scopes
 4. `TELEGRAM_ROUTING_SPEC.md` - Telegram-first routing rules for topics, tags, threads, and task creation
-5. `migrations/` - database schema changes for the control plane
-6. `scripts/` - migration runner and smoke verification helpers
-7. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4-RU.md` - main human-readable canon in Russian
-8. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md` - English technical version of the same plan
-9. `OPS_DEPLOYMENT_SKELETON.md` - deployment contour for the separate `ops` server user
-10. `OPS_RAILWAY_VPS_NOTES.md` - canonical note for the current live split between Railway state and VPS execution
-11. `DEPLOY_RUNBOOK.md` - canonical VPS deploy, rollback, monitoring, and smoke sequence
-12. `MANUAL_ROLE_TESTS.md` - canonical manual validation runbook for live roles and scheduled jobs
-13. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md` - problem statement and decision options for separate OpenClaw execution
-14. `deploy/systemd/` - systemd unit templates for `ops-api`, `ops-telegram`, and `ops-worker`
-15. `refs/` - curated reference library for runtimes, auth/provider paths, evals, and ops patterns
-16. `V2_EXECUTION_LAYER.md` - agreed V2 execution architecture: what stays, what gets replaced, and phased migration
+5. `MINI_APP_FRONTEND_SPEC.md` - canonical scope for the founder-facing Telegram Mini App board
+6. `migrations/` - database schema changes for the control plane
+7. `scripts/` - migration runner and smoke verification helpers
+8. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4-RU.md` - main human-readable canon in Russian
+9. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md` - English technical version of the same plan
+10. `OPS_DEPLOYMENT_SKELETON.md` - deployment contour for the separate `ops` server user
+11. `OPS_RAILWAY_VPS_NOTES.md` - canonical note for the current live split between Railway state and VPS execution
+12. `DEPLOY_RUNBOOK.md` - canonical VPS deploy, rollback, monitoring, and smoke sequence
+13. `MANUAL_ROLE_TESTS.md` - canonical manual validation runbook for live roles and scheduled jobs
+14. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md` - problem statement and decision options for separate OpenClaw execution
+15. `deploy/systemd/` - systemd unit templates for `ops-api`, `ops-telegram`, and `ops-worker`
+16. `refs/` - curated reference library for runtimes, auth/provider paths, evals, and ops patterns
+17. `V2_EXECUTION_LAYER.md` - agreed V2 execution architecture: what stays, what gets replaced, and phased migration
 
 ## Core Separation Rule
 
@@ -82,12 +84,13 @@ Do not mix it with:
 1. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4-RU.md`
 2. `IMPLEMENTATION_CHECKLIST.md`
 3. `TELEGRAM_ROUTING_SPEC.md`
-4. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md`
-5. `OPS_RAILWAY_VPS_NOTES.md`
-6. `OPS_DEPLOYMENT_SKELETON.md`
-7. `MANUAL_ROLE_TESTS.md`
-8. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md`
-9. `V2_EXECUTION_LAYER.md`
+4. `MINI_APP_FRONTEND_SPEC.md` for the founder board surface
+5. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md`
+6. `OPS_RAILWAY_VPS_NOTES.md`
+7. `OPS_DEPLOYMENT_SKELETON.md`
+8. `MANUAL_ROLE_TESTS.md`
+9. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md`
+10. `V2_EXECUTION_LAYER.md`
 
 ## Reference Rule
 
