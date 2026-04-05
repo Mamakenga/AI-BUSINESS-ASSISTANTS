@@ -234,6 +234,7 @@ Closure criteria для `Phase 9`:
 - [x] Подмешать компактные `compiled knowledge` snippets в runtime memory bundle и system prompt
 - [x] Усилить compiled page layer semantic LLM-compile step с deterministic fallback
 - [x] Подключить page recompilation автоматически внутри dirty queue consumer
+- [x] Подавить пустые `knowledge_page_versions`, если semantic/deterministic compile ничего не изменил
 - [ ] Только после этого расширять knowledge graph (`knowledge_nodes`, `knowledge_edges`) и richer compiled pages
 
 ## Server Validation Gates

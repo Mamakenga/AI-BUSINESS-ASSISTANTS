@@ -54,6 +54,7 @@ function buildKnowledgeDirtyQueueRunReport({
       pages_created: 0,
       pages_updated: 0,
       versions_created: 0,
+      versions_skipped_noop: 0,
       semantic_pages_compiled: 0,
       fallback_pages_compiled: 0,
     },

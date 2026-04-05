@@ -4,6 +4,47 @@ const { normalizeLiteLLMConfig } = require("./executor-client");
 const { buildKnowledgeScopePageDraftWithFallback, extractJsonObjectFromText, groupKnowledgeClaimsForPages } = require("./knowledge-pages");
 const { normalizeNullableString } = require("./string-normalizers");
 
+function normalizeKnowledgePageVersionList(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const normalized = [];
+  for (const item of value) {
+    const text = normalizeNullableString(item);
+    if (!text) {
+      continue;
+    }
+    normalized.push(text);
+  }
+
+  return normalized;
+}
+
+function normalizeKnowledgePageVersionSnapshot(version = {}) {
+  const source = version && typeof version === "object" ? version : {};
+  return {
+    summary_short: normalizeNullableString(source.summary_short) ?? null,
+    summary_full: normalizeNullableString(source.summary_full) ?? null,
+    key_facts_json: normalizeKnowledgePageVersionList(source.key_facts_json),
+    contradictions_json: normalizeKnowledgePageVersionList(source.contradictions_json),
+    open_questions_json: normalizeKnowledgePageVersionList(source.open_questions_json),
+    related_pages_json: normalizeKnowledgePageVersionList(source.related_pages_json),
+    compiled_markdown: normalizeNullableString(source.compiled_markdown) ?? null,
+  };
+}
+
+function isKnowledgePageVersionNoop(currentVersion, nextVersion) {
+  const normalizedCurrentVersion = normalizeKnowledgePageVersionSnapshot(currentVersion);
+  const normalizedNextVersion = normalizeKnowledgePageVersionSnapshot(nextVersion);
+
+  if (!normalizedCurrentVersion.summary_short || !normalizedCurrentVersion.summary_full) {
+    return false;
+  }
+
+  return JSON.stringify(normalizedCurrentVersion) === JSON.stringify(normalizedNextVersion);
+}
+
 function hasLiteLLMConfig(env = process.env) {
   return Boolean(normalizeNullableString(env.LITELLM_BASE_URL));
 }
@@ -117,15 +158,22 @@ async function loadKnowledgeClaimsForCompilation(client) {
 
 async function loadExistingKnowledgePages(client) {
   const result = await client.query(`
-    SELECT id, page_type, scope, scope_id, title, status, current_version_id
-    FROM knowledge_pages
-    WHERE page_type = 'scope_summary'
+    SELECT p.id, p.page_type, p.scope, p.scope_id, p.title, p.status, p.current_version_id,
+           v.summary_short, v.summary_full, v.key_facts_json, v.contradictions_json,
+           v.open_questions_json, v.related_pages_json, v.compiled_markdown
+    FROM knowledge_pages p
+    LEFT JOIN knowledge_page_versions v
+      ON v.id = p.current_version_id
+    WHERE p.page_type = 'scope_summary'
   `);
 
   const pages = new Map();
   for (const row of result.rows) {
     const key = JSON.stringify([row.page_type, row.scope, row.scope_id ?? null]);
-    pages.set(key, row);
+    pages.set(key, {
+      ...row,
+      current_version: normalizeKnowledgePageVersionSnapshot(row),
+    });
   }
   return pages;
 }
@@ -158,9 +206,16 @@ async function ensureKnowledgePage(client, existingPages, draft) {
       `,
       [existing.id, draft.title, draft.status]
     );
+    existingPages.set(key, {
+      ...existing,
+      title: draft.title,
+      status: draft.status,
+    });
     return {
       page_id: Number(existing.id),
       created: false,
+      key,
+      existing_page: existingPages.get(key),
     };
   }
 
@@ -181,11 +236,15 @@ async function ensureKnowledgePage(client, existingPages, draft) {
     scope_id: draft.scope_id,
     title: draft.title,
     status: draft.status,
+    current_version_id: null,
+    current_version: null,
   });
 
   return {
     page_id: pageId,
     created: true,
+    key,
+    existing_page: existingPages.get(key),
   };
 }
 
@@ -241,6 +300,7 @@ async function compileKnowledgePages(client, options = {}) {
       pages_created: 0,
       pages_updated: 0,
       versions_created: 0,
+      versions_skipped_noop: 0,
       semantic_pages_compiled: 0,
       fallback_pages_compiled: 0,
     };
@@ -253,6 +313,7 @@ async function compileKnowledgePages(client, options = {}) {
   let pagesCreated = 0;
   let pagesUpdated = 0;
   let versionsCreated = 0;
+  let versionsSkippedNoop = 0;
   let semanticPagesCompiled = 0;
   let fallbackPagesCompiled = 0;
 
@@ -267,13 +328,24 @@ async function compileKnowledgePages(client, options = {}) {
       pagesUpdated += 1;
     }
 
-    await insertKnowledgePageVersion(client, pageResult.page_id, draft.version);
-    versionsCreated += 1;
     if (draft.version.compiled_by === "knowledge_compiler_semantic_v1") {
       semanticPagesCompiled += 1;
     } else {
       fallbackPagesCompiled += 1;
     }
+
+    if (isKnowledgePageVersionNoop(pageResult.existing_page?.current_version, draft.version)) {
+      versionsSkippedNoop += 1;
+      continue;
+    }
+
+    const versionResult = await insertKnowledgePageVersion(client, pageResult.page_id, draft.version);
+    existingPages.set(pageResult.key, {
+      ...(existingPages.get(pageResult.key) || {}),
+      current_version_id: versionResult.version_id,
+      current_version: normalizeKnowledgePageVersionSnapshot(draft.version),
+    });
+    versionsCreated += 1;
   }
 
   return {
@@ -281,6 +353,7 @@ async function compileKnowledgePages(client, options = {}) {
     pages_created: pagesCreated,
     pages_updated: pagesUpdated,
     versions_created: versionsCreated,
+    versions_skipped_noop: versionsSkippedNoop,
     semantic_pages_compiled: semanticPagesCompiled,
     fallback_pages_compiled: fallbackPagesCompiled,
   };
@@ -291,6 +364,8 @@ module.exports = {
   createSemanticCompileGroup,
   extractAssistantText,
   hasLiteLLMConfig,
+  isKnowledgePageVersionNoop,
   loadKnowledgeClaimsForCompilation,
   normalizeKnowledgeCompilerConfig,
+  normalizeKnowledgePageVersionSnapshot,
 };

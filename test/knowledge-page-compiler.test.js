@@ -7,7 +7,9 @@ const {
   createSemanticCompileGroup,
   extractAssistantText,
   hasLiteLLMConfig,
+  isKnowledgePageVersionNoop,
   normalizeKnowledgeCompilerConfig,
+  normalizeKnowledgePageVersionSnapshot,
 } = require("../src/knowledge-page-compiler");
 
 test("hasLiteLLMConfig detects when semantic compilation can run", () => {
@@ -32,16 +34,16 @@ test("normalizeKnowledgeCompilerConfig reuses LiteLLM config and compiler model"
 test("extractAssistantText handles string and array response content", () => {
   assert.equal(
     extractAssistantText({
-      choices: [{ message: { content: "Простой ответ." } }],
+      choices: [{ message: { content: "Simple answer." } }],
     }),
-    "Простой ответ."
+    "Simple answer."
   );
 
   assert.equal(
     extractAssistantText({
-      choices: [{ message: { content: [{ text: "Часть 1. " }, { text: "Часть 2." }] } }],
+      choices: [{ message: { content: [{ text: "Part 1. " }, { text: "Part 2." }] } }],
     }),
-    "Часть 1. Часть 2."
+    "Part 1. Part 2."
   );
 });
 
@@ -65,7 +67,7 @@ test("createSemanticCompileGroup extracts JSON from LiteLLM response", async () 
               {
                 message: {
                   content:
-                    "```json\n{\"summary_short\":\"Коротко.\",\"summary_full\":\"Полно.\",\"key_facts\":[\"Факт\"],\"contradictions\":[],\"open_questions\":[]}\n```",
+                    "```json\n{\"summary_short\":\"Short.\",\"summary_full\":\"Full.\",\"key_facts\":[\"Fact\"],\"contradictions\":[],\"open_questions\":[]}\n```",
                 },
               },
             ],
@@ -80,10 +82,68 @@ test("createSemanticCompileGroup extracts JSON from LiteLLM response", async () 
   });
 
   assert.deepEqual(result, {
-    summary_short: "Коротко.",
-    summary_full: "Полно.",
-    key_facts: ["Факт"],
+    summary_short: "Short.",
+    summary_full: "Full.",
+    key_facts: ["Fact"],
     contradictions: [],
     open_questions: [],
   });
+});
+
+test("normalizeKnowledgePageVersionSnapshot keeps only comparable semantic fields", () => {
+  const snapshot = normalizeKnowledgePageVersionSnapshot({
+    summary_short: "  Short.  ",
+    summary_full: " Full. ",
+    key_facts_json: [" Fact 1 ", "", null, "Fact 2"],
+    contradictions_json: [" Conflict "],
+    open_questions_json: [" Question? "],
+    related_pages_json: [null, " task:123 "],
+    compiled_markdown: "  # Page  ",
+    compiled_by: "knowledge_compiler_semantic_v1",
+  });
+
+  assert.deepEqual(snapshot, {
+    summary_short: "Short.",
+    summary_full: "Full.",
+    key_facts_json: ["Fact 1", "Fact 2"],
+    contradictions_json: ["Conflict"],
+    open_questions_json: ["Question?"],
+    related_pages_json: ["task:123"],
+    compiled_markdown: "# Page",
+  });
+});
+
+test("isKnowledgePageVersionNoop ignores metadata-only changes", () => {
+  const currentVersion = {
+    summary_short: "Short.",
+    summary_full: "Full.",
+    key_facts_json: ["Fact 1", "Fact 2"],
+    contradictions_json: [],
+    open_questions_json: [],
+    related_pages_json: [],
+    compiled_markdown: "# Page\n\n## Summary\nFull.",
+    compiled_by: "knowledge_compiler",
+    change_reason: "compiled_from_supported_claims",
+  };
+
+  const sameContentNextVersion = {
+    summary_short: "Short.",
+    summary_full: "Full.",
+    key_facts_json: ["Fact 1", "Fact 2"],
+    contradictions_json: [],
+    open_questions_json: [],
+    related_pages_json: [],
+    compiled_markdown: "# Page\n\n## Summary\nFull.",
+    compiled_by: "knowledge_compiler_semantic_v1",
+    change_reason: "compiled_from_supported_claims_semantic",
+  };
+
+  const changedNextVersion = {
+    ...sameContentNextVersion,
+    summary_full: "Full. And slightly different.",
+  };
+
+  assert.equal(isKnowledgePageVersionNoop(currentVersion, sameContentNextVersion), true);
+  assert.equal(isKnowledgePageVersionNoop(currentVersion, changedNextVersion), false);
+  assert.equal(isKnowledgePageVersionNoop(null, sameContentNextVersion), false);
 });
