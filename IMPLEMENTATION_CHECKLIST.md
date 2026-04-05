@@ -232,6 +232,7 @@ Closure criteria для `Phase 9`:
 - [x] Добавить queue consumer для incremental knowledge rebuild
 - [x] Добавить минимальный compiled page layer (`knowledge_pages`, `knowledge_page_versions`, scope summaries)
 - [x] Подмешать компактные `compiled knowledge` snippets в runtime memory bundle и system prompt
+- [x] Усилить compiled page layer semantic LLM-compile step с deterministic fallback
 - [ ] Только после этого расширять knowledge graph (`knowledge_nodes`, `knowledge_edges`) и richer compiled pages
 
 ## Server Validation Gates

@@ -1,10 +1,18 @@
 "use strict";
 
 const { Pool } = require("pg");
-const { buildKnowledgeScopePageDraft, groupKnowledgeClaimsForPages } = require("../src/knowledge-pages");
+const { normalizeLiteLLMConfig } = require("../src/executor-client");
+const {
+  buildKnowledgeScopePageDraftWithFallback,
+  extractJsonObjectFromText,
+  groupKnowledgeClaimsForPages,
+} = require("../src/knowledge-pages");
+const { normalizeNullableString } = require("../src/string-normalizers");
 
 const DATABASE_URL = String(process.env.DATABASE_URL || "").trim();
 const PGSSLMODE = String(process.env.PGSSLMODE || "").trim();
+const KNOWLEDGE_COMPILER_MODEL = String(process.env.KNOWLEDGE_COMPILER_MODEL || "assistant-model").trim();
+const KNOWLEDGE_COMPILER_TIMEOUT_MS = Number.parseInt(process.env.KNOWLEDGE_COMPILER_TIMEOUT_MS || "45000", 10);
 
 if (!DATABASE_URL) {
   throw new Error("DATABASE_URL is required");
@@ -14,6 +22,103 @@ const pool = new Pool({
   connectionString: DATABASE_URL,
   ssl: PGSSLMODE === "disable" ? false : { rejectUnauthorized: false },
 });
+
+function hasLiteLLMConfig(env = process.env) {
+  return Boolean(normalizeNullableString(env.LITELLM_BASE_URL));
+}
+
+function normalizeKnowledgeCompilerConfig(env = process.env) {
+  if (!hasLiteLLMConfig(env)) {
+    return null;
+  }
+
+  const liteLLMConfig = normalizeLiteLLMConfig(env);
+  return {
+    base_url: liteLLMConfig.base_url,
+    api_key: liteLLMConfig.api_key,
+    timeout_ms:
+      Number.isFinite(KNOWLEDGE_COMPILER_TIMEOUT_MS) && KNOWLEDGE_COMPILER_TIMEOUT_MS > 0
+        ? KNOWLEDGE_COMPILER_TIMEOUT_MS
+        : liteLLMConfig.timeout_ms,
+    model: KNOWLEDGE_COMPILER_MODEL,
+  };
+}
+
+function extractAssistantText(payload) {
+  const choice = Array.isArray(payload?.choices) ? payload.choices[0] : null;
+  const content = choice?.message?.content;
+
+  if (typeof content === "string") {
+    return content.trim() || null;
+  }
+
+  if (Array.isArray(content)) {
+    const text = content
+      .map((part) => {
+        if (typeof part === "string") {
+          return part;
+        }
+        if (part && typeof part === "object" && typeof part.text === "string") {
+          return part.text;
+        }
+        return "";
+      })
+      .join("")
+      .trim();
+
+    return text || null;
+  }
+
+  return null;
+}
+
+function createSemanticCompileGroup(config, fetchImpl = fetch) {
+  if (!config) {
+    return null;
+  }
+
+  return async function compileGroup(input) {
+    const abortController = new AbortController();
+    const timeout = setTimeout(() => abortController.abort(), config.timeout_ms);
+
+    try {
+      const response = await fetchImpl(`${config.base_url}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(config.api_key ? { authorization: `Bearer ${config.api_key}` } : {}),
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages: [
+            { role: "system", content: input.system_prompt },
+            { role: "user", content: input.user_prompt },
+          ],
+          max_tokens: 350,
+          temperature: 0,
+          stream: false,
+        }),
+        signal: abortController.signal,
+      });
+
+      const text = await response.text();
+      if (!response.ok) {
+        throw new Error(`LiteLLM semantic compile failed: ${response.status} ${text}`);
+      }
+
+      const payload = text ? JSON.parse(text) : null;
+      const assistantText = extractAssistantText(payload);
+      const jsonText = extractJsonObjectFromText(assistantText);
+      if (!jsonText) {
+        throw new Error("LiteLLM semantic compile returned no JSON payload");
+      }
+
+      return JSON.parse(jsonText);
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
+}
 
 async function loadKnowledgeClaimsForCompilation(client) {
   const result = await client.query(`
@@ -161,15 +266,21 @@ async function main() {
     }
 
     const existingPages = await loadExistingKnowledgePages(client);
+    const compilerConfig = normalizeKnowledgeCompilerConfig(process.env);
+    const compileGroup = createSemanticCompileGroup(compilerConfig);
 
     await client.query("BEGIN");
     try {
       let pagesCreated = 0;
       let pagesUpdated = 0;
       let versionsCreated = 0;
+      let semanticPagesCompiled = 0;
+      let fallbackPagesCompiled = 0;
 
       for (const group of groupedClaims) {
-        const draft = buildKnowledgeScopePageDraft(group);
+        const draft = await buildKnowledgeScopePageDraftWithFallback(group, {
+          compileGroup,
+        });
         const pageResult = await ensureKnowledgePage(client, existingPages, draft);
         if (pageResult.created) {
           pagesCreated += 1;
@@ -179,6 +290,11 @@ async function main() {
 
         await insertKnowledgePageVersion(client, pageResult.page_id, draft.version);
         versionsCreated += 1;
+        if (draft.version.compiled_by === "knowledge_compiler_semantic_v1") {
+          semanticPagesCompiled += 1;
+        } else {
+          fallbackPagesCompiled += 1;
+        }
       }
 
       await client.query("COMMIT");
@@ -190,6 +306,8 @@ async function main() {
           pages_created: pagesCreated,
           pages_updated: pagesUpdated,
           versions_created: versionsCreated,
+          semantic_pages_compiled: semanticPagesCompiled,
+          fallback_pages_compiled: fallbackPagesCompiled,
         })
       );
     } catch (error) {
