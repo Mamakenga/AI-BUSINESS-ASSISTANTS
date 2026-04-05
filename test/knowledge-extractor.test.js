@@ -35,6 +35,23 @@ test("extractClaimTexts keeps only concrete declarative statements", () => {
   assert.ok(claims.length <= MAX_EXTRACTED_CLAIMS);
 });
 
+test("extractClaimTexts skips markdown headings in structured course outlines", () => {
+  const claims = extractClaimTexts(`
+# Черновой каркас мини-курса для родителей по практическому использованию AI дома
+
+## Целевая аудитория
+Родители детей школьного возраста (7-17 лет), которые хотят понять, как безопасно и эффективно использовать AI-инструменты в семейной жизни.
+
+## Цель курса
+Дать родителям практические навыки и уверенность в использовании AI для помощи детям в учёбе, организации семейных дел и развития цифровой грамотности.
+`);
+
+  assert.deepEqual(claims, [
+    "Родители детей школьного возраста (7-17 лет), которые хотят понять, как безопасно и эффективно использовать AI-инструменты в семейной жизни.",
+    "Дать родителям практические навыки и уверенность в использовании AI для помощи детям в учёбе, организации семейных дел и развития цифровой грамотности.",
+  ]);
+});
+
 test("selectKnowledgeSourceText prefers artifact reply_text over top-level reply_text", () => {
   const text = selectKnowledgeSourceText({
     reply_text: "Top-level reply.",

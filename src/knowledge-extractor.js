@@ -7,6 +7,9 @@ const MAX_EXTRACTED_CLAIMS = 3;
 const MIN_CLAIM_LENGTH = 30;
 const MAX_CLAIM_LENGTH = 280;
 const CLAIM_SKIP_PATTERNS = [
+  /^#{1,6}\s+/,
+  /^module\s+\d+/i,
+  /^модуль\s+\d+/i,
   /^что (подтверждено|не подтверждено|остается неясным)/i,
   /^безопасный следующий шаг/i,
   /^следующий шаг/i,
@@ -28,7 +31,10 @@ function normalizeKnowledgeText(value) {
     .replace(/^\s*\d+\.\s*/gm, "")
     .replace(/\*\*/g, "")
     .replace(/`/g, "")
-    .replace(/\s{2,}/g, " ")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
@@ -59,6 +65,9 @@ function shouldKeepClaimText(text) {
     return false;
   }
   if (text.endsWith("?")) {
+    return false;
+  }
+  if (text.endsWith(":")) {
     return false;
   }
   return !CLAIM_SKIP_PATTERNS.some((pattern) => pattern.test(text));
