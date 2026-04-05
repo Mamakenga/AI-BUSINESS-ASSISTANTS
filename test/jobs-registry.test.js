@@ -35,6 +35,8 @@ test("daily founder brief request is deterministic and does not ask for clarific
   assert.equal(dailyBrief.assigned_agent, "assistant");
   assert.match(dailyBrief.request_text, /Do not ask follow-up questions/i);
   assert.match(dailyBrief.request_text, /leader/i);
+  assert.match(dailyBrief.request_text, /compiled knowledge summaries/i);
+  assert.match(dailyBrief.request_text, /Prioritize compiled knowledge summaries when they are available/i);
   assert.match(dailyBrief.request_text, /If fresh data is limited/i);
   assert.match(dailyBrief.request_text, /do not fill gaps with invented business claims/i);
   assert.ok(dailyBrief.request_text.includes("Текущий статус"));
@@ -52,6 +54,8 @@ test("weekly digest request is deterministic and leader-facing", () => {
   assert.equal(weeklyDigest.assigned_agent, "assistant");
   assert.match(weeklyDigest.output_summary, /leader/i);
   assert.match(weeklyDigest.request_text, /Do not ask follow-up questions/i);
+  assert.match(weeklyDigest.request_text, /compiled knowledge summaries/i);
+  assert.match(weeklyDigest.request_text, /Prioritize compiled knowledge summaries when they are available/i);
   assert.match(weeklyDigest.request_text, /If confirmed information is limited/i);
   assert.match(weeklyDigest.request_text, /do not fill gaps with invented business claims/i);
   assert.ok(weeklyDigest.request_text.includes("Что изменилось за неделю"));

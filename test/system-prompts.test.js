@@ -8,6 +8,7 @@ const {
   buildExecutionMessages,
   buildSystemPrompt,
   deriveRequestType,
+  isLeaderDigestScheduledRun,
 } = require("../src/system-prompts");
 
 test("deriveRequestType detects orchestration and direct answers", () => {
@@ -33,6 +34,32 @@ test("deriveRequestType detects orchestration and direct answers", () => {
       run: { task_id: null, requested_by_agent: "scheduler" },
     }),
     "task-execution"
+  );
+});
+
+test("isLeaderDigestScheduledRun detects assistant leader digests only", () => {
+  assert.equal(
+    isLeaderDigestScheduledRun({
+      role: { id: "assistant" },
+      run: { requested_by_agent: "scheduler", dispatch_reason: "Prepare the daily brief for the leader in Russian." },
+    }),
+    true
+  );
+
+  assert.equal(
+    isLeaderDigestScheduledRun({
+      role: { id: "assistant" },
+      run: { requested_by_agent: "scheduler", dispatch_reason: "Prepare the weekly digest for the leader in Russian." },
+    }),
+    true
+  );
+
+  assert.equal(
+    isLeaderDigestScheduledRun({
+      role: { id: "researcher" },
+      run: { requested_by_agent: "scheduler", dispatch_reason: "Prepare the weekly digest for the leader in Russian." },
+    }),
+    false
   );
 });
 
@@ -216,6 +243,47 @@ test("buildSystemPrompt trims compiled knowledge snippets separately from atomic
   assert.doesNotMatch(result.prompt, /compiled-summary-3/);
   assert.equal(result.meta.compiled_knowledge_count, 2);
   assert.match(result.prompt, /Founder prefers concise answers/);
+});
+
+test("buildSystemPrompt gives scheduled leader digests richer compiled knowledge guidance", () => {
+  const result = buildSystemPrompt({
+    role: {
+      id: "assistant",
+      execution_mode: "single_role_worker",
+      output_contract: "assistant_summary_v1",
+    },
+    run: {
+      requested_by_agent: "scheduler",
+      dispatch_reason: "Prepare the weekly digest for the leader in Russian.",
+      task_id: null,
+    },
+    task: null,
+    founder_request: "Prepare the weekly digest for the leader in Russian.",
+    handoff_messages: [],
+    memory_bundle: {
+      compiled_pages: [
+        {
+          summary_short: "Short compiled summary.",
+          summary_full: "Full compiled summary with more concrete business context for the leader digest.",
+        },
+      ],
+      owner: [],
+      business: [],
+      role: [],
+      task: [],
+      decisions: {
+        owner: [],
+        business: [],
+        task: [],
+      },
+    },
+  });
+
+  assert.match(result.prompt, /Leader scheduled digest rules:/);
+  assert.match(result.prompt, /Prioritize compiled knowledge summaries when they are available/i);
+  assert.match(result.prompt, /Use compiled knowledge to anchor confirmed sections before adding raw memory details/i);
+  assert.match(result.prompt, /Full compiled summary with more concrete business context/);
+  assert.doesNotMatch(result.prompt, /- Short compiled summary\./);
 });
 
 test("buildSystemPrompt sanitizes internal identifiers from memory facts and handoffs", () => {

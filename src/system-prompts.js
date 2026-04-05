@@ -69,6 +69,18 @@ function deriveRequestType(executionContext) {
   return "direct-answer";
 }
 
+function isLeaderDigestScheduledRun(executionContext) {
+  const requestedByAgent = normalizeOptionalString(executionContext?.run?.requested_by_agent);
+  const roleId = normalizeOptionalString(executionContext?.role?.id);
+  const reason = normalizeOptionalString(executionContext?.run?.dispatch_reason)?.toLowerCase() || "";
+
+  if (requestedByAgent !== "scheduler" || roleId !== "assistant") {
+    return false;
+  }
+
+  return reason.includes("daily brief for the leader") || reason.includes("weekly digest for the leader");
+}
+
 function buildMemoryFacts(memoryBundle) {
   if (!memoryBundle || typeof memoryBundle !== "object") {
     return [];
@@ -105,16 +117,20 @@ function buildMemoryFacts(memoryBundle) {
   return facts;
 }
 
-function buildCompiledKnowledgeFacts(memoryBundle) {
+function buildCompiledKnowledgeFacts(executionContext) {
+  const memoryBundle = executionContext?.memory_bundle;
   if (!memoryBundle || typeof memoryBundle !== "object") {
     return [];
   }
 
+  const preferFullSummaries = isLeaderDigestScheduledRun(executionContext);
   const pages = Array.isArray(memoryBundle.compiled_pages) ? memoryBundle.compiled_pages : [];
   const facts = [];
 
   for (const page of pages.slice(0, MAX_COMPILED_KNOWLEDGE_SNIPPETS)) {
-    const summary = sanitizeUserFacingPromptText(page?.summary_short || page?.summary_full);
+    const summary = sanitizeUserFacingPromptText(
+      preferFullSummaries ? page?.summary_full || page?.summary_short : page?.summary_short || page?.summary_full
+    );
     if (!summary) {
       continue;
     }
@@ -269,6 +285,17 @@ function buildSystemPrompt(executionContext) {
     );
   }
 
+  if (isLeaderDigestScheduledRun(executionContext)) {
+    sections.push(
+      [
+        "Leader scheduled digest rules:",
+        "1. Prioritize compiled knowledge summaries when they are available.",
+        "2. Use compiled knowledge to anchor confirmed sections before adding raw memory details.",
+        "3. If compiled knowledge and atomic memory diverge, be explicit about uncertainty instead of smoothing over the mismatch.",
+      ].join("\n")
+    );
+  }
+
   if (executionContext.task) {
     const taskLines = [
       "Current task:",
@@ -299,7 +326,7 @@ function buildSystemPrompt(executionContext) {
     sections.push(["Recent handoffs:", ...handoffLines].join("\n"));
   }
 
-  const compiledKnowledgeFacts = buildCompiledKnowledgeFacts(executionContext.memory_bundle);
+  const compiledKnowledgeFacts = buildCompiledKnowledgeFacts(executionContext);
   const compiledKnowledgeLines = trimBulletList(compiledKnowledgeFacts, toCharBudget(COMPILED_KNOWLEDGE_BUDGET_TOKENS));
   if (compiledKnowledgeLines.length > 0) {
     sections.push(["Compiled knowledge:", ...compiledKnowledgeLines].join("\n"));
@@ -367,4 +394,5 @@ module.exports = {
   buildExecutionMessages,
   buildSystemPrompt,
   deriveRequestType,
+  isLeaderDigestScheduledRun,
 };
