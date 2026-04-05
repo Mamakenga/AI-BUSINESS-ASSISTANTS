@@ -128,23 +128,58 @@ Localhost binding note:
 
 ## 6. Restart Cycle
 
-For future updates:
-1. `cd /opt/ops/app`
-2. `sudo -u ops git -C /opt/ops/app pull --ff-only`
-3. `sudo -u ops bash -lc 'cd /opt/ops/app && npm install'`
-4. `sudo -u ops bash -lc 'set -a; source /etc/ops.env; set +a; cd /opt/ops/app && npm run db:migrate'`
-5. `sudo systemctl daemon-reload`
-6. `sudo systemctl restart ops-litellm.service`
-7. `sudo systemctl restart ops-api.service`
-8. `sudo systemctl restart ops-telegram.service`
-9. `sudo systemctl restart ops-worker.service`
-10. rerun smoke
+This section is only a short mnemonic.
 
-## 7. Canonical Update Sequence
+For any real routine update, use Section 7 below as the canonical path.
 
-Use this sequence for every routine VPS update after the first deploy.
+Short mnemonic:
+1. pre-deploy smoke
+2. pull
+3. migrate
+4. restart
+5. post-deploy smoke
 
-### 7.1 Pull
+## 7. Canonical Smoke -> Deploy -> Smoke Pipeline
+
+Use this pipeline for every routine VPS update after the first deploy.
+
+The core rule is simple:
+1. prove the contour is healthy before changing it
+2. apply the update in one bounded deploy window
+3. prove the contour is still healthy after the update
+
+The canonical flow is:
+1. pre-deploy smoke
+2. pull
+3. migrate
+4. restart
+5. post-deploy smoke
+
+If any stage fails:
+1. stop at that stage
+2. do not continue to the next stage
+3. localize the failure before making more changes
+
+### 7.1 Pre-Deploy Smoke
+
+Run this before `git pull` when the contour is already live and handling work.
+
+1. `sudo -u ops bash -lc 'cd /opt/ops/app && npm run smoke:ops-preflight'`
+2. `sudo -u ops bash -lc 'cd /opt/ops/app && export CONTROL_API_URL=http://127.0.0.1:3300 && export LITELLM_BASE_URL=http://127.0.0.1:4000 && export LITELLM_MASTER_KEY=$(grep "^LITELLM_MASTER_KEY=" /home/ops/.env.ops-litellm | cut -d= -f2-) && export SMOKE_LITELLM_MODEL=assistant-model && export SMOKE_LITELLM_EXPECT_TEXT=OK && npm run smoke:ops-stack'`
+
+Recommended quick human check:
+1. send one founder-facing Telegram message only if the contour has been unstable or recently changed
+
+Pass condition:
+1. `smoke:ops-preflight` passes
+2. `smoke:ops-stack` passes
+3. if a human Telegram smoke was used, one reply returns to the same topic
+
+If this fails:
+1. do not pull new code yet
+2. first understand whether the current live contour is already degraded
+
+### 7.2 Pull
 
 1. `cd /opt/ops/app`
 2. `sudo -u ops git -C /opt/ops/app pull --ff-only`
@@ -156,7 +191,7 @@ If this fails:
 1. stop here
 2. inspect local changes or upstream divergence before touching services
 
-### 7.2 Migrate
+### 7.3 Migrate
 
 1. `cd /opt/ops/app`
 2. `sudo -u ops bash -lc 'cd /opt/ops/app && npm install'`
@@ -170,7 +205,7 @@ If this fails:
 1. do not restart services yet
 2. inspect migration output first
 
-### 7.3 Restart
+### 7.4 Restart
 
 1. `sudo systemctl daemon-reload`
 2. `sudo systemctl restart ops-litellm.service`
@@ -191,7 +226,7 @@ If this fails:
 1. inspect the failing service log first
 2. do not continue to smoke until service status is healthy
 
-### 7.4 Smoke
+### 7.5 Post-Deploy Smoke
 
 1. `sudo -u ops bash -lc 'cd /opt/ops/app && npm run smoke:ops-preflight'`
 2. `sudo -u ops bash -lc 'cd /opt/ops/app && export CONTROL_API_URL=http://127.0.0.1:3300 && export LITELLM_BASE_URL=http://127.0.0.1:4000 && export LITELLM_MASTER_KEY=$(grep "^LITELLM_MASTER_KEY=" /home/ops/.env.ops-litellm | cut -d= -f2-) && export SMOKE_LITELLM_MODEL=assistant-model && export SMOKE_LITELLM_EXPECT_TEXT=OK && npm run smoke:ops-stack'`
@@ -216,6 +251,18 @@ Optional reproducible scheduled-trigger smoke:
 2. this checks the internal auth gate and the `POST /jobs/:jobType/trigger` path without waiting for Railway
 3. default smoke target is `daily_founder_brief -> assistant`
 4. if delivery fails with `migrate_to_chat_id`, update `TELEGRAM_ALLOWED_CHAT_ID` and restart `ops-telegram.service` plus `ops-worker.service`
+
+### 7.6 Pipeline Pass Rule
+
+A routine deploy is considered successful only when:
+1. pre-deploy smoke passed
+2. pull, migrate, and restart all passed
+3. post-deploy smoke passed
+4. at least one founder-facing path still works after the update
+
+If post-deploy smoke fails after a successful restart:
+1. treat the deploy as unsuccessful
+2. move to rollback or targeted repair before declaring the update finished
 
 ## 8. Current Known-Good Example
 

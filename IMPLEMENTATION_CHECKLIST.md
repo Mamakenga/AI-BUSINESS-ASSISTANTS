@@ -44,7 +44,7 @@
 
 Следующий практический фокус:
 1. перейти к `Phase 9` hardening;
-2. внутри `Phase 9A` после observability перейти к automated quality gates и затем к следующему hardening pass по founder-facing quality;
+2. внутри `Phase 9C` зафиксировать rollback procedure и health-check / monitoring notes;
 3. отдельно вернуться к качеству живого ответа `methodist`;
 4. держать `DEPLOY_RUNBOOK.md` как канонический операторский сценарий для VPS updates.
 5. считать Phase 6 completed на уровне job contracts and trigger path, а не как полный live-quality signoff для каждого scheduled use-case.
@@ -210,9 +210,9 @@ Closure criteria для `Phase 9`:
 - [x] Зафиксировать policy для rotation / renewal internal tokens
 
 ### Phase 9C. Deploy Hardening
-- [ ] Добавить smoke-runbook для deploy
+- [x] Добавить smoke-runbook для deploy
 - [ ] Добавить Railway/VPS deployment notes в отдельный ops-файл
-- [ ] Формализовать smoke -> deploy -> smoke pipeline как канонический deploy path
+- [x] Формализовать smoke -> deploy -> smoke pipeline как канонический deploy path
 - [ ] Зафиксировать rollback procedure для VPS deploy
 - [ ] Добавить health-check / monitoring notes для ops-контура
 
@@ -234,7 +234,7 @@ Closure criteria для `Phase 9`:
 
 Следующий шаг по этому чеклисту:
 1. перейти к `Phase 9` hardening;
-2. перейти к `Phase 9C` deploy hardening и формализовать smoke -> deploy -> smoke path;
+2. внутри `Phase 9C` зафиксировать rollback procedure и health-check / monitoring notes;
 3. после hardening вернуться к live-quality pass для `methodist`;
 4. founder-facing implicit same-topic routing без `@role` держать как UX-polish шаг после hardening, а не как недостающую routing-capability;
 5. использовать `DEPLOY_RUNBOOK.md` как канонический VPS update flow.
