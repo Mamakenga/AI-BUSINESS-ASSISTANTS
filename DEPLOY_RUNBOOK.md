@@ -348,3 +348,105 @@ Emergency rotation after possible exposure:
 1. do not disable internal auth to "get the contour working again"
 2. do not keep old and new tokens in parallel
 3. do not store the token in ad-hoc shell files outside `/etc/ops.env`
+
+## 10. Rollback Procedure
+
+Use rollback when a deploy completed technically, but the contour is no longer healthy enough to keep serving work.
+
+Typical rollback triggers:
+1. post-deploy smoke fails
+2. founder-facing Telegram replies stop returning after restart
+3. `ops-api`, `ops-worker`, or `ops-telegram` starts failing immediately after the new revision
+4. the new revision introduces broken routing, broken auth, failed scheduled delivery, or obvious regressions in the live founder path
+
+The rollback goal is simple:
+1. return the VPS contour to the last known-good git revision
+2. restart services on that known-good revision
+3. prove that the old healthy behavior is back
+
+### 10.1. Before You Roll Back
+
+1. stop the deploy and declare it unsuccessful
+2. identify the current bad revision:
+   `sudo -u ops git -C /opt/ops/app rev-parse --short HEAD`
+3. identify the last known-good revision:
+   `sudo -u ops git -C /opt/ops/app reflog --date=iso --max-count=10`
+4. confirm that the last known-good revision is the commit that passed the previous post-deploy smoke
+5. if a DB migration ran in the failed deploy, note that separately before moving code back
+
+Rule:
+1. do not guess the rollback target from memory
+2. use the last revision that is already known to have passed smoke on this VPS contour
+
+### 10.2. Code Rollback
+
+Rollback the working tree to the last known-good revision:
+
+1. `sudo -u ops git -C /opt/ops/app checkout --detach <known-good-commit>`
+
+If you must return to branch tracking later:
+1. first restore service health on the detached known-good revision
+2. only after that decide whether to move `main` forward again with a new fixed deploy
+
+Important:
+1. rollback is a VPS recovery action, not a history rewrite
+2. do not use destructive git cleanup like `reset --hard` unless there is a separately confirmed emergency and the local VPS checkout is already known to be disposable
+
+### 10.3. Migration Rollback Rule
+
+Default rule:
+1. do not automatically roll back database schema during a routine code rollback
+2. first try to restore service health by rolling code back to the last revision that still works against the current schema
+
+Why:
+1. schema rollback is riskier than code rollback
+2. most of our recent migrations have been additive and safer to leave in place temporarily
+
+If the failed deploy included a migration that is truly incompatible with the previous code:
+1. stop and treat this as a higher-risk recovery event
+2. inspect the specific migration before touching live schema
+3. do not improvise a reverse SQL step from memory
+4. create an explicit rollback note or follow a pre-written reverse migration only if one exists and is reviewed
+
+### 10.4. Restart After Rollback
+
+Once the known-good code is checked out:
+
+1. `sudo systemctl daemon-reload`
+2. `sudo systemctl restart ops-litellm.service`
+3. `sudo systemctl restart ops-api.service`
+4. `sudo systemctl restart ops-telegram.service`
+5. `sudo systemctl restart ops-worker.service`
+
+Quick verification:
+1. `systemctl status ops-litellm.service --no-pager`
+2. `systemctl status ops-api.service --no-pager`
+3. `systemctl status ops-telegram.service --no-pager`
+4. `systemctl status ops-worker.service --no-pager`
+
+### 10.5. Rollback Smoke
+
+After rollback, rerun the same confidence gates:
+
+1. `sudo -u ops bash -lc 'cd /opt/ops/app && npm run smoke:ops-preflight'`
+2. `sudo -u ops bash -lc 'cd /opt/ops/app && export CONTROL_API_URL=http://127.0.0.1:3300 && export LITELLM_BASE_URL=http://127.0.0.1:4000 && export LITELLM_MASTER_KEY=$(grep "^LITELLM_MASTER_KEY=" /home/ops/.env.ops-litellm | cut -d= -f2-) && export SMOKE_LITELLM_MODEL=assistant-model && export SMOKE_LITELLM_EXPECT_TEXT=OK && npm run smoke:ops-stack'`
+3. send one founder-facing Telegram message
+4. verify the reply returns to the same topic
+
+Pass condition:
+1. rollback revision is running
+2. `smoke:ops-preflight` passes
+3. `smoke:ops-stack` passes
+4. one founder-facing Telegram reply returns successfully
+
+### 10.6. Aftercare
+
+After a successful rollback:
+1. keep the failed revision marked as failed
+2. do not immediately redeploy a new guess without understanding the failure
+3. capture:
+   - failed revision
+   - restored revision
+   - failing stage
+   - first observed symptom
+4. only then prepare the next corrective change
