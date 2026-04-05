@@ -340,6 +340,22 @@ Railway используется как слой памяти, control API и sc
 
 Отдельная scheduled job должна регулярно сжимать и очищать память.
 
+### 6.4. Knowledge plane поверх control plane
+
+Одной слоистой памяти недостаточно для накопления осмысленного знания на горизонте месяцев.
+
+Поверх control plane нужен отдельный knowledge plane.
+
+Правила:
+
+1. `memories`, `messages`, `decisions`, `artifacts`, `runs` и `tasks` остаются каноническим state layer;
+2. compiled knowledge - это derived semantic layer, а не замена канонического state;
+3. knowledge plane строится из канонических записей control plane, а не из сырых Telegram dumps;
+4. базовая единица knowledge plane - claim с provenance, а не прямой durable write в `memories` из одного LLM-ответа;
+5. compiled pages и insight-кандидаты должны пересобираться инкрементально через dirty queue;
+6. human-readable markdown/wiki view допустим как интерфейс, но не должен становиться единственным source of truth;
+7. runtime получает не всю wiki, а только релевантные compiled snippets поверх atomic facts.
+
 ---
 
 ## 7. Минимальная схема данных
@@ -439,6 +455,139 @@ CREATE TABLE artifacts (
 );
 ```
 
+### 7.7. knowledge_claims
+
+```sql
+CREATE TABLE knowledge_claims (
+  id BIGSERIAL PRIMARY KEY,
+  claim_text TEXT NOT NULL,
+  claim_type TEXT NOT NULL,
+  scope TEXT NOT NULL,
+  scope_id TEXT,
+  status TEXT NOT NULL DEFAULT 'candidate',
+  confidence NUMERIC(4,3),
+  freshness_score NUMERIC(4,3),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  last_reviewed_at TIMESTAMPTZ
+);
+```
+
+### 7.8. knowledge_claim_sources
+
+```sql
+CREATE TABLE knowledge_claim_sources (
+  id BIGSERIAL PRIMARY KEY,
+  claim_id BIGINT NOT NULL REFERENCES knowledge_claims(id) ON DELETE CASCADE,
+  source_type TEXT NOT NULL,
+  source_id TEXT NOT NULL,
+  support_type TEXT NOT NULL DEFAULT 'supports',
+  evidence_snippet TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### 7.9. knowledge_nodes
+
+```sql
+CREATE TABLE knowledge_nodes (
+  id BIGSERIAL PRIMARY KEY,
+  node_type TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### 7.10. knowledge_edges
+
+```sql
+CREATE TABLE knowledge_edges (
+  id BIGSERIAL PRIMARY KEY,
+  from_node_id BIGINT NOT NULL REFERENCES knowledge_nodes(id) ON DELETE CASCADE,
+  to_node_id BIGINT NOT NULL REFERENCES knowledge_nodes(id) ON DELETE CASCADE,
+  edge_type TEXT NOT NULL,
+  weight NUMERIC(6,3),
+  evidence_count INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### 7.11. knowledge_pages
+
+```sql
+CREATE TABLE knowledge_pages (
+  id BIGSERIAL PRIMARY KEY,
+  page_type TEXT NOT NULL,
+  scope TEXT NOT NULL,
+  scope_id TEXT,
+  node_id BIGINT REFERENCES knowledge_nodes(id) ON DELETE SET NULL,
+  title TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'draft',
+  current_version_id BIGINT,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### 7.12. knowledge_page_versions
+
+```sql
+CREATE TABLE knowledge_page_versions (
+  id BIGSERIAL PRIMARY KEY,
+  page_id BIGINT NOT NULL REFERENCES knowledge_pages(id) ON DELETE CASCADE,
+  version_no INTEGER NOT NULL,
+  summary_short TEXT,
+  summary_full TEXT,
+  key_facts_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+  contradictions_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+  open_questions_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+  related_pages_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+  compiled_markdown TEXT,
+  compiled_by TEXT NOT NULL,
+  change_reason TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### 7.13. knowledge_dirty_queue
+
+```sql
+CREATE TABLE knowledge_dirty_queue (
+  id BIGSERIAL PRIMARY KEY,
+  source_type TEXT NOT NULL,
+  source_id TEXT NOT NULL,
+  affected_scope TEXT,
+  affected_scope_id TEXT,
+  affected_node_slugs_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+  reason TEXT NOT NULL,
+  priority INTEGER NOT NULL DEFAULT 100,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  locked_at TIMESTAMPTZ
+);
+```
+
+### 7.14. knowledge_insight_candidates
+
+```sql
+CREATE TABLE knowledge_insight_candidates (
+  id BIGSERIAL PRIMARY KEY,
+  insight_type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  confidence NUMERIC(4,3),
+  severity TEXT NOT NULL DEFAULT 'medium',
+  scope TEXT NOT NULL,
+  scope_id TEXT,
+  supporting_claim_ids_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+  status TEXT NOT NULL DEFAULT 'candidate',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
 ---
 
 ## 8. Tooling layer
@@ -462,6 +611,27 @@ CREATE TABLE artifacts (
 2. нельзя полагаться на то, что роль сама не забудет подтянуть память;
 3. роли могут читать `decisions`, но запись решений должна оставаться под контролем founder-а или явно авторизованного founder-controlled flow.
 
+### 8.1. Internal tooling для knowledge plane
+
+Knowledge plane не должен жить как свободная коллекция скриптов.
+
+Минимальный внутренний сервисный набор:
+
+1. `extract_claim_candidates`
+2. `consolidate_claims`
+3. `compile_knowledge_page`
+4. `read_compiled_knowledge`
+5. `queue_knowledge_rebuild`
+6. `run_knowledge_lint`
+7. `generate_insight_candidates`
+
+Правила:
+
+1. extract step пишет в claim staging, а не прямо в durable memory;
+2. compile step работает только по dirty queue или по явному rebuild trigger;
+3. prompt/runtime слой читает compiled snippets отдельно от atomic facts;
+4. insight generation не должна переписывать approved decisions и канонические artifacts.
+
 ---
 
 ## 9. Execution pattern
@@ -477,10 +647,11 @@ CREATE TABLE artifacts (
    - multi-role task;
 5. система создает `thread` и `run` record;
 6. собирается relevant memory bundle;
-7. выбранная роль выполняет работу;
-8. результат сохраняется как artifact;
-9. при необходимости запускаются follow-up runs для `assistant`, `researcher`, `methodist`, `finance_analyst` или `critic`;
-10. если в задаче участвовала orchestration-логика, итог founder-у возвращает orchestrator.
+7. при наличии knowledge plane к bundle могут добавляться 1-2 релевантных compiled snippets;
+8. выбранная роль выполняет работу;
+9. результат сохраняется как artifact;
+10. при необходимости запускаются follow-up runs для `assistant`, `researcher`, `methodist`, `finance_analyst` или `critic`;
+11. если в задаче участвовала orchestration-логика, итог founder-у возвращает orchestrator.
 
 ### 9.2. Inter-agent flow
 
@@ -490,7 +661,8 @@ CREATE TABLE artifacts (
 
 1. inbox messages для коротких async notes и handoff-сигналов;
 2. artifacts для переиспользуемых structured outputs;
-3. approved decisions.
+3. approved decisions;
+4. compiled knowledge snippets, если это уже собранный и подтвержденный semantic layer.
 
 Пример:
 
@@ -504,6 +676,8 @@ CREATE TABLE artifacts (
 ## 10. Scheduled jobs
 
 На старте достаточно шести фоновых задач.
+
+После включения knowledge plane поверх control plane добавляются сервисные knowledge jobs.
 
 ### 10.1. daily founder brief
 
@@ -598,6 +772,75 @@ CREATE TABLE artifacts (
 1. compacted memory;
 2. поднятые long-term facts.
 
+### 10.7. knowledge extraction
+
+Расписание:
+
+1. post-run trigger;
+2. при необходимости batched pass каждые 15-30 минут.
+
+Исполнитель:
+
+1. отдельный internal extractor worker.
+
+Результат:
+
+1. claim candidates;
+2. provenance links к `messages`, `artifacts`, `decisions`, `runs` или `memories`;
+3. dirty queue для knowledge rebuild.
+
+### 10.8. knowledge compile
+
+Расписание:
+
+1. несколько раз в день;
+2. или по порогу dirty queue.
+
+Исполнитель:
+
+1. `memory_curator` или отдельный `knowledge_compiler`.
+
+Результат:
+
+1. compiled pages;
+2. новые page versions;
+3. обновленные short/full summaries;
+4. связанные open questions и contradictions.
+
+### 10.9. knowledge lint
+
+Расписание:
+
+1. ежедневно ночью.
+
+Исполнитель:
+
+1. `critic` или отдельный service job.
+
+Результат:
+
+1. contradiction findings;
+2. stale pages;
+3. weak evidence findings;
+4. orphan knowledge signals.
+
+### 10.10. insight scan
+
+Расписание:
+
+1. ежедневно или еженедельно в зависимости от темпа накопления данных.
+
+Исполнитель:
+
+1. `assistant`, `critic` или отдельный insight worker.
+
+Результат:
+
+1. insight candidates;
+2. repeated pattern findings;
+3. cross-domain signals;
+4. короткий список потенциальных business insights для founder-а.
+
 ---
 
 ## 11. Правила изоляции контекста
@@ -611,7 +854,10 @@ CREATE TABLE artifacts (
 5. артефакты обязаны иметь `task_id`;
 6. decisions - это founder-approved facts и read-only для обычного role execution;
 7. никакого общего глобального role chat;
-8. никакого бесконтрольного переноса длинного сессионного контекста.
+8. никакого бесконтрольного переноса длинного сессионного контекста;
+9. compiled knowledge никогда не заменяет канонические `messages`, `decisions`, `artifacts` или `memories`;
+10. один role output не должен автоматически становиться durable memory без claim staging и provenance;
+11. runtime не должен получать полные compiled pages целиком, только релевантные snippets по budget guard.
 
 ---
 
@@ -761,6 +1007,20 @@ Telegram Mini App kanban-доска рекомендуется как founder-fa
 2. ограничить объем retrieval на роль;
 3. проверить повторные сессии на дистанции нескольких дней.
 
+### Следующий архитектурный трек. Knowledge plane
+
+После стабилизации memory hygiene следующий крупный слой - knowledge plane поверх control plane.
+
+Порядок:
+
+1. добавить claim staging (`knowledge_claims`, `knowledge_claim_sources`, `knowledge_dirty_queue`);
+2. запускать post-run extract не в durable memory, а в claim candidates;
+3. добавить consolidation pass: dedupe, contradiction detection, support/dispute lifecycle;
+4. добавить `knowledge_nodes`, `knowledge_edges`, `knowledge_pages`, `knowledge_page_versions`;
+5. собирать compiled pages инкрементально, а не полной пересборкой всей wiki;
+6. подключить runtime snippets поверх atomic bundle только после появления page versions и relevance selection;
+7. включить nightly lint и periodic insight scan как отдельный слой над compiled knowledge.
+
 ---
 
 ## 14. Логика бюджета
@@ -782,7 +1042,31 @@ Telegram Mini App kanban-доска рекомендуется как founder-fa
 2. оптимизируем summaries, а не raw chat dumps;
 3. оптимизируем role isolation.
 
-### 14.1. Человеко-понятное управление бюджетом
+### 14.1. Budget для knowledge plane
+
+Compiled knowledge должен улучшать thinking quality, а не раздувать prompt без контроля.
+
+Рабочий budget:
+
+1. atomic facts: 300-500 tokens;
+2. decisions: 100-200 tokens;
+3. handoffs: 100-200 tokens;
+4. compiled snippet: 300-600 tokens;
+5. insight snippet: 0-200 tokens только при явной релевантности.
+
+Нормальный целевой knowledge envelope:
+
+1. 800-1200 tokens на обычный founder-facing run;
+2. hard ceiling до 1500 tokens только для strategist-style synthesis или weekly digests.
+
+Правила:
+
+1. в prompt нельзя отправлять полную compiled article, только section-level snippets;
+2. дорогая модель не должна тратиться на каждый extract pass;
+3. extract и dedupe должны жить на дешевых моделях;
+4. compile и insight scan могут использовать более сильную модель только по dirty/relevance trigger.
+
+### 14.2. Человеко-понятное управление бюджетом
 
 Следующий практический слой после runtime limits должен быть не техническим, а founder-friendly.
 
