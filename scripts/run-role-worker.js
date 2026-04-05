@@ -6,6 +6,8 @@ const { buildInternalAuthHeaders } = require("../src/control-api-auth");
 const { resolveScheduledTelegramTarget } = require("../src/scheduled-telegram-target");
 const { buildTelegramTextMessage, callTelegramApi, normalizeTelegramBotConfig } = require("../src/telegram-bot-client");
 const { executeRoleRun } = require("../src/executor-client");
+const { buildKnowledgeClaimSource, buildKnowledgeDirtyQueueItem } = require("../src/knowledge-service");
+const { buildKnowledgeExtractionPlan } = require("../src/knowledge-extractor");
 const { buildRunCompletionInput, buildRunExecutionContext, normalizeWorkerRoleIds } = require("../src/run-worker");
 const { buildRunLogFields, createStructuredLogger } = require("../src/structured-logging");
 
@@ -195,6 +197,98 @@ async function failRun(runId) {
   }
 }
 
+async function persistKnowledgeExtraction(result) {
+  const extractionPlan = buildKnowledgeExtractionPlan(result);
+  if (!extractionPlan) {
+    return {
+      claim_candidates_created: 0,
+      dirty_queue_items_created: 0,
+      skipped: true,
+    };
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    let claimCandidatesCreated = 0;
+    for (const candidate of extractionPlan.claim_candidates) {
+      const claimResult = await client.query(
+        `
+          INSERT INTO knowledge_claims (
+            claim_text, claim_type, scope, scope_id, status, confidence, freshness_score
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          RETURNING id
+        `,
+        [
+          candidate.claim_text,
+          candidate.claim_type,
+          candidate.scope,
+          candidate.scope_id,
+          candidate.status,
+          candidate.confidence,
+          candidate.freshness_score,
+        ]
+      );
+
+      claimCandidatesCreated += 1;
+      for (const template of extractionPlan.source_templates) {
+        const source = buildKnowledgeClaimSource({
+          claim_id: claimResult.rows[0].id,
+          source_type: template.source_type,
+          source_id: template.source_id,
+          support_type: template.support_type,
+          evidence_snippet: template.evidence_snippet,
+        });
+
+        await client.query(
+          `
+            INSERT INTO knowledge_claim_sources (
+              claim_id, source_type, source_id, support_type, evidence_snippet
+            )
+            VALUES ($1, $2, $3, $4, $5)
+          `,
+          [source.claim_id, source.source_type, source.source_id, source.support_type, candidate.claim_text]
+        );
+      }
+    }
+
+    const dirtyQueueItem = buildKnowledgeDirtyQueueItem(extractionPlan.dirty_queue_item);
+    await client.query(
+      `
+        INSERT INTO knowledge_dirty_queue (
+          source_type, source_id, affected_scope, affected_scope_id, affected_node_slugs_json, reason, priority, status
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `,
+      [
+        dirtyQueueItem.source_type,
+        dirtyQueueItem.source_id,
+        dirtyQueueItem.affected_scope,
+        dirtyQueueItem.affected_scope_id,
+        JSON.stringify(dirtyQueueItem.affected_node_slugs),
+        dirtyQueueItem.reason,
+        dirtyQueueItem.priority,
+        dirtyQueueItem.status,
+      ]
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      claim_candidates_created: claimCandidatesCreated,
+      dirty_queue_items_created: 1,
+      skipped: false,
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 async function processOneRun(runRow) {
   const client = await pool.connect();
   let task;
@@ -301,6 +395,24 @@ async function main() {
           artifact_created: Boolean(result.completion_response?.artifact),
         })
       );
+      try {
+        const extractionResult = await persistKnowledgeExtraction(result);
+        logger.info(
+          "knowledge_extraction_completed",
+          buildRunLogFields(claimedRun, {
+            claim_candidates_created: extractionResult.claim_candidates_created,
+            dirty_queue_items_created: extractionResult.dirty_queue_items_created,
+            skipped: extractionResult.skipped,
+          })
+        );
+      } catch (error) {
+        logger.error(
+          "knowledge_extraction_failed",
+          buildRunLogFields(claimedRun, {
+            error,
+          })
+        );
+      }
       stage = "delivery";
       if (result.reply_text && result.telegram_thread && TELEGRAM_CONFIG) {
         deliveryContext = {

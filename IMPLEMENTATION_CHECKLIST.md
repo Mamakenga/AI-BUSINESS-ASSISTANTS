@@ -227,7 +227,7 @@ Closure criteria для `Phase 9`:
 - [x] Зафиксировать `knowledge plane` architecture в implementation plan
 - [x] Добавить core schema для `knowledge_claims`, `knowledge_claim_sources`, `knowledge_dirty_queue`
 - [x] Добавить validation/builders для claim staging payloads
-- [ ] Подключить post-run extract в `knowledge_claims`
+- [x] Подключить консервативный post-run extract в `knowledge_claims` для task-bound completed runs
 - [ ] Добавить consolidation pass для dedupe / support / dispute lifecycle
 - [ ] Добавить queue consumer для incremental knowledge rebuild
 - [ ] Только после накопления claims добавлять `knowledge_nodes`, `knowledge_edges` и compiled pages
