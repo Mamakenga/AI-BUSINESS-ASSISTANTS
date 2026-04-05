@@ -230,7 +230,8 @@ Closure criteria для `Phase 9`:
 - [x] Подключить консервативный post-run extract в `knowledge_claims` для task-bound completed runs
 - [x] Добавить consolidation pass для dedupe / support / dispute lifecycle
 - [x] Добавить queue consumer для incremental knowledge rebuild
-- [ ] Только после накопления claims добавлять `knowledge_nodes`, `knowledge_edges` и compiled pages
+- [x] Добавить минимальный compiled page layer (`knowledge_pages`, `knowledge_page_versions`, scope summaries)
+- [ ] Только после этого расширять knowledge graph (`knowledge_nodes`, `knowledge_edges`) и richer compiled pages
 
 ## Server Validation Gates
 
