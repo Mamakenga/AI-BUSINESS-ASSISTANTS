@@ -1,19 +1,7 @@
 "use strict";
 
 const { ROLE_PROFILES } = require("./runtime-profiles");
-
-function normalizeRequiredString(value, fieldName) {
-  const normalized = String(value || "").trim();
-  if (!normalized) {
-    throw new Error(`${fieldName} is required`);
-  }
-  return normalized;
-}
-
-function normalizeOptionalString(value) {
-  const normalized = String(value || "").trim();
-  return normalized.length > 0 ? normalized : null;
-}
+const { normalizeLooseOptionalString, normalizeRequiredString } = require("./string-normalizers");
 
 function parseLimit(value, fallback = 10, max = 50) {
   const parsed = Number.parseInt(value || "", 10);
@@ -49,7 +37,7 @@ function buildMemoryBundleRequest(input = {}) {
     throw new Error("Invalid role_id");
   }
 
-  const taskId = normalizeOptionalString(input.task_id);
+  const taskId = normalizeLooseOptionalString(input.task_id);
   const limitPerScope = parseLimit(input.limit_per_scope, 10, 50);
   const maxTotalItems = parseLimit(input.max_total_items, 24, 100);
   const includeExpired = input.include_expired === true;

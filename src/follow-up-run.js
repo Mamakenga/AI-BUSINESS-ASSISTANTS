@@ -1,6 +1,7 @@
 "use strict";
 
 const { ROLE_PROFILES } = require("./runtime-profiles");
+const { normalizeLooseOptionalString, normalizeRequiredString } = require("./string-normalizers");
 
 const FOLLOW_UP_TARGET_ROLE_IDS = new Set(
   Object.values(ROLE_PROFILES)
@@ -8,22 +9,9 @@ const FOLLOW_UP_TARGET_ROLE_IDS = new Set(
     .map((profile) => profile.id)
 );
 
-function normalizeRequiredString(value, fieldName) {
-  const normalized = String(value || "").trim();
-  if (!normalized) {
-    throw new Error(`${fieldName} is required`);
-  }
-  return normalized;
-}
-
-function normalizeOptionalString(value) {
-  const normalized = String(value || "").trim();
-  return normalized.length > 0 ? normalized : null;
-}
-
 function buildHandoffMessage(sourceAgent, targetAgent, taskId, threadId, dispatchReason, input) {
   const handoffContent =
-    normalizeOptionalString(input.handoff_message) ||
+    normalizeLooseOptionalString(input.handoff_message) ||
     dispatchReason ||
     "Follow-up requested by orchestrator.";
 
@@ -52,7 +40,7 @@ function buildFollowUpRun(input) {
     throw new Error("Invalid follow-up target_agent");
   }
 
-  const dispatchReason = normalizeOptionalString(input.dispatch_reason);
+  const dispatchReason = normalizeLooseOptionalString(input.dispatch_reason);
 
   return {
     run: {

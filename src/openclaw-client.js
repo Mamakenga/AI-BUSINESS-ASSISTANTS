@@ -1,20 +1,5 @@
 "use strict";
-
-function normalizeRequiredString(value, fieldName) {
-  const normalized = String(value || "").trim();
-  if (!normalized) {
-    throw new Error(`${fieldName} is required`);
-  }
-  return normalized;
-}
-
-function normalizeOptionalString(value) {
-  if (value === undefined || value === null) {
-    return null;
-  }
-  const normalized = String(value).trim();
-  return normalized.length > 0 ? normalized : null;
-}
+const { normalizeOptionalString, normalizeRequiredString } = require("./string-normalizers");
 
 function normalizeOpenClawConfig(env = process.env) {
   const executeUrl = normalizeRequiredString(env.OPENCLAW_EXECUTE_URL, "OPENCLAW_EXECUTE_URL");

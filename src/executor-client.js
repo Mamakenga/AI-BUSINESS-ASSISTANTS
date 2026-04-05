@@ -1,22 +1,7 @@
 "use strict";
 
 const { buildExecutionMessages } = require("./system-prompts");
-
-function normalizeRequiredString(value, fieldName) {
-  const normalized = String(value || "").trim();
-  if (!normalized) {
-    throw new Error(`${fieldName} is required`);
-  }
-  return normalized;
-}
-
-function normalizeOptionalString(value) {
-  if (value === undefined || value === null) {
-    return null;
-  }
-  const normalized = String(value).trim();
-  return normalized.length > 0 ? normalized : null;
-}
+const { normalizeOptionalString, normalizeRequiredString } = require("./string-normalizers");
 
 function normalizeLiteLLMConfig(env = process.env) {
   const baseUrl = normalizeRequiredString(env.LITELLM_BASE_URL, "LITELLM_BASE_URL").replace(/\/+$/, "");

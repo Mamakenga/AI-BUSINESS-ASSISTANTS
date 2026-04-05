@@ -1,21 +1,9 @@
 "use strict";
 
 const { ROLE_PROFILES } = require("./runtime-profiles");
+const { normalizeLooseOptionalString, normalizeRequiredString } = require("./string-normalizers");
 
 const TERMINAL_RUN_STATUSES = new Set(["completed", "failed", "canceled"]);
-
-function normalizeRequiredString(value, fieldName) {
-  const normalized = String(value || "").trim();
-  if (!normalized) {
-    throw new Error(`${fieldName} is required`);
-  }
-  return normalized;
-}
-
-function normalizeOptionalString(value) {
-  const normalized = String(value || "").trim();
-  return normalized.length > 0 ? normalized : null;
-}
 
 function normalizeFallbackChain(value) {
   if (value === undefined) {
@@ -97,7 +85,7 @@ function buildRunCompletion(input, runRow) {
     throw new Error("Invalid run status");
   }
 
-  const modelUsed = normalizeOptionalString(input.model_used);
+  const modelUsed = normalizeLooseOptionalString(input.model_used);
   const fallbackChain = normalizeFallbackChain(input.fallback_chain);
   const artifactContent = normalizeArtifactContent(input.artifact_content);
   const usageJson = normalizeUsageJson(input.usage_json);
@@ -113,7 +101,7 @@ function buildRunCompletion(input, runRow) {
   const roleProfile = ROLE_PROFILES[runRow.agent];
   const artifactType =
     status === "completed" && runRow.task_id
-      ? normalizeOptionalString(input.artifact_type) || roleProfile.output_contract
+      ? normalizeLooseOptionalString(input.artifact_type) || roleProfile.output_contract
       : null;
 
   return {
