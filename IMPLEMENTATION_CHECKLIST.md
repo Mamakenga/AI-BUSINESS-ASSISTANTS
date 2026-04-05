@@ -41,11 +41,12 @@
 10. первый живой dispatch в тему `03 Methodist` уже подтвержден, но quality-signoff для роли пока не пройден.
 11. базовый structured logging foundation уже добавлен для `control-api`, `telegram-bridge` и `role-worker`;
 12. run-level trace по `run_id` теперь виден от intake до completion/delivery в JSON-логах.
+13. `Phase 9` hardening canon теперь покрывает runtime guards, auth, deploy pipeline, rollback, monitoring и отдельные Railway/VPS deployment notes.
 
 Следующий практический фокус:
-1. перейти к `Phase 9` hardening;
-2. внутри `Phase 9C` зафиксировать rollback procedure и health-check / monitoring notes;
-3. отдельно вернуться к качеству живого ответа `methodist`;
+1. считать `Phase 9` hardening практически закрытой;
+2. вернуться к live-quality pass для `methodist`;
+3. затем решить, брать ли `Phase 9.x` refactor backlog или `Phase 8` UX polish;
 4. держать `DEPLOY_RUNBOOK.md` как канонический операторский сценарий для VPS updates.
 5. считать Phase 6 completed на уровне job contracts and trigger path, а не как полный live-quality signoff для каждого scheduled use-case.
 6. зафиксировать founder-facing UX, где implicit routing в родной теме роли станет рекомендуемым live-path без обязательного `@role`, как отдельный future polish после hardening.
@@ -211,7 +212,7 @@ Closure criteria для `Phase 9`:
 
 ### Phase 9C. Deploy Hardening
 - [x] Добавить smoke-runbook для deploy
-- [ ] Добавить Railway/VPS deployment notes в отдельный ops-файл
+- [x] Добавить Railway/VPS deployment notes в отдельный ops-файл
 - [x] Формализовать smoke -> deploy -> smoke pipeline как канонический deploy path
 - [x] Зафиксировать rollback procedure для VPS deploy
 - [x] Добавить health-check / monitoring notes для ops-контура
@@ -233,9 +234,9 @@ Closure criteria для `Phase 9`:
 ## Next Step
 
 Следующий шаг по этому чеклисту:
-1. перейти к `Phase 9` hardening;
-2. внутри `Phase 9C` вынести Railway/VPS deployment notes в отдельный ops-файл;
-3. после hardening вернуться к live-quality pass для `methodist`;
+1. считать `Phase 9` hardening закрытой;
+2. вернуться к live-quality pass для `methodist`;
+3. после этого выбрать между `Phase 9.x` refactor backlog и `Phase 8` UX polish;
 4. founder-facing implicit same-topic routing без `@role` держать как UX-polish шаг после hardening, а не как недостающую routing-capability;
 5. использовать `DEPLOY_RUNBOOK.md` как канонический VPS update flow.
 

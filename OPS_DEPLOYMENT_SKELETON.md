@@ -1,4 +1,8 @@
-﻿# OPS Deployment Skeleton
+# OPS Deployment Skeleton
+
+If this file conflicts with the current live contour, defer to:
+1. [OPS_RAILWAY_VPS_NOTES.md](OPS_RAILWAY_VPS_NOTES.md)
+2. [DEPLOY_RUNBOOK.md](DEPLOY_RUNBOOK.md)
 
 ## Goal
 
@@ -18,19 +22,18 @@ The purpose is to keep AI Business Assistants independent from old Stemford and 
 ## VPS Responsibilities
 
 1. `LiteLLM gateway`
-2. `Telegram bridge`
-3. `role workers`
-4. `scheduled execution after trigger`
-5. `process-level logs`
-6. `temporary working artifacts`
+2. `Control API`
+3. `Telegram bridge`
+4. `role workers`
+5. `scheduled execution after trigger`
+6. `process-level logs`
+7. `temporary working artifacts`
 
 ## Railway Responsibilities
 
 1. `PostgreSQL`
-2. `Control API`
-3. `job registry`
-4. `schedule-trigger logic`
-5. `memory / messages / decisions / runs / artifact metadata`
+2. `durable state for jobs / tasks / runs / messages / artifacts / memories`
+3. `optional schedule-trigger origin if used later`
 
 ## Preferred Service Names
 
@@ -58,10 +61,10 @@ Concrete templates already live in:
 
 ## Execution Split
 
-1. Railway decides when a scheduled job should fire
-2. VPS decides how the job runs through LiteLLM-backed role execution
-3. Railway stores canonical state
-4. VPS stores runtime state and process logs
+1. Railway stores canonical durable state
+2. VPS hosts the live execution path and operational services
+3. if a schedule-trigger origin is used externally, it still feeds into the VPS execution path
+4. process supervision and runtime logs stay on VPS
 
 ## First Smoke Checks
 

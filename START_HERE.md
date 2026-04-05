@@ -16,7 +16,8 @@ If you feel lost, read only these files in this order:
 4. `TELEGRAM_ROUTING_SPEC.md`
 5. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4-RU.md`
 6. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md`
-7. `OPS_DEPLOYMENT_SKELETON.md`
+7. `OPS_RAILWAY_VPS_NOTES.md`
+8. `OPS_DEPLOYMENT_SKELETON.md`
 
 ## Project Map
 
@@ -29,12 +30,13 @@ If you feel lost, read only these files in this order:
 7. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4-RU.md` - main human-readable canon in Russian
 8. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md` - English technical version of the same plan
 9. `OPS_DEPLOYMENT_SKELETON.md` - deployment contour for the separate `ops` server user
-10. `DEPLOY_RUNBOOK.md` - first concrete VPS deploy and smoke sequence
-11. `MANUAL_ROLE_TESTS.md` - canonical manual validation runbook for live roles and scheduled jobs
-12. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md` - problem statement and decision options for separate OpenClaw execution
-13. `deploy/systemd/` - systemd unit templates for `ops-api`, `ops-telegram`, and `ops-worker`
-14. `refs/` - curated reference library for runtimes, auth/provider paths, evals, and ops patterns
-15. `V2_EXECUTION_LAYER.md` - agreed V2 execution architecture: what stays, what gets replaced, and phased migration
+10. `OPS_RAILWAY_VPS_NOTES.md` - canonical note for the current live split between Railway state and VPS execution
+11. `DEPLOY_RUNBOOK.md` - canonical VPS deploy, rollback, monitoring, and smoke sequence
+12. `MANUAL_ROLE_TESTS.md` - canonical manual validation runbook for live roles and scheduled jobs
+13. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md` - problem statement and decision options for separate OpenClaw execution
+14. `deploy/systemd/` - systemd unit templates for `ops-api`, `ops-telegram`, and `ops-worker`
+15. `refs/` - curated reference library for runtimes, auth/provider paths, evals, and ops patterns
+16. `V2_EXECUTION_LAYER.md` - agreed V2 execution architecture: what stays, what gets replaced, and phased migration
 
 ## Core Separation Rule
 
@@ -47,19 +49,20 @@ Do not mix it with:
 
 ## Current Architecture Direction
 
-1. `VPS = execution`
+1. `VPS = execution + control API`
    - LiteLLM gateway
+   - control API
    - Telegram bridge
    - role workers
    - execution of scheduled jobs
    - process logs
    - temporary artifacts
 
-2. `Railway = state + API + schedule-trigger`
+2. `Railway = state layer`
    - PostgreSQL
-   - control API
    - memory / messages / decisions / runs / artifacts metadata
-   - job registry and scheduled triggers
+   - durable job/task/run state
+   - optional external schedule-trigger origin later, if needed
 
 3. `ops` is the active Linux user for this contour.
 4. live `@assistant` and `@researcher` Telegram smoke through LiteLLM already passed on 2026-03-30 in the `AI_KiberOne чат` supergroup.
@@ -80,10 +83,11 @@ Do not mix it with:
 2. `IMPLEMENTATION_CHECKLIST.md`
 3. `TELEGRAM_ROUTING_SPEC.md`
 4. `AI-BUSINESS-ASSISTANTS-IMPLEMENTATION-PLAN-GPT-5.4.md`
-5. `OPS_DEPLOYMENT_SKELETON.md`
-6. `MANUAL_ROLE_TESTS.md`
-7. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md`
-8. `V2_EXECUTION_LAYER.md`
+5. `OPS_RAILWAY_VPS_NOTES.md`
+6. `OPS_DEPLOYMENT_SKELETON.md`
+7. `MANUAL_ROLE_TESTS.md`
+8. `OPENCLAW_EXECUTION_ADAPTER_OPTIONS.md`
+9. `V2_EXECUTION_LAYER.md`
 
 ## Reference Rule
 
