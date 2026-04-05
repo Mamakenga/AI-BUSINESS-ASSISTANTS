@@ -450,3 +450,120 @@ After a successful rollback:
    - failing stage
    - first observed symptom
 4. only then prepare the next corrective change
+
+## 11. Health-Check And Monitoring Notes
+
+This section defines the minimum operator view of a healthy `ops` contour.
+
+The goal is not full observability tooling yet.
+The goal is to make sure an operator can quickly answer:
+1. are the four services up
+2. is the local gateway reachable
+3. are founder-facing requests still flowing end to end
+4. are there any fresh error patterns that require rollback or repair
+
+### 11.1. Services That Must Stay Healthy
+
+These services are the minimum live contour:
+1. `ops-litellm.service`
+2. `ops-api.service`
+3. `ops-telegram.service`
+4. `ops-worker.service`
+
+Basic health check:
+1. `systemctl status ops-litellm.service --no-pager`
+2. `systemctl status ops-api.service --no-pager`
+3. `systemctl status ops-telegram.service --no-pager`
+4. `systemctl status ops-worker.service --no-pager`
+
+Healthy baseline:
+1. all four services are `active (running)`
+2. none of them is in a restart loop
+3. none of them exits immediately after restart
+
+### 11.2. Canonical Smoke Health Checks
+
+Use these as the minimum operator health checks:
+
+1. `sudo -u ops bash -lc 'cd /opt/ops/app && npm run smoke:ops-preflight'`
+2. `sudo -u ops bash -lc 'cd /opt/ops/app && export CONTROL_API_URL=http://127.0.0.1:3300 && export LITELLM_BASE_URL=http://127.0.0.1:4000 && export LITELLM_MASTER_KEY=$(grep "^LITELLM_MASTER_KEY=" /home/ops/.env.ops-litellm | cut -d= -f2-) && export SMOKE_LITELLM_MODEL=assistant-model && export SMOKE_LITELLM_EXPECT_TEXT=OK && npm run smoke:ops-stack'`
+3. one founder-facing Telegram message
+
+Healthy baseline:
+1. `smoke:ops-preflight` passes
+2. `smoke:ops-stack` passes
+3. one real Telegram reply returns to the same topic
+
+### 11.3. Canonical Log Files
+
+Primary log files:
+1. `/var/log/ops/ops-api.log`
+2. `/var/log/ops/ops-api.error.log`
+3. `/var/log/ops/ops-worker.log`
+4. `/var/log/ops/ops-worker.error.log`
+5. `/var/log/ops/ops-telegram.log`
+6. `/var/log/ops/ops-telegram.error.log`
+7. `journalctl -u ops-litellm.service --no-pager`
+
+Useful quick reads:
+1. `tail -n 20 /var/log/ops/ops-api.log`
+2. `tail -n 20 /var/log/ops/ops-worker.log`
+3. `tail -n 20 /var/log/ops/ops-telegram.log`
+4. `tail -n 20 /var/log/ops/ops-api.error.log`
+5. `tail -n 20 /var/log/ops/ops-worker.error.log`
+6. `tail -n 20 /var/log/ops/ops-telegram.error.log`
+7. `journalctl -u ops-litellm.service -n 50 --no-pager`
+
+### 11.4. Healthy Log Patterns
+
+Examples of healthy signals:
+1. `control_api_started`
+2. `bridge_started`
+3. `worker_started`
+4. `telegram_update_processed`
+5. `telegram_intake_persisted`
+6. `run_claimed`
+7. `run_execution_completed`
+8. `run_delivery_completed`
+
+These indicate the founder-facing path is still intact from Telegram intake to delivery.
+
+### 11.5. Warning Patterns
+
+These patterns require attention, but not always immediate rollback:
+1. `control_api_internal_auth_not_configured`
+2. repeated `bridge_poll_failed`
+3. repeated `run_claim_failed`
+4. repeated `run_execution_failed`
+5. repeated `run_delivery_failed`
+6. `smoke:ops-preflight` or `smoke:ops-stack` failing once after a restart
+
+Recommended action:
+1. inspect the newest logs first
+2. rerun the relevant smoke
+3. decide whether the issue is localized or founder-visible
+
+### 11.6. Escalation Patterns
+
+Treat these as rollback-or-repair level symptoms:
+1. post-deploy founder-facing Telegram replies do not return
+2. `ops-api.service`, `ops-worker.service`, `ops-telegram.service`, or `ops-litellm.service` enters a restart loop
+3. internal auth fails after a deploy or token change
+4. `smoke:ops-preflight` and `smoke:ops-stack` both fail after restart
+5. repeated fresh error lines continue after one retry and one log review
+
+At this point:
+1. stop the deploy or declare the contour degraded
+2. use Section 10 rollback procedure or a targeted repair path
+
+### 11.7. Minimum Monitoring Rhythm
+
+After any deploy:
+1. run the canonical post-deploy smoke immediately
+2. do one founder-facing Telegram check
+3. inspect fresh log lines once
+
+During routine operations:
+1. check service status when a founder reports missing replies
+2. check the three primary log streams (`api`, `worker`, `telegram`) before changing configuration
+3. use the smoke commands before and after any meaningful VPS-side change
