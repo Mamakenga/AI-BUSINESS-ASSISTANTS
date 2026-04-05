@@ -121,6 +121,8 @@ test("buildSemanticKnowledgeCompilerMessages limits supported and disputed claim
   assert.equal(messages.supported_claims.length, 8);
   assert.equal(messages.disputed_claims.length, 8);
   assert.match(messages.user_prompt, /Page title: task knowledge summary: task_77/);
+  assert.match(messages.system_prompt, /Write all summaries, facts, contradictions, and open questions in Russian\./);
+  assert.match(messages.user_prompt, /Write the result in Russian/i);
 });
 
 test("extractJsonObjectFromText pulls JSON out of fenced model output", () => {

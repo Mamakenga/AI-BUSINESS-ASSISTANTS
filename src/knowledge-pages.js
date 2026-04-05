@@ -123,6 +123,7 @@ function buildSemanticKnowledgeCompilerMessages(group) {
 
   const systemPrompt = [
     "You compile concise business knowledge pages from validated claims.",
+    "Write all summaries, facts, contradictions, and open questions in Russian.",
     "Return only valid JSON.",
     "Do not invent facts beyond the provided claims.",
     "Prefer short, high-signal synthesis.",
@@ -146,7 +147,8 @@ function buildSemanticKnowledgeCompilerMessages(group) {
     "3. Keep up to 5 key facts.",
     "4. Keep up to 5 contradictions.",
     "5. Add up to 3 open questions only if they follow directly from missing or disputed evidence.",
-    "6. Return JSON only.",
+    "6. Write the result in Russian, even if some source claims are in another language.",
+    "7. Return JSON only.",
   ].join("\n");
 
   return {
