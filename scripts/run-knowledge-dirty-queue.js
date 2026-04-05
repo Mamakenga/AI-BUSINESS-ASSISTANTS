@@ -4,6 +4,7 @@ const { Pool } = require("pg");
 const { buildKnowledgeClaimConsolidationPlan } = require("../src/knowledge-consolidation");
 const { buildKnowledgeDirtyQueueRunReport, normalizeKnowledgeDirtyQueueBatchSize } = require("../src/knowledge-dirty-queue");
 const { buildKnowledgeClaimHygienePlan } = require("../src/knowledge-hygiene");
+const { compileKnowledgePages, loadKnowledgeClaimsForCompilation } = require("../src/knowledge-page-compiler");
 
 const DATABASE_URL = String(process.env.DATABASE_URL || "").trim();
 const PGSSLMODE = String(process.env.PGSSLMODE || "").trim();
@@ -210,6 +211,10 @@ async function main() {
     try {
       const consolidationUpdatesApplied = await applyKnowledgeClaimConsolidation(client, consolidationPlan);
       const hygieneResult = await applyKnowledgeClaimHygiene(client, hygienePlan);
+      const pageCompilation = await compileKnowledgePages(client, {
+        env: process.env,
+        claim_rows: await loadKnowledgeClaimsForCompilation(client),
+      });
       await markKnowledgeDirtyQueueBatch(client, itemIds, "completed");
       await client.query("COMMIT");
 
@@ -222,6 +227,7 @@ async function main() {
             consolidation_updates_applied: consolidationUpdatesApplied,
             hygiene_updates_applied: hygieneResult.updates_applied,
             archived_by_reason: hygieneResult.archived_by_reason,
+            page_compilation: pageCompilation,
           }),
         })
       );

@@ -66,6 +66,14 @@ test("buildKnowledgeDirtyQueueRunReport merges queue summary with processing res
     archived_by_reason: {
       markdown_heading: 1,
     },
+    page_compilation: {
+      grouped_scope_pages: 2,
+      pages_created: 1,
+      pages_updated: 1,
+      versions_created: 2,
+      semantic_pages_compiled: 1,
+      fallback_pages_compiled: 1,
+    },
   });
 
   assert.deepEqual(report, {
@@ -85,6 +93,14 @@ test("buildKnowledgeDirtyQueueRunReport merges queue summary with processing res
     hygiene_updates_applied: 1,
     archived_by_reason: {
       markdown_heading: 1,
+    },
+    page_compilation: {
+      grouped_scope_pages: 2,
+      pages_created: 1,
+      pages_updated: 1,
+      versions_created: 2,
+      semantic_pages_compiled: 1,
+      fallback_pages_compiled: 1,
     },
   });
 });

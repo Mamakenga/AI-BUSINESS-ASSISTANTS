@@ -42,12 +42,21 @@ function buildKnowledgeDirtyQueueRunReport({
   consolidation_updates_applied = 0,
   hygiene_updates_applied = 0,
   archived_by_reason = {},
+  page_compilation = null,
 } = {}) {
   return {
     queue_summary: summarizeKnowledgeDirtyQueueItems(queueRows),
     consolidation_updates_applied,
     hygiene_updates_applied,
     archived_by_reason,
+    page_compilation: page_compilation || {
+      grouped_scope_pages: 0,
+      pages_created: 0,
+      pages_updated: 0,
+      versions_created: 0,
+      semantic_pages_compiled: 0,
+      fallback_pages_compiled: 0,
+    },
   };
 }
 
