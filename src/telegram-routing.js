@@ -3,16 +3,16 @@
 const { ROLE_ALIASES, TOPIC_ROLE_BY_NAME } = require("./runtime-profiles");
 
 const QUESTION_STARTERS = [
-  "что",
-  "какой",
-  "какая",
-  "какие",
-  "когда",
-  "где",
-  "почему",
-  "зачем",
-  "сколько",
-  "как",
+  "\u0447\u0442\u043e",
+  "\u043a\u0430\u043a\u043e\u0439",
+  "\u043a\u0430\u043a\u0430\u044f",
+  "\u043a\u0430\u043a\u0438\u0435",
+  "\u043a\u043e\u0433\u0434\u0430",
+  "\u0433\u0434\u0435",
+  "\u043f\u043e\u0447\u0435\u043c\u0443",
+  "\u0437\u0430\u0447\u0435\u043c",
+  "\u0441\u043a\u043e\u043b\u044c\u043a\u043e",
+  "\u043a\u0430\u043a",
   "what",
   "which",
   "when",
@@ -55,7 +55,7 @@ function looksLikeQuestion(text) {
   if (normalized.includes("?")) {
     return true;
   }
-  return QUESTION_STARTERS.some((starter) => normalized.startsWith(starter + " "));
+  return QUESTION_STARTERS.some((starter) => normalized.startsWith(`${starter} `));
 }
 
 function classifyInteraction(resolvedRole, text) {
@@ -108,7 +108,7 @@ function resolveTelegramRouting(input) {
       should_create_task: false,
       needs_clarification: true,
       clarification_message:
-        "Не удалось определить роль. Укажите тег роли или напишите в привязанную тему Telegram.",
+        "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043e\u043f\u0440\u0435\u0434\u0435\u043b\u0438\u0442\u044c \u0440\u043e\u043b\u044c. \u041d\u0430\u043f\u0438\u0448\u0438\u0442\u0435 \u043f\u0440\u044f\u043c\u043e \u0432 \u043d\u0443\u0436\u043d\u0443\u044e \u0442\u0435\u043c\u0443 Telegram \u0438\u043b\u0438 \u0443\u043a\u0430\u0436\u0438\u0442\u0435 \u0442\u0435\u0433 \u0440\u043e\u043b\u0438.",
     };
   }
 

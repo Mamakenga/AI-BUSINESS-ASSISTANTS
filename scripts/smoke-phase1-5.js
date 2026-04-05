@@ -161,18 +161,20 @@ async function main() {
     assert.equal(health.service, "control-api", "health endpoint returned unexpected service");
 
     const routePreview = await request("POST", "/telegram/route-preview", {
-      text: "@researcher compare competitors in Varna",
+      text: "compare competitors in Varna",
       topic_name: "02 Researcher",
     });
     assert.equal(routePreview.resolved_role, "researcher", "route preview did not resolve researcher");
+    assert.equal(routePreview.route_source, "topic", "route preview should prefer same-topic routing");
 
     const directAnswerIntake = await request("POST", "/telegram/intake", {
-      text: `@assistant what is urgent today ${suffix}?`,
+      text: `what is urgent today ${suffix}?`,
       topic_name: "01 Assistant",
     });
     assert.equal(directAnswerIntake.persisted, true, "direct-answer intake did not persist");
     assert.equal(directAnswerIntake.route.interaction_type, "direct_answer", "direct-answer route type mismatch");
     assert.equal(directAnswerIntake.route.should_create_task, false, "direct-answer should not create a task");
+    assert.equal(directAnswerIntake.route.route_source, "topic", "direct-answer intake should use same-topic routing");
     assert.equal(directAnswerIntake.task, null, "direct-answer unexpectedly created a task");
     assert.ok(directAnswerIntake.run, "direct-answer run was not created");
     assert.equal(directAnswerIntake.run.task_id, null, "direct-answer run should not be task-bound");
@@ -225,11 +227,12 @@ async function main() {
     });
 
     const researcherIntake = await request("POST", "/telegram/intake", {
-      text: `@researcher compare competitors in Varna ${suffix}`,
+      text: `compare competitors in Varna ${suffix}`,
       topic_name: "02 Researcher",
     });
     assert.equal(researcherIntake.persisted, true, "researcher intake did not persist");
     assert.ok(researcherIntake.task && researcherIntake.run, "researcher intake did not create task and run");
+    assert.equal(researcherIntake.route.route_source, "topic", "researcher intake should use same-topic routing");
     cleanupState.taskIds.push(researcherIntake.task.id);
     cleanupState.messageIds.push(researcherIntake.founder_message.id);
     cleanupState.runIds.push(researcherIntake.run.id);
