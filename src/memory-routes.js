@@ -30,6 +30,35 @@ function mapDecisionRow(row) {
   };
 }
 
+function buildDecisionLookup(scope, limit, scopeId = null) {
+  const values = [scope];
+  const where = ["scope = $1", "status = 'active'"];
+
+  if (scope === "task") {
+    if (scopeId === null) {
+      return null;
+    }
+
+    values.push(scopeId);
+    where.push(`scope_id = $${values.length}`);
+  } else {
+    where.push("scope_id IS NULL");
+  }
+
+  values.push(limit);
+
+  return {
+    text: `
+      SELECT id, scope, decision, reasoning, made_by, status, created_at
+      FROM decisions
+      WHERE ${where.join(" AND ")}
+      ORDER BY created_at DESC
+      LIMIT $${values.length}
+    `,
+    values,
+  };
+}
+
 function registerMemoryRoutes(app, { pool }) {
   app.get("/memories", async (req, res, next) => {
     try {
@@ -231,21 +260,14 @@ function registerMemoryRoutes(app, { pool }) {
         return queryResult.rows.map(mapMemoryRow);
       }
 
-      async function loadDecisions(scope) {
-        if (scope === "task") {
+      async function loadDecisions(scope, scopeId = null) {
+        const lookup = buildDecisionLookup(scope, bundleRequest.limit_per_scope, scopeId);
+
+        if (!lookup) {
           return [];
         }
 
-        const queryResult = await pool.query(
-          `
-            SELECT id, scope, decision, reasoning, made_by, status, created_at
-            FROM decisions
-            WHERE scope = $1 AND status = 'active'
-            ORDER BY created_at DESC
-            LIMIT $2
-          `,
-          [scope, bundleRequest.limit_per_scope]
-        );
+        const queryResult = await pool.query(lookup.text, lookup.values);
 
         return queryResult.rows.map(mapDecisionRow);
       }
@@ -265,7 +287,7 @@ function registerMemoryRoutes(app, { pool }) {
       if (bundleRequest.scopes.decisions) {
         result.decisions.owner = await loadDecisions("owner");
         result.decisions.business = await loadDecisions("business");
-        result.decisions.task = bundleRequest.task_id ? await loadDecisions("task") : [];
+        result.decisions.task = await loadDecisions("task", bundleRequest.task_id);
       }
 
       return res.json(trimMemoryBundle(result, bundleRequest));
@@ -276,6 +298,7 @@ function registerMemoryRoutes(app, { pool }) {
 }
 
 module.exports = {
+  buildDecisionLookup,
   mapDecisionRow,
   mapMemoryRow,
   registerMemoryRoutes,
