@@ -1,6 +1,7 @@
 "use strict";
 
 const { isTaskAssignableRoleId } = require("./role-catalog");
+const { normalizeNullableString } = require("./string-normalizers");
 
 const ALLOWED_TASK_STATUSES = new Set(["inbox", "in_work", "done"]);
 const ALLOWED_TASK_PRIORITIES = new Set(["low", "medium", "high", "urgent"]);
@@ -11,17 +12,6 @@ function parseLimit(value, fallback = 50, max = 200) {
     return fallback;
   }
   return Math.min(parsed, max);
-}
-
-function normalizeNullableString(value) {
-  if (value === undefined) {
-    return undefined;
-  }
-  if (value === null) {
-    return null;
-  }
-  const normalized = String(value).trim();
-  return normalized.length > 0 ? normalized : null;
 }
 
 function normalizeTaskStatus(value) {

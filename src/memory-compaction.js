@@ -1,6 +1,7 @@
 "use strict";
 
 const { ALLOWED_MEMORY_SCOPES } = require("./memory-service");
+const { normalizeNullableString } = require("./string-normalizers");
 
 function normalizeRequiredString(value, fieldName) {
   const normalized = String(value || "").trim();
@@ -8,17 +9,6 @@ function normalizeRequiredString(value, fieldName) {
     throw new Error(`${fieldName} is required`);
   }
   return normalized;
-}
-
-function normalizeNullableString(value) {
-  if (value === undefined) {
-    return undefined;
-  }
-  if (value === null) {
-    return null;
-  }
-  const normalized = String(value).trim();
-  return normalized.length > 0 ? normalized : null;
 }
 
 function normalizeMemoryScope(value) {

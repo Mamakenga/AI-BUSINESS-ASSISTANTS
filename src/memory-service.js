@@ -1,17 +1,7 @@
 "use strict";
 
 const ALLOWED_MEMORY_SCOPES = new Set(["owner", "business", "role", "task"]);
-
-function normalizeNullableString(value) {
-  if (value === undefined) {
-    return undefined;
-  }
-  if (value === null) {
-    return null;
-  }
-  const normalized = String(value).trim();
-  return normalized.length > 0 ? normalized : null;
-}
+const { normalizeNullableString } = require("./string-normalizers");
 
 function normalizeMemoryScope(value) {
   const normalized = normalizeNullableString(value);

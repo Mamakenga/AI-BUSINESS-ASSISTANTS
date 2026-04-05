@@ -17,6 +17,18 @@ function normalizeOptionalString(value) {
   return normalized.length > 0 ? normalized : null;
 }
 
+function normalizeNullableString(value) {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value === null) {
+    return null;
+  }
+
+  const normalized = String(value).trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
 function normalizeLooseOptionalString(value) {
   const normalized = String(value || "").trim();
   return normalized.length > 0 ? normalized : null;
@@ -24,6 +36,7 @@ function normalizeLooseOptionalString(value) {
 
 module.exports = {
   normalizeLooseOptionalString,
+  normalizeNullableString,
   normalizeOptionalString,
   normalizeRequiredString,
 };

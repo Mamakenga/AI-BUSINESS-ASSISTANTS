@@ -4,21 +4,11 @@ const { mapMessageRow } = require("./run-routes");
 const { mapRunRow } = require("./run-row-mapping");
 const { buildRunLogFields } = require("./structured-logging");
 const { mapTaskRow } = require("./task-routes");
+const { normalizeNullableString } = require("./string-normalizers");
 const { buildTelegramIntakePlan } = require("./telegram-intake");
 const { buildTelegramContext, resolveTelegramIntakeContext } = require("./telegram-intake-context");
 const { buildTelegramReply } = require("./telegram-reply");
 const { resolveTelegramRouting } = require("./telegram-routing");
-
-function normalizeNullableString(value) {
-  if (value === undefined) {
-    return undefined;
-  }
-  if (value === null) {
-    return null;
-  }
-  const normalized = String(value).trim();
-  return normalized.length > 0 ? normalized : null;
-}
 
 function mapTelegramThreadRow(row) {
   return {

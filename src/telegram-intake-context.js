@@ -1,15 +1,6 @@
 "use strict";
 
-function normalizeNullableString(value) {
-  if (value === undefined) {
-    return undefined;
-  }
-  if (value === null) {
-    return null;
-  }
-  const normalized = String(value).trim();
-  return normalized.length > 0 ? normalized : null;
-}
+const { normalizeNullableString } = require("./string-normalizers");
 
 function normalizeBoardOrder(value) {
   if (value === undefined) {
