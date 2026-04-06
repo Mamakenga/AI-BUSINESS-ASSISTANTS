@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { resolveTelegramRouting } = require("../src/telegram-routing");
+const { isAssistantComplexFounderQuestion, resolveTelegramRouting } = require("../src/telegram-routing");
 
 test("explicit role tag wins over topic role", () => {
   const result = resolveTelegramRouting({
@@ -79,6 +79,30 @@ test("assistant topic without tag stays a direct answer path", () => {
   assert.equal(result.route_source, "topic");
   assert.equal(result.interaction_type, "direct_answer");
   assert.equal(result.should_create_task, false);
+});
+
+test("assistant complex founder question escalates to orchestrator gate", () => {
+  const result = resolveTelegramRouting({
+    text:
+      "Сейчас решается вопрос, откатить ли назад отказ от франшизы или делать ребрендинг. Денег на ребрендинг нет, кредит брать не хочется. Какие есть варианты действий?",
+    topic_name: "01 Assistant",
+  });
+
+  assert.equal(result.topic_role, "assistant");
+  assert.equal(result.resolved_role, "orchestrator");
+  assert.equal(result.route_source, "assistant_gate");
+  assert.equal(result.interaction_type, "direct_answer");
+  assert.equal(result.should_create_task, false);
+});
+
+test("assistant complex founder question detector ignores simple urgency questions", () => {
+  assert.equal(isAssistantComplexFounderQuestion("Что сейчас самое срочное?"), false);
+  assert.equal(
+    isAssistantComplexFounderQuestion(
+      "Откатить отказ от франшизы или делать ребрендинг, если денег мало и кредит брать не хочется? Какие есть варианты действий?"
+    ),
+    true
+  );
 });
 
 test("role tag with a concrete request still becomes a task", () => {

@@ -241,6 +241,19 @@ function buildSystemPrompt(executionContext) {
     );
   }
 
+  if (roleId === "orchestrator" && !executionContext?.task && executionContext?.run?.requested_by_agent !== "scheduler") {
+    sections.push(
+      [
+        "Orchestrator front-door rules:",
+        "1. First decide whether the founder request is narrow enough for a direct integrated answer or complex enough for decomposition across roles.",
+        "2. Treat scenario-choice, trade-off, and 'what are the options / what should we do' questions as likely multi-angle.",
+        "3. If the request is narrow, answer directly and do not mention decomposition.",
+        "4. If the request is multi-angle, briefly name the relevant lenses, give a short integrated answer now, and then offer a deeper multi-role decomposition as an option.",
+        "5. Do not force decomposition for every request and do not dump raw internal workflow details in the user-facing answer.",
+      ].join("\n")
+    );
+  }
+
   if (requestType === "direct-answer" && roleId === "assistant") {
     sections.push(
       [

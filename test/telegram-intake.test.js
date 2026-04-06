@@ -68,6 +68,25 @@ test("intake plan resolves same-topic direct answer without role tag", () => {
   assert.equal(plan.run.task_id, null);
 });
 
+test("intake plan routes assistant complex founder question through orchestrator gate", () => {
+  const plan = buildTelegramIntakePlan(
+    {
+      text:
+        "Сейчас решается вопрос, откатить ли назад отказ от франшизы или делать ребрендинг. Денег на ребрендинг нет, кредит брать не хочется. Какие есть варианты действий?",
+      topic_name: "01 Assistant",
+    },
+    { idFactory: createDeterministicIdFactory() }
+  );
+
+  assert.equal(plan.should_persist, true);
+  assert.equal(plan.route.topic_role, "assistant");
+  assert.equal(plan.route.resolved_role, "orchestrator");
+  assert.equal(plan.route.route_source, "assistant_gate");
+  assert.equal(plan.route.interaction_type, "direct_answer");
+  assert.equal(plan.task, null);
+  assert.equal(plan.run.task_id, null);
+});
+
 test("intake plan resolves same-topic task without role tag", () => {
   const plan = buildTelegramIntakePlan(
     {

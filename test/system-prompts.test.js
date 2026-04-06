@@ -386,6 +386,29 @@ test("buildSystemPrompt adds direct-answer guardrails for assistant urgency ques
   assert.equal(result.meta.request_type, "direct-answer");
 });
 
+test("buildSystemPrompt adds front-door orchestration guardrails for founder-facing orchestrator runs", () => {
+  const result = buildSystemPrompt({
+    role: {
+      id: "orchestrator",
+      execution_mode: "multi_role_router",
+      output_contract: "orchestrator_summary_v1",
+    },
+    run: {
+      task_id: null,
+      requested_by_agent: "founder",
+    },
+    task: null,
+    founder_request: "Откатывать отказ от франшизы или делать ребрендинг? Какие есть варианты действий?",
+    handoff_messages: [],
+    memory_bundle: null,
+  });
+
+  assert.match(result.prompt, /Orchestrator front-door rules:/);
+  assert.match(result.prompt, /narrow enough for a direct integrated answer or complex enough for decomposition across roles/i);
+  assert.match(result.prompt, /give a short integrated answer now, and then offer a deeper multi-role decomposition as an option/i);
+  assert.equal(result.meta.request_type, "orchestration");
+});
+
 test("buildSystemPrompt keeps generic direct-answer guardrails for non-assistant roles only", () => {
   const result = buildSystemPrompt({
     role: {

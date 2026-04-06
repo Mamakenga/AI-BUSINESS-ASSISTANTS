@@ -20,6 +20,30 @@ const QUESTION_STARTERS = [
   "why",
   "how",
 ];
+const COMPLEX_DECISION_PATTERNS = [
+  "какие есть варианты",
+  "какие варианты",
+  "какой вариант",
+  "что нам делать",
+  "что делать",
+  "как лучше поступить",
+  "как поступить",
+  "стоит ли",
+  "как решить",
+  "как нам решить",
+  "выбрать",
+  "варианты действий",
+  "what are the options",
+  "what should we do",
+  "which option",
+  "how should we proceed",
+  "is it worth",
+];
+const COMPLEX_LENS_GROUPS = [
+  ["деньг", "бюдж", "кредит", "аванс", "оплат", "стоим", "cash", "finance", "финанс"],
+  ["ребренд", "франшиз", "бренд", "позиционир", "стратег", "рынок", "market"],
+  ["риск", "последств", "блок", "удержан", "родител", "коммуникац", "срок", "дедлайн"],
+];
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -58,6 +82,32 @@ function looksLikeQuestion(text) {
   return QUESTION_STARTERS.some((starter) => normalized.startsWith(`${starter} `));
 }
 
+function countComplexLensMatches(text) {
+  const normalized = stripLeadingRoleTag(text).toLowerCase();
+  if (!normalized) {
+    return 0;
+  }
+
+  return COMPLEX_LENS_GROUPS.filter((group) => group.some((pattern) => normalized.includes(pattern))).length;
+}
+
+function isAssistantComplexFounderQuestion(text) {
+  const normalized = stripLeadingRoleTag(text).toLowerCase();
+  if (!normalized || !looksLikeQuestion(text)) {
+    return false;
+  }
+
+  const hasDecisionPattern =
+    COMPLEX_DECISION_PATTERNS.some((pattern) => normalized.includes(pattern)) ||
+    (normalized.includes(" или ") && (normalized.includes("как") || normalized.includes("что") || normalized.includes("какие")));
+
+  if (!hasDecisionPattern) {
+    return false;
+  }
+
+  return countComplexLensMatches(normalized) >= 2;
+}
+
 function classifyInteraction(resolvedRole, text) {
   if (!resolvedRole) {
     return null;
@@ -93,7 +143,10 @@ function resolveTelegramRouting(input) {
 
   const explicitRole = extractExplicitRole(text);
   const topicRole = resolveTopicRole(topicName);
-  const resolvedRole = explicitRole || topicRole || null;
+  const baseRole = explicitRole || topicRole || null;
+  const assistantGateRole =
+    baseRole === "assistant" && isAssistantComplexFounderQuestion(text) ? "orchestrator" : null;
+  const resolvedRole = assistantGateRole || baseRole;
 
   if (!resolvedRole) {
     return {
@@ -120,7 +173,7 @@ function resolveTelegramRouting(input) {
     explicit_role: explicitRole,
     topic_role: topicRole,
     resolved_role: resolvedRole,
-    route_source: explicitRole ? "tag" : "topic",
+    route_source: assistantGateRole ? "assistant_gate" : explicitRole ? "tag" : "topic",
     thread_required: true,
     interaction_type: classification.interaction_type,
     should_create_task: classification.should_create_task,
@@ -132,5 +185,6 @@ function resolveTelegramRouting(input) {
 module.exports = {
   ROLE_ALIASES,
   TOPIC_ROLE_BY_NAME,
+  isAssistantComplexFounderQuestion,
   resolveTelegramRouting,
 };
