@@ -287,6 +287,10 @@ test("buildSystemPrompt gives scheduled leader digests richer compiled knowledge
   assert.match(result.prompt, /Prioritize compiled knowledge summaries when they are available/i);
   assert.match(result.prompt, /Use compiled knowledge to anchor confirmed sections before adding raw memory details/i);
   assert.match(result.prompt, /Surface up to 3 most material open questions when the context supports them/i);
+  assert.match(
+    result.prompt,
+    /Preserve active transition states exactly; if the context says the business is exiting, leaving, or replacing something, do not rewrite that as a stable current-state arrangement/i
+  );
   assert.match(result.prompt, /Full compiled summary with more concrete business context/);
   assert.match(result.prompt, /Compiled open questions:/);
   assert.match(result.prompt, /Какой финальный вариант позиционирования подтверждаем первым\?/);

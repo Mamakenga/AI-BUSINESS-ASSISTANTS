@@ -255,7 +255,10 @@ function buildSemanticKnowledgeCompilerMessages(group) {
     "6. Write the result in Russian, even if some source claims are in another language.",
     "7. Return JSON only.",
     ...(scope === "business"
-      ? ["8. For business pages, lead with the core business state, scale, priorities, and strategic direction before secondary research gaps."]
+      ? [
+          "8. For business pages, lead with the core business state, scale, priorities, and strategic direction before secondary research gaps.",
+          "9. Preserve active transition states exactly; do not flatten 'exiting', 'leaving', or 'replacing' into a stable steady-state description.",
+        ]
       : []),
   ].join("\n");
 

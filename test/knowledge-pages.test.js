@@ -127,6 +127,25 @@ test("buildSemanticKnowledgeCompilerMessages limits supported and disputed claim
   assert.match(messages.user_prompt, /Write the result in Russian/i);
 });
 
+test("buildSemanticKnowledgeCompilerMessages preserves transition wording for business pages", () => {
+  const messages = buildSemanticKnowledgeCompilerMessages({
+    scope: "business",
+    scope_id: null,
+    claims: [
+      {
+        id: 1,
+        claim_text: "Школа выходит из франшизы KIBERone и готовит репозиционирование.",
+        status: "supported",
+      },
+    ],
+  });
+
+  assert.match(
+    messages.user_prompt,
+    /Preserve active transition states exactly; do not flatten 'exiting', 'leaving', or 'replacing' into a stable steady-state description\./
+  );
+});
+
 test("extractJsonObjectFromText pulls JSON out of fenced model output", () => {
   const extracted = extractJsonObjectFromText('```json\n{\"summary_short\":\"Short summary.\"}\n```');
   assert.equal(extracted, '{"summary_short":"Short summary."}');

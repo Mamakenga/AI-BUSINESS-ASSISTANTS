@@ -323,6 +323,7 @@ function buildSystemPrompt(executionContext) {
         "3. If compiled knowledge and atomic memory diverge, be explicit about uncertainty instead of smoothing over the mismatch.",
         "4. Surface up to 3 most material open questions when the context supports them; prefer strategic blockers over narrow research gaps.",
         "5. Keep the safest next step concrete and executive-friendly.",
+        "6. Preserve active transition states exactly; if the context says the business is exiting, leaving, or replacing something, do not rewrite that as a stable current-state arrangement.",
       ].join("\n")
     );
   }
