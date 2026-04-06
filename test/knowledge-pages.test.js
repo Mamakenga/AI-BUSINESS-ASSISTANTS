@@ -94,11 +94,13 @@ test("renderKnowledgePageMarkdown keeps summary-first structure", () => {
     summaryFull: "Founder preferences are stable.",
     keyFacts: ["Founder prefers concise answers."],
     contradictions: [],
+    openQuestions: ["What should the next pilot validate first?"],
   });
 
   assert.match(markdown, /^# business knowledge summary/);
   assert.match(markdown, /## Summary/);
   assert.match(markdown, /## Key Facts/);
+  assert.match(markdown, /## Open Questions/);
 });
 
 test("buildSemanticKnowledgeCompilerMessages limits supported and disputed claims for prompt input", () => {
@@ -216,4 +218,40 @@ test("buildKnowledgeScopePageDraftWithFallback uses semantic draft when compiler
   assert.equal(draft.version.compiled_by, "knowledge_compiler_semantic_v1");
   assert.equal(draft.version.summary_short, "Parents need short practical AI examples.");
   assert.deepEqual(draft.version.contradictions_json, ["The target age band is still disputed."]);
+});
+
+test("buildKnowledgeScopePageDraft prioritizes core business context before research gaps", () => {
+  const unresolvedClaim =
+    "Точные цены конкурентов по городам пока не подтверждены; для уверенных сравнений нужна mystery shopping-проверка.";
+  const draft = buildKnowledgeScopePageDraft({
+    scope: "business",
+    scope_id: null,
+    claims: [
+      {
+        id: 1,
+        claim_text: unresolvedClaim,
+        status: "supported",
+      },
+      {
+        id: 2,
+        claim_text: "Школа детского цифрового образования работает офлайн в Болгарии и выходит из франшизы KIBERone.",
+        status: "supported",
+      },
+      {
+        id: 3,
+        claim_text:
+          "Главный текущий приоритет бизнеса: сначала репозиционирование после выхода из франшизы, затем ребрендинг, затем операционная модернизация.",
+        status: "supported",
+      },
+    ],
+  });
+
+  assert.equal(
+    draft.version.summary_short,
+    "Школа детского цифрового образования работает офлайн в Болгарии и выходит из франшизы KIBERone."
+  );
+  assert.equal(draft.version.key_facts_json[0], draft.version.summary_short);
+  assert.deepEqual(draft.version.open_questions_json, [unresolvedClaim]);
+  assert.doesNotMatch(draft.version.summary_short, /mystery shopping/i);
+  assert.match(draft.version.compiled_markdown, /## Open Questions/);
 });

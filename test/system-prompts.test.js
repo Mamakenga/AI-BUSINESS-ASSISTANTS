@@ -265,6 +265,10 @@ test("buildSystemPrompt gives scheduled leader digests richer compiled knowledge
         {
           summary_short: "Short compiled summary.",
           summary_full: "Full compiled summary with more concrete business context for the leader digest.",
+          open_questions_json: [
+            "Какой финальный вариант позиционирования подтверждаем первым?",
+            "Кто владеет дедлайнами по новым программам?",
+          ],
         },
       ],
       owner: [],
@@ -282,7 +286,11 @@ test("buildSystemPrompt gives scheduled leader digests richer compiled knowledge
   assert.match(result.prompt, /Leader scheduled digest rules:/);
   assert.match(result.prompt, /Prioritize compiled knowledge summaries when they are available/i);
   assert.match(result.prompt, /Use compiled knowledge to anchor confirmed sections before adding raw memory details/i);
+  assert.match(result.prompt, /Surface up to 3 most material open questions when the context supports them/i);
   assert.match(result.prompt, /Full compiled summary with more concrete business context/);
+  assert.match(result.prompt, /Compiled open questions:/);
+  assert.match(result.prompt, /Какой финальный вариант позиционирования подтверждаем первым\?/);
+  assert.match(result.prompt, /Кто владеет дедлайнами по новым программам\?/);
   assert.doesNotMatch(result.prompt, /- Short compiled summary\./);
 });
 

@@ -6,6 +6,7 @@ const MEMORY_BUDGET_TOKENS = 500;
 const HANDOFF_BUDGET_TOKENS = 200;
 const COMPILED_KNOWLEDGE_BUDGET_TOKENS = 300;
 const MAX_COMPILED_KNOWLEDGE_SNIPPETS = 2;
+const MAX_COMPILED_OPEN_QUESTIONS = 3;
 
 function normalizeOptionalString(value) {
   if (value === undefined || value === null) {
@@ -139,6 +140,34 @@ function buildCompiledKnowledgeFacts(executionContext) {
   }
 
   return facts;
+}
+
+function buildCompiledOpenQuestions(executionContext) {
+  if (!isLeaderDigestScheduledRun(executionContext)) {
+    return [];
+  }
+
+  const pages = Array.isArray(executionContext?.memory_bundle?.compiled_pages)
+    ? executionContext.memory_bundle.compiled_pages
+    : [];
+  const questions = [];
+
+  for (const page of pages.slice(0, MAX_COMPILED_KNOWLEDGE_SNIPPETS)) {
+    const openQuestions = Array.isArray(page?.open_questions_json) ? page.open_questions_json : [];
+    for (const question of openQuestions) {
+      const sanitized = sanitizeUserFacingPromptText(question);
+      if (!sanitized || questions.includes(sanitized)) {
+        continue;
+      }
+
+      questions.push(sanitized);
+      if (questions.length >= MAX_COMPILED_OPEN_QUESTIONS) {
+        return questions;
+      }
+    }
+  }
+
+  return questions;
 }
 
 function trimBulletList(items, maxChars) {
@@ -292,6 +321,8 @@ function buildSystemPrompt(executionContext) {
         "1. Prioritize compiled knowledge summaries when they are available.",
         "2. Use compiled knowledge to anchor confirmed sections before adding raw memory details.",
         "3. If compiled knowledge and atomic memory diverge, be explicit about uncertainty instead of smoothing over the mismatch.",
+        "4. Surface up to 3 most material open questions when the context supports them; prefer strategic blockers over narrow research gaps.",
+        "5. Keep the safest next step concrete and executive-friendly.",
       ].join("\n")
     );
   }
@@ -330,6 +361,11 @@ function buildSystemPrompt(executionContext) {
   const compiledKnowledgeLines = trimBulletList(compiledKnowledgeFacts, toCharBudget(COMPILED_KNOWLEDGE_BUDGET_TOKENS));
   if (compiledKnowledgeLines.length > 0) {
     sections.push(["Compiled knowledge:", ...compiledKnowledgeLines].join("\n"));
+  }
+
+  const compiledOpenQuestions = buildCompiledOpenQuestions(executionContext);
+  if (compiledOpenQuestions.length > 0) {
+    sections.push(["Compiled open questions:", ...compiledOpenQuestions].join("\n"));
   }
 
   const memoryFacts = buildMemoryFacts(executionContext.memory_bundle);

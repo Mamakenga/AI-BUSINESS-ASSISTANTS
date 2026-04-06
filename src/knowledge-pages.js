@@ -9,6 +9,37 @@ const MAX_PAGE_KEY_FACTS = 5;
 const MAX_PAGE_CONTRADICTIONS = 5;
 const MAX_PAGE_OPEN_QUESTIONS = 3;
 const MAX_SEMANTIC_CLAIMS_PER_STATUS = 8;
+const BUSINESS_OPEN_QUESTION_HINTS = [
+  "не подтверж",
+  "пока не подтверж",
+  "не зафиксир",
+  "не принят",
+  "не определ",
+  "не выбран",
+  "нужна провер",
+  "нужно провер",
+  "mystery shopping",
+];
+const BUSINESS_PRIORITY_KEYWORDS = [
+  { pattern: "школ", weight: 6 },
+  { pattern: "офлайн", weight: 5 },
+  { pattern: "болгари", weight: 3 },
+  { pattern: "франшиз", weight: 6 },
+  { pattern: "kiberone", weight: 5 },
+  { pattern: "филиал", weight: 5 },
+  { pattern: "ученик", weight: 5 },
+  { pattern: "премиаль", weight: 4 },
+  { pattern: "цена", weight: 2 },
+  { pattern: "репозиционир", weight: 6 },
+  { pattern: "ребренд", weight: 5 },
+  { pattern: "модернизац", weight: 4 },
+  { pattern: "приоритет", weight: 5 },
+  { pattern: "концепц", weight: 4 },
+  { pattern: "цифров", weight: 3 },
+  { pattern: "инженер", weight: 3 },
+  { pattern: "три столп", weight: 3 },
+  { pattern: "рамк", weight: 2 },
+];
 
 function normalizePageScopeId(value) {
   return normalizeNullableString(value) ?? null;
@@ -68,7 +99,7 @@ function groupKnowledgeClaimsForPages(claimRows = []) {
   });
 }
 
-function renderKnowledgePageMarkdown({ title, summaryFull, keyFacts, contradictions }) {
+function renderKnowledgePageMarkdown({ title, summaryFull, keyFacts, contradictions, openQuestions = [] }) {
   const sections = [`# ${title}`, "", "## Summary", summaryFull];
 
   if (keyFacts.length > 0) {
@@ -77,6 +108,10 @@ function renderKnowledgePageMarkdown({ title, summaryFull, keyFacts, contradicti
 
   if (contradictions.length > 0) {
     sections.push("", "## Contradictions", ...contradictions.map((item) => `- ${item}`));
+  }
+
+  if (openQuestions.length > 0) {
+    sections.push("", "## Open Questions", ...openQuestions.map((item) => `- ${item}`));
   }
 
   return sections.join("\n").trim();
@@ -103,6 +138,73 @@ function normalizePageList(items, maxItems) {
   return normalized;
 }
 
+function isBusinessOpenQuestionCandidate(claimText) {
+  const normalized = normalizeNullableString(claimText)?.toLowerCase() || "";
+  if (!normalized) {
+    return false;
+  }
+
+  return BUSINESS_OPEN_QUESTION_HINTS.some((hint) => normalized.includes(hint));
+}
+
+function scoreBusinessClaimPriority(claimText) {
+  const normalized = normalizeNullableString(claimText)?.toLowerCase() || "";
+  if (!normalized) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  let score = 0;
+  for (const keyword of BUSINESS_PRIORITY_KEYWORDS) {
+    if (normalized.includes(keyword.pattern)) {
+      score += keyword.weight;
+    }
+  }
+
+  if (isBusinessOpenQuestionCandidate(normalized)) {
+    score -= 20;
+  }
+
+  return score;
+}
+
+function prioritizeClaimsForScope(scope, claims = []) {
+  const normalizedScope = normalizeNullableString(scope);
+  const normalizedClaims = claims.filter((claim) => normalizeNullableString(claim));
+  if (normalizedScope !== "business") {
+    return normalizedClaims;
+  }
+
+  return normalizedClaims
+    .map((claim, index) => ({
+      claim,
+      index,
+      score: scoreBusinessClaimPriority(claim),
+    }))
+    .sort((left, right) => right.score - left.score || left.index - right.index)
+    .map((item) => item.claim);
+}
+
+function buildOpenQuestionsFromSupportedClaims(scope, supportedClaims = []) {
+  if (normalizeNullableString(scope) !== "business") {
+    return [];
+  }
+
+  return prioritizeClaimsForScope(scope, supportedClaims)
+    .filter((claim) => isBusinessOpenQuestionCandidate(claim))
+    .slice(0, MAX_PAGE_OPEN_QUESTIONS);
+}
+
+function buildKeyFactsFromSupportedClaims(scope, supportedClaims = []) {
+  const openQuestions = new Set(buildOpenQuestionsFromSupportedClaims(scope, supportedClaims));
+  const prioritizedClaims = prioritizeClaimsForScope(scope, supportedClaims).filter((claim) => !openQuestions.has(claim));
+
+  if (prioritizedClaims.length > 0) {
+    return prioritizedClaims.slice(0, MAX_PAGE_KEY_FACTS);
+  }
+
+  return prioritizeClaimsForScope(scope, supportedClaims).slice(0, MAX_PAGE_KEY_FACTS);
+}
+
 function buildSemanticKnowledgeCompilerMessages(group) {
   const scope = normalizeNullableString(group?.scope);
   if (!scope) {
@@ -112,10 +214,13 @@ function buildSemanticKnowledgeCompilerMessages(group) {
   const scopeId = normalizePageScopeId(group?.scope_id);
   const title = buildKnowledgePageTitle(scope, scopeId);
   const claimRows = Array.isArray(group?.claims) ? group.claims : [];
-  const supportedClaims = claimRows
-    .filter((row) => row.status === "supported" && normalizeNullableString(row.claim_text))
-    .slice(0, MAX_SEMANTIC_CLAIMS_PER_STATUS)
-    .map((row) => normalizeNullableString(row.claim_text));
+  const supportedClaims = prioritizeClaimsForScope(
+    scope,
+    claimRows
+      .filter((row) => row.status === "supported" && normalizeNullableString(row.claim_text))
+      .slice(0, MAX_SEMANTIC_CLAIMS_PER_STATUS)
+      .map((row) => normalizeNullableString(row.claim_text))
+  );
   const disputedClaims = claimRows
     .filter((row) => row.status === "disputed" && normalizeNullableString(row.claim_text))
     .slice(0, MAX_SEMANTIC_CLAIMS_PER_STATUS)
@@ -149,6 +254,9 @@ function buildSemanticKnowledgeCompilerMessages(group) {
     "5. Add up to 3 open questions only if they follow directly from missing or disputed evidence.",
     "6. Write the result in Russian, even if some source claims are in another language.",
     "7. Return JSON only.",
+    ...(scope === "business"
+      ? ["8. For business pages, lead with the core business state, scale, priorities, and strategic direction before secondary research gaps."]
+      : []),
   ].join("\n");
 
   return {
@@ -212,6 +320,7 @@ function normalizeSemanticKnowledgeCompilerResult(payload, fallbackDraft) {
         summaryFull,
         keyFacts: keyFacts.length > 0 ? keyFacts : fallbackVersion.key_facts_json || [],
         contradictions: contradictions.length > 0 ? contradictions : fallbackVersion.contradictions_json || [],
+        openQuestions,
       }),
       compiled_by: "knowledge_compiler_semantic_v1",
       change_reason: "compiled_from_supported_claims_semantic",
@@ -239,15 +348,20 @@ function buildKnowledgeScopePageDraft(group) {
     .map((row) => normalizeNullableString(row.claim_text));
 
   const title = buildKnowledgePageTitle(scope, scopeId);
-  const keyFacts = supportedClaims.slice(0, MAX_PAGE_KEY_FACTS);
+  const keyFacts = buildKeyFactsFromSupportedClaims(scope, supportedClaims);
   const contradictions = disputedClaims.slice(0, MAX_PAGE_CONTRADICTIONS);
+  const openQuestions = buildOpenQuestionsFromSupportedClaims(scope, supportedClaims);
   const summaryShort = keyFacts[0] || contradictions[0] || "No compiled summary is available yet.";
-  const summaryFull =
-    keyFacts.length > 0
-      ? keyFacts.join(" ")
-      : contradictions.length > 0
-        ? `Contradictions require review: ${contradictions.join(" ")}`
-        : "No supported or disputed claims are available yet.";
+  const summaryParts = [];
+  if (keyFacts.length > 0) {
+    summaryParts.push(keyFacts.join(" "));
+  } else if (contradictions.length > 0) {
+    summaryParts.push(`Contradictions require review: ${contradictions.join(" ")}`);
+  }
+  if (openQuestions.length > 0) {
+    summaryParts.push(`Open questions: ${openQuestions.join(" ")}`);
+  }
+  const summaryFull = summaryParts.join(" ").trim() || "No supported or disputed claims are available yet.";
 
   return {
     page_type: "scope_summary",
@@ -260,13 +374,14 @@ function buildKnowledgeScopePageDraft(group) {
       summary_full: summaryFull,
       key_facts_json: keyFacts,
       contradictions_json: contradictions,
-      open_questions_json: [],
+      open_questions_json: openQuestions,
       related_pages_json: [],
       compiled_markdown: renderKnowledgePageMarkdown({
         title,
         summaryFull,
         keyFacts,
         contradictions,
+        openQuestions,
       }),
       compiled_by: "knowledge_compiler",
       change_reason: "compiled_from_supported_claims",
