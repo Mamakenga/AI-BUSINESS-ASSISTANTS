@@ -25,9 +25,9 @@ test("runtime profiles registry exposes all expected roles", () => {
 });
 
 test("founder-facing aliases and topics are derived from runtime profiles", () => {
-  assert.equal(ROLE_ALIASES.get("assistant"), "assistant");
+  assert.equal(ROLE_ALIASES.get("assistant"), undefined);
   assert.equal(ROLE_ALIASES.get("finance"), "finance_analyst");
-  assert.equal(TOPIC_ROLE_BY_NAME.get("00 orchestrator"), "orchestrator");
+  assert.equal(TOPIC_ROLE_BY_NAME.get("01 orchestrator"), "orchestrator");
   assert.equal(TOPIC_ROLE_BY_NAME.get("04 finance"), "finance_analyst");
   assert.equal(TOPIC_ROLE_BY_NAME.get("general"), "orchestrator");
 });

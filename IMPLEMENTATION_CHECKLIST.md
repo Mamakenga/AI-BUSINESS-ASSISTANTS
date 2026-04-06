@@ -34,15 +34,15 @@
 3. есть deployment skeleton;
 4. есть базовая схема БД;
 5. есть минимальный Control API для `tasks`;
-6. живой LiteLLM-backed `@assistant` и `@researcher` smoke уже прошел на VPS через Telegram supergroup `AI_KiberOne чат`;
+6. живой LiteLLM-backed `@orchestrator` и `@researcher` smoke уже прошел на VPS через Telegram supergroup `AI_KiberOne чат`;
 7. scheduled trigger -> VPS execution -> Telegram delivery уже прошел живьем;
-8. scheduled delivery в тему `01 Assistant` уже подтверждена.
+8. scheduled delivery в тему `01 Orchestrator` уже подтверждена.
 9. manual thin-context sweep для `daily_founder_brief`, `weekly_digest`, `competitor_watch`, `branch_finance_review` и `weekly_risk_review` уже пройден без выдуманных фактов;
 10. первый живой dispatch в тему `03 Methodist` уже подтвержден, но quality-signoff для роли пока не пройден.
 11. базовый structured logging foundation уже добавлен для `control-api`, `telegram-bridge` и `role-worker`;
 12. run-level trace по `run_id` теперь виден от intake до completion/delivery в JSON-логах.
 13. `Phase 9` hardening canon теперь покрывает runtime guards, auth, deploy pipeline, rollback, monitoring и отдельные Railway/VPS deployment notes.
-14. founder-facing implicit same-topic routing без обязательного `@role` теперь подтвержден живьем на VPS для темы `01 Assistant`.
+14. founder-facing implicit same-topic routing без обязательного `@role` теперь подтвержден живьем на VPS для темы `01 Orchestrator`.
 
 Следующий практический фокус:
 1. считать `Phase 9` hardening практически закрытой;
@@ -94,7 +94,7 @@
 
 - [x] Зафиксировать Telegram routing spec отдельным файлом
 - [x] Описать mapping `topic -> role`
-- [x] Поддержать direct role call `@assistant`
+- [x] Поддержать direct role call `@orchestrator`
 - [x] Поддержать direct role call `@researcher`
 - [x] Поддержать direct role call `@methodist`
 - [x] Поддержать direct role call `@finance`
@@ -147,7 +147,7 @@
 - [x] Прогнать живой personal-chat smoke: Telegram message -> run -> stub execution -> complete -> reply
 - [x] Перевести demo contour из ручных SSH-сессий в устойчивый systemd-режим
 - [x] Прогнать group/topic smoke: сообщение в Telegram-группе -> run -> execution -> complete -> reply in topic
-- [x] Зафиксировать живой founder-demo flow для `@assistant` в группе `AI_KiberOne чат` через LiteLLM
+- [x] Зафиксировать живой founder-demo flow для `@orchestrator` в группе `AI_KiberOne чат` через LiteLLM
 - [x] Зафиксировать живой founder-demo flow для `@researcher` в группе `AI_KiberOne чат`
 
 ## Phase 6. Scheduled Jobs
@@ -244,7 +244,7 @@ Closure criteria для `Phase 9`:
 - [x] Развернуть contour на VPS под пользователем `ops` в ручном demo-режиме
 - [x] Подключить проект к живому Railway Postgres через `DATABASE_URL`
 - [x] Перевести VPS contour на systemd services
-- [x] Прогнать полный server smoke suite на VPS (`@assistant` and `@researcher` done)
+- [x] Прогнать полный server smoke suite на VPS (`@orchestrator` and `@researcher` done)
 - [x] Проверить process logs после первого живого demo
 - [x] Зафиксировать ручной runbook: `git pull -> migrate -> restart -> smoke`
 

@@ -5,8 +5,8 @@ const assert = require("node:assert/strict");
 
 const { buildJobTrigger, getJobDispatchStatus } = require("../src/job-trigger");
 
-test("getJobDispatchStatus marks assistant jobs as worker dispatchable", () => {
-  const dispatch = getJobDispatchStatus("assistant");
+test("getJobDispatchStatus marks orchestrator jobs as worker dispatchable", () => {
+  const dispatch = getJobDispatchStatus("orchestrator");
 
   assert.equal(dispatch.dispatch_status, "worker_dispatchable");
 });
@@ -27,12 +27,12 @@ test("buildJobTrigger creates a pending scheduler run for dispatchable jobs", ()
     {
       job_type: "daily_founder_brief",
       title: "Daily Founder Brief",
-      assigned_agent: "assistant",
+      assigned_agent: "orchestrator",
       request_text: "Prepare the daily founder brief in Russian. Keep it Telegram-ready.",
     }
   );
 
-  assert.equal(trigger.run.agent, "assistant");
+  assert.equal(trigger.run.agent, "orchestrator");
   assert.equal(trigger.run.status, "pending");
   assert.equal(trigger.run.thread_id, "thread_jobs_founder");
   assert.equal(trigger.run.requested_by_agent, "scheduler");

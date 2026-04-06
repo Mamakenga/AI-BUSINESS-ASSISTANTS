@@ -25,7 +25,7 @@ test("listRegisteredRoleCatalog derives canonical DB rows from runtime profiles"
 test("role catalog helpers expose task-assignable and founder-visible metadata", () => {
   assert.equal(hasRegisteredRoleId("assistant"), true);
   assert.equal(hasRegisteredRoleId("unknown_role"), false);
-  assert.equal(isWorkerDispatchableRoleId("orchestrator"), false);
+  assert.equal(isWorkerDispatchableRoleId("orchestrator"), true);
   assert.equal(isTaskAssignableRoleId("memory_curator"), true);
   assert.equal(isTaskAssignableRoleId("unknown_role"), false);
   assert.equal(isWorkerDispatchableRoleId("assistant"), true);
@@ -79,14 +79,22 @@ test("syncRoleCatalog upserts canonical roles when the table exists", async () =
   assert.equal(payload.length, 7);
   assert.deepEqual(payload.find((row) => row.role_id === "assistant"), {
     role_id: "assistant",
-    founder_entry_mode: "direct_or_topic",
+    founder_entry_mode: "service_only",
     execution_mode: "single_role_worker",
     task_assignable: true,
     dispatchable: true,
-    founder_visible: true,
-    telegram_topic: "01 Assistant",
+    founder_visible: false,
+    telegram_topic: null,
   });
-  assert.equal(payload.find((row) => row.role_id === "orchestrator").dispatchable, false);
+  assert.deepEqual(payload.find((row) => row.role_id === "orchestrator"), {
+    role_id: "orchestrator",
+    founder_entry_mode: "direct_or_topic",
+    execution_mode: "multi_role_router",
+    task_assignable: true,
+    dispatchable: true,
+    founder_visible: true,
+    telegram_topic: "01 Orchestrator",
+  });
 });
 
 test("syncRoleCatalog fails when stale DB roles are still referenced", async () => {

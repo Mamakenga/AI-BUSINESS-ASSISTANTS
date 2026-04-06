@@ -151,10 +151,10 @@ test("isLeaderDigestDispatchReason detects only leader brief and digest requests
   assert.equal(isLeaderDigestDispatchReason("Run the daily competitor watch in Russian."), false);
 });
 
-test("shouldLoadRecentTaskCompiledPages only enables fallback for empty assistant leader digests", () => {
+test("shouldLoadRecentTaskCompiledPages only enables fallback for empty orchestrator leader digests", () => {
   assert.equal(
     shouldLoadRecentTaskCompiledPages({
-      role_id: "assistant",
+      role_id: "orchestrator",
       task_id: null,
       requested_by_agent: "scheduler",
       dispatch_reason: "Prepare the daily brief for the leader in Russian.",
@@ -165,7 +165,7 @@ test("shouldLoadRecentTaskCompiledPages only enables fallback for empty assistan
 
   assert.equal(
     shouldLoadRecentTaskCompiledPages({
-      role_id: "assistant",
+      role_id: "orchestrator",
       task_id: null,
       requested_by_agent: "scheduler",
       dispatch_reason: "Prepare the weekly digest for the leader in Russian.",
@@ -176,7 +176,7 @@ test("shouldLoadRecentTaskCompiledPages only enables fallback for empty assistan
 
   assert.equal(
     shouldLoadRecentTaskCompiledPages({
-      role_id: "assistant",
+      role_id: "orchestrator",
       task_id: "task_42",
       requested_by_agent: "scheduler",
       dispatch_reason: "Prepare the weekly digest for the leader in Russian.",

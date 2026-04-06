@@ -12,9 +12,9 @@ const {
 } = require("../src/telegram-bridge");
 
 test("parseTelegramTopicMap parses JSON mapping into a Map", () => {
-  const topicMap = parseTelegramTopicMap('{"101":"01 Assistant","202":"02 Researcher"}');
+  const topicMap = parseTelegramTopicMap('{"101":"01 Orchestrator","202":"02 Researcher"}');
 
-  assert.equal(topicMap.get("101"), "01 Assistant");
+  assert.equal(topicMap.get("101"), "01 Orchestrator");
   assert.equal(topicMap.get("202"), "02 Researcher");
 });
 
@@ -23,7 +23,7 @@ test("buildTelegramIntakeRequest resolves mapped topic name for forum topic mess
     {
       message: {
         message_id: 77,
-        text: "@assistant what is urgent today?",
+        text: "@orchestrator what is urgent today?",
         is_topic_message: true,
         message_thread_id: 101,
         chat: { id: -100123, type: "supergroup" },
@@ -32,15 +32,15 @@ test("buildTelegramIntakeRequest resolves mapped topic name for forum topic mess
     },
     {
       allowed_chat_id: "-100123",
-      topic_map: parseTelegramTopicMap('{"101":"01 Assistant"}'),
+      topic_map: parseTelegramTopicMap('{"101":"01 Orchestrator"}'),
     }
   );
 
   assert.equal(request.telegram.chat_id, "-100123");
   assert.equal(request.telegram.message_thread_id, 101);
   assert.equal(request.telegram.message_id, 77);
-  assert.equal(request.telegram.topic_name, "01 Assistant");
-  assert.equal(request.intake.topic_name, "01 Assistant");
+  assert.equal(request.telegram.topic_name, "01 Orchestrator");
+  assert.equal(request.intake.topic_name, "01 Orchestrator");
   assert.equal(request.intake.is_group_context, true);
 });
 
@@ -94,7 +94,7 @@ test("buildTelegramIntakeRequest ignores messages from non-allowed chats", () =>
     {
       message: {
         message_id: 1,
-        text: "@assistant hello",
+        text: "@orchestrator hello",
         chat: { id: -100999, type: "supergroup" },
         from: { id: 42, is_bot: false },
       },
@@ -117,14 +117,14 @@ test("buildTelegramSendMessageRequest keeps reply in the same topic", () => {
     },
     {
       reply: {
-        text: "Accepted. Passing the question to the assistant.",
+        text: "Accepted. Passing the question to the orchestrator.",
       },
     }
   );
 
   assert.deepEqual(payload, {
     chat_id: "-100123",
-    text: "Accepted. Passing the question to the assistant.",
+    text: "Accepted. Passing the question to the orchestrator.",
     message_thread_id: 202,
     reply_to_message_id: 77,
   });

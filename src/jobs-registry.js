@@ -7,7 +7,7 @@ const REGISTERED_JOBS = Object.freeze([
   {
     job_type: "daily_founder_brief",
     title: "Daily Founder Brief",
-    assigned_agent: "assistant",
+    assigned_agent: "orchestrator",
     schedule: "daily morning",
     output_summary: "Short Telegram digest for the leader.",
     request_text:
@@ -16,7 +16,7 @@ const REGISTERED_JOBS = Object.freeze([
   {
     job_type: "weekly_digest",
     title: "Weekly Digest",
-    assigned_agent: "assistant",
+    assigned_agent: "orchestrator",
     schedule: "monday morning",
     output_summary: "Weekly digest for the leader with decisions, risks, and unresolved items.",
     request_text:
@@ -29,7 +29,7 @@ const REGISTERED_JOBS = Object.freeze([
     schedule: "daily",
     output_summary: "Daily competitor watch with grounded market signals and escalation notes.",
     request_text:
-      "Run the daily competitor watch in Russian. Do not ask follow-up questions. Use only available context, memory, tasks, decisions, and recent activity. If confirmed competitor information is limited, say that directly, do not fill gaps with invented market signals, and still produce the best concise report you can. Format it as a compact update with: 1) confirmed competitor or market signals, 2) why they matter for us, 3) what should be escalated to assistant, methodist, or finance_analyst, 4) one recommended next action.",
+      "Run the daily competitor watch in Russian. Do not ask follow-up questions. Use only available context, memory, tasks, decisions, and recent activity. If confirmed competitor information is limited, say that directly, do not fill gaps with invented market signals, and still produce the best concise report you can. Format it as a compact update with: 1) confirmed competitor or market signals, 2) why they matter for us, 3) what should be escalated to orchestrator, methodist, or finance_analyst, 4) one recommended next action.",
   },
   {
     job_type: "branch_finance_review",

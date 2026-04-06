@@ -2,7 +2,7 @@
 
 const { ROLE_IDS, ROLE_PROFILES } = require("./runtime-profiles");
 
-const WORKER_DISPATCHABLE_EXECUTION_MODES = new Set(["single_role_worker", "review_worker"]);
+const WORKER_DISPATCHABLE_EXECUTION_MODES = new Set(["single_role_worker", "review_worker", "multi_role_router"]);
 
 function normalizeOptionalString(value) {
   if (value === undefined || value === null) {

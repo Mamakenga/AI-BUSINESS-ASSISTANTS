@@ -75,7 +75,7 @@ function isLeaderDigestScheduledRun(executionContext) {
   const roleId = normalizeOptionalString(executionContext?.role?.id);
   const reason = normalizeOptionalString(executionContext?.run?.dispatch_reason)?.toLowerCase() || "";
 
-  if (requestedByAgent !== "scheduler" || roleId !== "assistant") {
+  if (requestedByAgent !== "scheduler" || roleId !== "orchestrator") {
     return false;
   }
 

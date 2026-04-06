@@ -161,7 +161,7 @@ function shouldLoadRecentTaskCompiledPages({
 } = {}) {
   return (
     requestedByAgent === "scheduler" &&
-    roleId === "assistant" &&
+    roleId === "orchestrator" &&
     !taskId &&
     compiledPagesCount === 0 &&
     isLeaderDigestDispatchReason(dispatchReason)

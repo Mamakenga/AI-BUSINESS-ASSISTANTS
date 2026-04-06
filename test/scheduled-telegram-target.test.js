@@ -5,10 +5,10 @@ const assert = require("node:assert/strict");
 
 const { resolveScheduledTelegramTarget } = require("../src/scheduled-telegram-target");
 
-test("resolveScheduledTelegramTarget routes scheduled assistant output into known assistant topic", () => {
+test("resolveScheduledTelegramTarget routes scheduled orchestrator output into known orchestrator topic", () => {
   const target = resolveScheduledTelegramTarget({
     run: {
-      agent: "assistant",
+      agent: "orchestrator",
       requested_by_agent: "scheduler",
     },
     allowed_chat_id: "-5020629823",
@@ -16,7 +16,7 @@ test("resolveScheduledTelegramTarget routes scheduled assistant output into know
       {
         chat_id: "-5020629823",
         message_thread_id: 101,
-        topic_name: "01 Assistant",
+        topic_name: "01 Orchestrator",
         updated_at: "2026-03-30T20:00:00.000Z",
       },
     ],
@@ -25,7 +25,7 @@ test("resolveScheduledTelegramTarget routes scheduled assistant output into know
   assert.deepEqual(target, {
     chat_id: "-5020629823",
     message_thread_id: "101",
-    topic_name: "01 Assistant",
+    topic_name: "01 Orchestrator",
     target_mode: "role_topic",
   });
 });
@@ -51,7 +51,7 @@ test("resolveScheduledTelegramTarget falls back to general chat when role topic 
 test("resolveScheduledTelegramTarget returns null for non-scheduler runs", () => {
   const target = resolveScheduledTelegramTarget({
     run: {
-      agent: "assistant",
+      agent: "orchestrator",
       requested_by_agent: "founder",
     },
     allowed_chat_id: "-5020629823",

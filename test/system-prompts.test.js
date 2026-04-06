@@ -37,10 +37,10 @@ test("deriveRequestType detects orchestration and direct answers", () => {
   );
 });
 
-test("isLeaderDigestScheduledRun detects assistant leader digests only", () => {
+test("isLeaderDigestScheduledRun detects orchestrator leader digests only", () => {
   assert.equal(
     isLeaderDigestScheduledRun({
-      role: { id: "assistant" },
+      role: { id: "orchestrator" },
       run: { requested_by_agent: "scheduler", dispatch_reason: "Prepare the daily brief for the leader in Russian." },
     }),
     true
@@ -48,7 +48,7 @@ test("isLeaderDigestScheduledRun detects assistant leader digests only", () => {
 
   assert.equal(
     isLeaderDigestScheduledRun({
-      role: { id: "assistant" },
+      role: { id: "orchestrator" },
       run: { requested_by_agent: "scheduler", dispatch_reason: "Prepare the weekly digest for the leader in Russian." },
     }),
     true
@@ -248,9 +248,9 @@ test("buildSystemPrompt trims compiled knowledge snippets separately from atomic
 test("buildSystemPrompt gives scheduled leader digests richer compiled knowledge guidance", () => {
   const result = buildSystemPrompt({
     role: {
-      id: "assistant",
-      execution_mode: "single_role_worker",
-      output_contract: "assistant_summary_v1",
+      id: "orchestrator",
+      execution_mode: "multi_role_router",
+      output_contract: "orchestrator_summary_v1",
     },
     run: {
       requested_by_agent: "scheduler",

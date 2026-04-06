@@ -3,11 +3,11 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { isAssistantComplexFounderQuestion, resolveTelegramRouting } = require("../src/telegram-routing");
+const { resolveTelegramRouting } = require("../src/telegram-routing");
 
 test("explicit role tag wins over topic role", () => {
   const result = resolveTelegramRouting({
-    text: "@finance \u0441\u0440\u0430\u0432\u043d\u0438 \u043c\u0430\u0440\u0442 \u0438 \u0444\u0435\u0432\u0440\u0430\u043b\u044c",
+    text: "@finance сравни март и февраль",
     topic_name: "02 Researcher",
   });
 
@@ -21,7 +21,7 @@ test("explicit role tag wins over topic role", () => {
 
 test("general topic defaults to orchestrator", () => {
   const result = resolveTelegramRouting({
-    text: "\u0421\u043e\u0431\u0435\u0440\u0438 \u043c\u043d\u0435 \u043a\u0430\u0440\u0442\u0438\u043d\u0443 \u043f\u043e \u0444\u0438\u043b\u0438\u0430\u043b\u0430\u043c",
+    text: "Собери мне картину по филиалам",
     topic_name: "General",
   });
 
@@ -34,7 +34,7 @@ test("general topic defaults to orchestrator", () => {
 
 test("orchestrator question may stay a direct answer", () => {
   const result = resolveTelegramRouting({
-    text: "@orchestrator \u0441\u043a\u043e\u043b\u044c\u043a\u043e \u0443 \u043d\u0430\u0441 \u0443\u0447\u0435\u043d\u0438\u043a\u043e\u0432?",
+    text: "@orchestrator сколько у нас учеников?",
     topic_name: "General",
   });
 
@@ -46,7 +46,7 @@ test("orchestrator question may stay a direct answer", () => {
 
 test("role topic without tag uses topic role", () => {
   const result = resolveTelegramRouting({
-    text: "\u041f\u0440\u043e\u0432\u0435\u0440\u044c \u043a\u043e\u043d\u043a\u0443\u0440\u0435\u043d\u0442\u043e\u0432 \u0432 \u0412\u0430\u0440\u043d\u0435",
+    text: "Проверь конкурентов в Варне",
     topic_name: "02 Researcher",
   });
 
@@ -58,7 +58,7 @@ test("role topic without tag uses topic role", () => {
 
 test("question in a role topic becomes direct answer", () => {
   const result = resolveTelegramRouting({
-    text: "\u041a\u0430\u043a\u0430\u044f \u0443 \u043d\u0430\u0441 \u0434\u0438\u043d\u0430\u043c\u0438\u043a\u0430 \u043f\u043e \u043c\u0430\u0440\u0442\u0443?",
+    text: "Какая у нас динамика по марту?",
     topic_name: "04 Finance",
   });
 
@@ -67,72 +67,62 @@ test("question in a role topic becomes direct answer", () => {
   assert.equal(result.should_create_task, false);
 });
 
-test("assistant topic without tag stays a direct answer path", () => {
+test("orchestrator topic without tag stays a direct answer path", () => {
   const result = resolveTelegramRouting({
     text: "what is urgent today?",
-    topic_name: "01 Assistant",
+    topic_name: "01 Orchestrator",
   });
 
   assert.equal(result.explicit_role, null);
-  assert.equal(result.topic_role, "assistant");
-  assert.equal(result.resolved_role, "assistant");
+  assert.equal(result.topic_role, "orchestrator");
+  assert.equal(result.resolved_role, "orchestrator");
   assert.equal(result.route_source, "topic");
   assert.equal(result.interaction_type, "direct_answer");
   assert.equal(result.should_create_task, false);
 });
 
-test("assistant complex founder question escalates to orchestrator gate", () => {
+test("orchestrator topic keeps complex founder questions in orchestrator", () => {
   const result = resolveTelegramRouting({
     text:
       "Сейчас решается вопрос, откатить ли назад отказ от франшизы или делать ребрендинг. Денег на ребрендинг нет, кредит брать не хочется. Какие есть варианты действий?",
-    topic_name: "01 Assistant",
+    topic_name: "01 Orchestrator",
   });
 
-  assert.equal(result.topic_role, "assistant");
+  assert.equal(result.topic_role, "orchestrator");
   assert.equal(result.resolved_role, "orchestrator");
-  assert.equal(result.route_source, "assistant_gate");
+  assert.equal(result.route_source, "topic");
   assert.equal(result.interaction_type, "direct_answer");
   assert.equal(result.should_create_task, false);
 });
 
-test("assistant complex founder question detector ignores simple urgency questions", () => {
-  assert.equal(isAssistantComplexFounderQuestion("Что сейчас самое срочное?"), false);
-  assert.equal(
-    isAssistantComplexFounderQuestion(
-      "Откатить отказ от франшизы или делать ребрендинг, если денег мало и кредит брать не хочется? Какие есть варианты действий?"
-    ),
-    true
-  );
-});
-
-test("role tag with a concrete request still becomes a task", () => {
+test("role tag with a concrete orchestrator request still becomes a task", () => {
   const result = resolveTelegramRouting({
-    text: "@assistant prepare the weekly digest",
-    topic_name: "01 Assistant",
+    text: "@orchestrator prepare the weekly digest",
+    topic_name: "01 Orchestrator",
   });
 
-  assert.equal(result.resolved_role, "assistant");
-  assert.equal(result.interaction_type, "one_role_task");
+  assert.equal(result.resolved_role, "orchestrator");
+  assert.equal(result.interaction_type, "multi_role_task");
   assert.equal(result.should_create_task, true);
 });
 
-test("role topic without tag still creates a task for concrete requests", () => {
+test("orchestrator topic without tag still creates a task for concrete requests", () => {
   const result = resolveTelegramRouting({
     text: "prepare the weekly digest",
-    topic_name: "01 Assistant",
+    topic_name: "01 Orchestrator",
   });
 
   assert.equal(result.explicit_role, null);
-  assert.equal(result.topic_role, "assistant");
-  assert.equal(result.resolved_role, "assistant");
+  assert.equal(result.topic_role, "orchestrator");
+  assert.equal(result.resolved_role, "orchestrator");
   assert.equal(result.route_source, "topic");
-  assert.equal(result.interaction_type, "one_role_task");
+  assert.equal(result.interaction_type, "multi_role_task");
   assert.equal(result.should_create_task, true);
 });
 
 test("ambiguous contextless message asks for clarification", () => {
   const result = resolveTelegramRouting({
-    text: "\u041f\u043e\u0441\u043c\u043e\u0442\u0440\u0438 \u043f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430",
+    text: "Посмотри пожалуйста",
     topic_name: "",
     is_group_context: false,
   });

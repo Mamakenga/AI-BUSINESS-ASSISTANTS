@@ -32,7 +32,7 @@ test("daily founder brief request is deterministic and does not ask for clarific
   const dailyBrief = jobs.find((job) => job.job_type === "daily_founder_brief");
 
   assert.ok(dailyBrief);
-  assert.equal(dailyBrief.assigned_agent, "assistant");
+  assert.equal(dailyBrief.assigned_agent, "orchestrator");
   assert.match(dailyBrief.request_text, /Do not ask follow-up questions/i);
   assert.match(dailyBrief.request_text, /leader/i);
   assert.match(dailyBrief.request_text, /compiled knowledge summaries/i);
@@ -51,7 +51,7 @@ test("weekly digest request is deterministic and leader-facing", () => {
   const weeklyDigest = jobs.find((job) => job.job_type === "weekly_digest");
 
   assert.ok(weeklyDigest);
-  assert.equal(weeklyDigest.assigned_agent, "assistant");
+  assert.equal(weeklyDigest.assigned_agent, "orchestrator");
   assert.match(weeklyDigest.output_summary, /leader/i);
   assert.match(weeklyDigest.request_text, /Do not ask follow-up questions/i);
   assert.match(weeklyDigest.request_text, /compiled knowledge summaries/i);
@@ -75,7 +75,7 @@ test("competitor watch request is deterministic and escalation-oriented", () => 
   assert.match(competitorWatch.request_text, /Do not ask follow-up questions/i);
   assert.match(competitorWatch.request_text, /If confirmed competitor information is limited/i);
   assert.match(competitorWatch.request_text, /do not fill gaps with invented market signals/i);
-  assert.match(competitorWatch.request_text, /assistant, methodist, or finance_analyst/i);
+  assert.match(competitorWatch.request_text, /orchestrator, methodist, or finance_analyst/i);
   assert.match(competitorWatch.request_text, /one recommended next action/i);
 });
 
@@ -131,13 +131,13 @@ test("buildJobSyncPlan inserts missing jobs and updates drifted jobs", () => {
     {
       id: 11,
       job_type: "daily_founder_brief",
-      assigned_agent: "assistant",
+      assigned_agent: "orchestrator",
       schedule: "daily morning",
     },
     {
       id: 12,
       job_type: "weekly_digest",
-      assigned_agent: "assistant",
+      assigned_agent: "orchestrator",
       schedule: "every friday",
     },
   ]);
@@ -154,8 +154,8 @@ test("buildJobSyncPlan rejects duplicate stored job rows for one job type", () =
   assert.throws(
     () =>
       buildJobSyncPlan([
-        { id: 1, job_type: "daily_founder_brief", assigned_agent: "assistant", schedule: "daily morning" },
-        { id: 2, job_type: "daily_founder_brief", assigned_agent: "assistant", schedule: "daily morning" },
+        { id: 1, job_type: "daily_founder_brief", assigned_agent: "orchestrator", schedule: "daily morning" },
+        { id: 2, job_type: "daily_founder_brief", assigned_agent: "orchestrator", schedule: "daily morning" },
       ]),
     /Duplicate stored jobs/
   );
@@ -210,7 +210,7 @@ test("mergeRegisteredJobWithStoredRow returns the matching registered snapshot i
   const weeklyDigest = mergeRegisteredJobWithStoredRow({
     id: 44,
     job_type: "weekly_digest",
-    assigned_agent: "assistant",
+    assigned_agent: "orchestrator",
     schedule: "monday morning",
     enabled: true,
     last_run_at: null,
